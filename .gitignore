@@ -1,0 +1,42 @@
+# Claude Code local files
+CLAUDE.local.md
+.claude/**/memory/
+.claude/agent-memory-local/
+.claude/subtasks/active/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Dependencies
+node_modules/
+
+# Build
+.next/
+dist/
+build/
+.turbo/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel
+.vercel
