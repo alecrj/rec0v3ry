@@ -1,84 +1,56 @@
 # Phase 4: Build (Full Product)
 
 ## Objective
-Implement the complete product using Agent Teams for parallel development.
+Implement the complete product. Opus writes all files directly — no agent teams.
 
 ## Entry Criteria
 - Phase 3 complete and validated
 - All architecture approved by compliance-expert
 - All architecture approved by payments-architect
 
-## Method: Agent Team (5 Parallel Builders)
+## Method: Opus Direct Writes (Sequential)
 
-Spawn 5 specialized teammates:
-1. **backend-lead**: Database, API, business logic, auth
-2. **frontend-lead**: Operator web app (Next.js)
-3. **mobile-lead**: Resident PWA
-4. **integrations-lead**: Stripe, webhooks, external APIs
-5. **compliance-verifier**: Continuous compliance verification
+One sprint pair per session:
+1. Read SOURCE_OF_TRUTH.md + relevant roadmap section
+2. Write backend routers → `tsc --noEmit`
+3. Write frontend pages → `tsc --noEmit`
+4. Write integration files if any → `next build`
+5. Update SOURCE_OF_TRUTH.md before ending session
 
-### Backend Lead Responsibilities
-- Database schema implementation (Drizzle ORM)
-- All tRPC API routes with auth/authz
-- Business logic (billing, admissions, house ops)
-- Audit logging infrastructure
-- Background jobs (payment processing, notifications)
-- Test coverage for all endpoints
+**Why no agent teams**: Subagents failed to write files in Sprint 7-8. Opus had to redo all work. Teams burn ~2x tokens with dispatch/monitor/fix overhead.
 
-### Frontend Lead Responsibilities
-- Operator dashboard
-- Property/house/bed management UI
-- Resident management UI
-- Billing and payments UI
-- Documents and e-sign UI
-- Reporting and exports UI
-- Responsive design (desktop-first)
+## Sprint Status
 
-### Mobile Lead Responsibilities
-- Resident PWA shell
-- Payment and balance views
-- Requirements checklist UI
-- Request submission
-- Messaging UI
-- Push notifications setup
+| Sprint | Module | Status | Files Added | Date |
+|--------|--------|--------|-------------|------|
+| 1-2 | Foundation (schema, tRPC, shell) | **Complete** | 63 | 2026-02-12 |
+| 3-4 | Compliance (routers, pages, webhook) | **Complete** | +14 → 77 | 2026-02-12 |
+| 5-6 | Payments (Stripe, ledger, billing) | **Complete** | +15 → 92 | 2026-02-12 |
+| 7-8 | Documents & E-Sign | **Complete** | +11 → 103 | 2026-02-17 |
+| 9-10 | Org + Occupancy | **Complete** | +6 → 109 | 2026-02-17 |
+| 11-12 | Admissions CRM | **Next** | — | — |
+| 13-14 | House Operations | Pending | — | — |
+| 15-16 | Messaging | Pending | — | — |
+| 17-18 | Advanced Ops | Pending | — | — |
+| 19 | Reporting | Pending | — | — |
+| 20 | Launch Prep | Pending | — | — |
 
-### Integrations Lead Responsibilities
-- Stripe Connect setup and configuration
-- Payment processing flows
-- Webhook handlers
-- Document storage (S3)
-- Email notifications (Resend or similar)
+## Current Stats
+- 109 source files, 24,904 lines TypeScript
+- Zero TS errors, clean `next build`
+- 19 tRPC routers, 19 CRM pages, 3 PWA pages, 3 webhook handlers
 
-### Compliance Verifier Responsibilities
-- Continuous audit log verification
-- RBAC enforcement verification
-- Security testing
-- Code review for compliance issues
-- Run `/verify-compliance` regularly
-
-## Coordination
-- Shared task list for work items
-- Teammates communicate via messaging
-- Lead synthesizes progress daily
-- compliance-verifier reviews all PRs
-
-## Build Order
-1. Foundation: Auth, database, core models
-2. Core: Residents, houses, beds, admissions
-3. Payments: Ledger, Stripe, billing
-4. Operations: Tasks, meetings, requests
-5. Documents: Templates, e-sign, storage
-6. Messaging: Channels, notifications
-7. Mobile: Resident PWA
-8. Reporting: Dashboards, exports
+## Build Order (Remaining)
+1. **Sprint 9-10**: Org + Occupancy (property/house CRUD, bed grid, transfers, waitlist)
+2. **Sprint 11-12**: Admissions CRM (lead pipeline, intake wizard, Part 2 consent at admission)
+3. **Sprint 13-14**: House Operations (chores, meetings, passes, curfew, drug tests, incidents)
+4. **Sprint 15-16**: Messaging (DM, group chat, announcements, push, consent-gated)
+5. **Sprint 17-18**: Advanced Ops (drug test scheduling, family portal, maintenance)
+6. **Sprint 19**: Reporting (all dashboards, data export)
+7. **Sprint 20**: Launch Prep (E2E tests, security audit, performance)
 
 ## Exit Criteria
-- All features implemented per PRD
-- All acceptance criteria met
-- compliance-verifier sign-off on security
-- All tests passing
-- No open security issues
-- Performance acceptable
-
-## Duration
-Many sessions (parallel work)
+- All P0 features implemented per PRD (68 features)
+- Zero TS errors, clean `next build`
+- compliance-expert review on security-sensitive sprints
+- All acceptance criteria from 06_ROADMAP.md met
