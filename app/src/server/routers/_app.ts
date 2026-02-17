@@ -34,6 +34,10 @@ import { curfewRouter } from './curfew';
 import { drugTestRouter } from './drugTest';
 import { incidentRouter } from './incident';
 import { checkInRouter } from './checkIn';
+// Sprint 15-16: Messaging
+import { conversationRouter } from './conversation';
+import { messageRouter } from './message';
+import { announcementRouter } from './announcement';
 
 /**
  * Main application router
@@ -74,6 +78,10 @@ export const appRouter = router({
   drugTest: drugTestRouter,
   incident: incidentRouter,
   checkIn: checkInRouter,
+  // Sprint 15-16: Messaging
+  conversation: conversationRouter,
+  message: messageRouter,
+  announcement: announcementRouter,
 });
 
 /**

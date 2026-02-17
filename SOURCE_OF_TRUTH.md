@@ -4,8 +4,8 @@
 > Read this FIRST at the start of EVERY session.
 
 ## Current State
-- **Phase**: PHASE-4-BUILD (Sprint 1-14 Complete)
-- **Status**: Sprint 13-14 done! 7 backend routers + 7 frontend pages. 127 source files. Zero TS errors, clean `next build`. Sprint 15-16 (Messaging) next.
+- **Phase**: PHASE-4-BUILD (Sprint 1-16 Complete)
+- **Status**: Sprint 15-16 done! 3 messaging routers + 5 frontend pages. 135 source files. Zero TS errors, clean `next build`. Sprint 17-18 (Advanced Ops) next.
 - **Blocking Issues**: None
 - **Last Updated**: 2026-02-17
 
@@ -32,9 +32,6 @@
 ## Remaining Sprint Plan (v1.0)
 | Sprint | Module | What to Build | Est. Files |
 |--------|--------|---------------|-----------|
-| 11-12 | Admissions CRM | Lead pipeline (Kanban), intake wizard, Part 2 consent at admission | ~8 |
-| 13-14 | House Operations | Chores, meetings, passes, curfew, drug tests, incidents, check-ins | ~12 |
-| 15-16 | Messaging | DM, group chat, announcements, push notifications, consent-gated | ~10 |
 | 17-18 | Advanced Ops | Drug test scheduling, family portal, maintenance | ~6 |
 | 19 | Reporting | All dashboards, data export | ~6 |
 | 20 | Launch Prep | E2E tests, security audit, performance | ~4 |
@@ -55,6 +52,7 @@
 | 416 | Sprint 9-10: Property + occupancy routers, bed grid, waitlist, property management pages | 4 | 2026-02-17 |
 | 417 | Sprint 11-12: Lead + admission routers, lead pipeline, intake pages | 4 | 2026-02-17 |
 | 418 | Sprint 13-14: 7 House Operations routers + 7 frontend pages (chores, meetings, passes, curfew, drug-tests, incidents, check-ins) | 4 | 2026-02-17 |
+| 419 | Sprint 15-16: 3 Messaging routers (conversation, message, announcement) + 5 frontend pages (inbox, conversation, announcements, compose, resident inbox) | 4 | 2026-02-17 |
 
 ## Canonical Docs Status
 | Doc | Status | Key Stats |
@@ -92,8 +90,8 @@ Non-blocking findings from compliance-reviewer to address during relevant sprint
 
 ### READ THIS FIRST
 1. Read this file (SOURCE_OF_TRUTH.md) for full context
-2. Sprint 1-14 COMPLETE — clean `next build`, 127 files
-3. Sprint 15-16 (Messaging) is NEXT
+2. Sprint 1-16 COMPLETE — clean `next build`, 135 files
+3. Sprint 17-18 (Advanced Ops) is NEXT
 
 ### What's Been Built (Sprint 1-14)
 
@@ -104,7 +102,7 @@ Non-blocking findings from compliance-reviewer to address during relevant sprint
 | **Schema** | 60+ tables, 40+ enums, 150+ indexes, 100+ relations | `src/server/db/schema/*.ts` (18 files) |
 | **tRPC Init** | Context, base/protected/part2 procedures | `src/server/trpc-init.ts`, `src/server/trpc.ts` |
 | **Middleware** | Auth → Tenant → RBAC → Consent → Audit → Redisclosure → DisclosureTracking | `src/server/middleware/*.ts` (8 files) |
-| **Routers** | consent, admin, org, user, disclosure, breach, audit, breakGlass, invoice, payment, ledger, rate, stripe, payer, document, esign, property, occupancy, lead, admission, chore, meeting, pass, curfew, drugTest, incident, checkIn | `src/server/routers/*.ts` (26 files) |
+| **Routers** | consent, admin, org, user, disclosure, breach, audit, breakGlass, invoice, payment, ledger, rate, stripe, payer, document, esign, property, occupancy, lead, admission, chore, meeting, pass, curfew, drugTest, incident, checkIn, conversation, message, announcement | `src/server/routers/*.ts` (29 files) |
 | **Shared Libs** | Types, constants, encryption (AES-256-GCM), errors (11 classes), Stripe client, ledger helpers, DocuSign client, S3 client, document versioning | `src/lib/*.ts` (9 files) |
 | **CRM** | Desktop layout, sidebar (30+ links), header, dashboard | `src/components/layouts/*` |
 | **Compliance Pages** | Dashboard, audit log viewer, break-glass log, disclosures, patient notice | `src/app/(crm)/compliance/**` (5 pages) |
@@ -114,7 +112,8 @@ Non-blocking findings from compliance-reviewer to address during relevant sprint
 | **Occupancy Pages** | Bed grid (visual, color-coded), waitlist management | `src/app/(crm)/occupancy/**` (2 pages) |
 | **Admissions Pages** | Lead pipeline, admission detail | `src/app/(crm)/admissions/**` (2 pages) |
 | **Operations Pages** | Chores, meetings, passes, curfew, drug tests, incidents, check-ins | `src/app/(crm)/operations/**` (7 pages) |
-| **PWA** | Mobile layout, bottom nav, home, payments, documents | `src/app/(resident)/**` |
+| **Messaging Pages** | Inbox, conversation view, announcements, compose | `src/app/(crm)/messages/**` (4 pages) |
+| **PWA** | Mobile layout, bottom nav, home, payments, documents, inbox | `src/app/(resident)/**` |
 | **Compliance UI** | 5-step consent wizard, status badges, redisclosure banner, patient notice | `src/components/compliance/*` (4 components) |
 | **Auth** | Clerk login/register, proxy (middleware), webhook handler | `src/app/(auth)/**`, `src/proxy.ts`, `api/webhooks/clerk` |
 | **API** | tRPC handler, health check, Clerk webhook, Stripe webhook, DocuSign webhook | `src/app/api/**` |
@@ -131,52 +130,43 @@ Non-blocking findings from compliance-reviewer to address during relevant sprint
 - Double-entry ledger: every money movement creates debit+credit pair, balances always computed
 - Retention policies enforce regulatory minimums (6yr Part 2, 6yr medical, 7yr financial, 3yr operational)
 
-### Sprint 15-16: Messaging — What to Build Next
+### Sprint 17-18: Advanced Ops — What to Build Next
 
-Read `docs/06_ROADMAP.md` Sprint 15-16 section for full specs.
+Read `docs/06_ROADMAP.md` Sprint 21-22 section for specs (v1.1 features).
 
 **Backend**:
-- Routers: `message`, `conversation`, `announcement`
-- Real-time WebSocket or polling for DMs
-- Consent-gated messaging (Part 2 residents)
+- Drug test scheduling (random + scheduled)
+- Family portal messaging
+- Maintenance request system
 
 **Frontend**:
-- CRM pages: Inbox, announcements, compose
-- Resident app: Messaging tab
+- Drug test scheduling interface
+- Family portal pages
+- Maintenance request workflow
 
 ---
 
-### Sprint 13-14: House Operations — COMPLETE
+### Sprint 15-16: Messaging — COMPLETE
 
-**Backend** (DONE): 7 routers built and compiling
-- `chore` — chore management, assignments, rotation, verification
-- `meeting` — house/AA/NA meeting scheduling and attendance
-- `pass` — pass requests, approvals, tracking
-- `curfew` — curfew config, check-ins, violations
-- `drugTest` — Part 2 protected drug test results
-- `incident` — incident reporting with encrypted fields
-- `checkIn` — daily wellness check-ins
+**Backend** (DONE): 3 routers built and compiling
+- `conversation` — DM, group chat, house channels, member management
+- `message` — send/receive, encryption for Part 2, redisclosure notice
+- `announcement` — broadcast, pinning, read tracking, drafts
 
-**Frontend** (DONE): 7 pages at `/operations/*`
-- Chores: assignments, rotation, verification
-- Meetings: calendar, attendance tracking
-- Passes: request/approve workflow
-- Curfew: house config, check-in log
-- Drug Tests: Part 2 protected, random scheduling
-- Incidents: severity badges, follow-up tracking
-- Check-ins: mood/wellness tracking, flagging
+**Frontend** (DONE): 5 pages
+- CRM `/messages` — inbox with conversation list, filters
+- CRM `/messages/[id]` — conversation thread view with members
+- CRM `/messages/announcements` — announcement management
+- CRM `/messages/compose` — new message/conversation creation
+- PWA `/inbox` — resident messaging with announcements
 
 **Key Features (from roadmap)**:
-- OPS-01: Chore chart + rotation
-- OPS-02: Auto-rotate chores weekly/biweekly
-- OPS-03: Meeting scheduler (house, AA/NA)
-- OPS-04: Attendance tracking for accountability
-- OPS-05: Pass request workflow
-- OPS-06: Curfew tracking (check-in log)
-- OPS-07: Drug test recording (Part 2 protected)
-- OPS-08: Random test scheduling
-- OPS-09: Incident reporting (structured form)
-- OPS-10: Daily wellness check-ins
+- MSG-01: Direct messages (1:1, real-time delivery)
+- MSG-02: Group chat (house, property, custom groups)
+- MSG-03: House announcements (pinnable, read tracking)
+- MSG-07: Family/sponsor messaging (consent-gated)
+- MSG-09: Consent-gated content (Part 2 verification)
+- CMP-06: Redisclosure notice in messages
 
 ### Workflow Per Session
 1. Read SOURCE_OF_TRUTH.md + relevant roadmap section
