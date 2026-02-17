@@ -38,6 +38,12 @@ import { checkInRouter } from './checkIn';
 import { conversationRouter } from './conversation';
 import { messageRouter } from './message';
 import { announcementRouter } from './announcement';
+// Sprint 17-18: Advanced Ops
+import { drugTestScheduleRouter } from './drugTestSchedule';
+import { maintenanceRouter } from './maintenance';
+import { familyPortalRouter } from './familyPortal';
+// Sprint 19: Reporting
+import { reportingRouter } from './reporting';
 
 /**
  * Main application router
@@ -82,6 +88,12 @@ export const appRouter = router({
   conversation: conversationRouter,
   message: messageRouter,
   announcement: announcementRouter,
+  // Sprint 17-18: Advanced Ops
+  drugTestSchedule: drugTestScheduleRouter,
+  maintenance: maintenanceRouter,
+  familyPortal: familyPortalRouter,
+  // Sprint 19: Reporting
+  reporting: reportingRouter,
 });
 
 /**

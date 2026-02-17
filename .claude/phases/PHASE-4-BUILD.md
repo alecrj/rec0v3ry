@@ -28,26 +28,21 @@ One sprint pair per session:
 | 5-6 | Payments (Stripe, ledger, billing) | **Complete** | +15 → 92 | 2026-02-12 |
 | 7-8 | Documents & E-Sign | **Complete** | +11 → 103 | 2026-02-17 |
 | 9-10 | Org + Occupancy | **Complete** | +6 → 109 | 2026-02-17 |
-| 11-12 | Admissions CRM | **Next** | — | — |
-| 13-14 | House Operations | Pending | — | — |
-| 15-16 | Messaging | Pending | — | — |
-| 17-18 | Advanced Ops | Pending | — | — |
-| 19 | Reporting | Pending | — | — |
-| 20 | Launch Prep | Pending | — | — |
+| 11-12 | Admissions CRM | **Complete** | +6 → 115 | 2026-02-17 |
+| 13-14 | House Operations | **Complete** | +10 → 125 | 2026-02-17 |
+| 15-16 | Messaging | **Complete** | +10 → 135 | 2026-02-17 |
+| 17-18 | Advanced Ops | **Complete** | +9 → 144 | 2026-02-17 |
+| 19 | Reporting | **Complete** | +5 → 149 | 2026-02-17 |
+| 20 | Launch Prep (E2E, security, CI/CD) | **Complete** | +13 → 162 | 2026-02-17 |
 
 ## Current Stats
-- 109 source files, 24,904 lines TypeScript
+- 162 source files, 48,628 lines TypeScript
 - Zero TS errors, clean `next build`
-- 19 tRPC routers, 19 CRM pages, 3 PWA pages, 3 webhook handlers
+- 33 tRPC routers, 43 CRM pages, 8 PWA pages, 3 webhook handlers
+- 8 E2E test files, 2 verification scripts, 1 CI/CD workflow
 
 ## Build Order (Remaining)
-1. **Sprint 9-10**: Org + Occupancy (property/house CRUD, bed grid, transfers, waitlist)
-2. **Sprint 11-12**: Admissions CRM (lead pipeline, intake wizard, Part 2 consent at admission)
-3. **Sprint 13-14**: House Operations (chores, meetings, passes, curfew, drug tests, incidents)
-4. **Sprint 15-16**: Messaging (DM, group chat, announcements, push, consent-gated)
-5. **Sprint 17-18**: Advanced Ops (drug test scheduling, family portal, maintenance)
-6. **Sprint 19**: Reporting (all dashboards, data export)
-7. **Sprint 20**: Launch Prep (E2E tests, security audit, performance)
+NONE - All 20 sprints complete! Phase 5 (VERIFY) is next.
 
 ## Exit Criteria
 - All P0 features implemented per PRD (68 features)

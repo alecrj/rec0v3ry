@@ -297,3 +297,119 @@ export const clinicalAssessmentsRelations = relations(clinicalAssessments, ({ on
     references: [users.id],
   }),
 }));
+
+// Drug Test Schedules (recurring/random test configurations)
+export const drugTestSchedules = pgTable(
+  'drug_test_schedules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    org_id: uuid('org_id').notNull().references(() => organizations.id),
+    house_id: uuid('house_id').references(() => houses.id), // Null = org-wide
+    name: text('name').notNull(),
+    description: text('description'),
+    schedule_type: text('schedule_type').notNull(), // 'random', 'scheduled', 'weekly', 'monthly'
+    test_type: text('test_type').notNull().default('urine'), // 'urine', 'breathalyzer', etc.
+    // For random schedules
+    random_percentage: integer('random_percentage'), // % of residents per execution
+    random_min_per_execution: integer('random_min_per_execution'),
+    random_max_per_execution: integer('random_max_per_execution'),
+    // For scheduled/recurring
+    recurrence_rule: text('recurrence_rule'), // iCal RRULE format
+    day_of_week: jsonb('day_of_week'), // Array of days: ['monday', 'wednesday', 'friday']
+    day_of_month: jsonb('day_of_month'), // Array of days: [1, 15] for 1st and 15th
+    time_of_day: text('time_of_day'), // HH:MM format
+    // Configuration
+    is_active: boolean('is_active').default(true),
+    notify_residents: boolean('notify_residents').default(false), // Should residents be notified?
+    advance_notice_hours: integer('advance_notice_hours'), // How far in advance to notify
+    last_executed_at: timestamp('last_executed_at'),
+    next_execution_at: timestamp('next_execution_at'),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    updated_at: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
+    created_by: uuid('created_by'),
+    updated_by: uuid('updated_by'),
+    deleted_at: timestamp('deleted_at'),
+  },
+  (table) => ({
+    org_id_idx: index('drug_test_schedules_org_id_idx').on(table.org_id),
+    house_id_idx: index('drug_test_schedules_house_id_idx').on(table.house_id),
+    schedule_type_idx: index('drug_test_schedules_schedule_type_idx').on(table.schedule_type),
+    next_execution_idx: index('drug_test_schedules_next_execution_idx').on(table.next_execution_at),
+  })
+);
+
+export const drugTestSchedulesRelations = relations(drugTestSchedules, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [drugTestSchedules.org_id],
+    references: [organizations.id],
+  }),
+  house: one(houses, {
+    fields: [drugTestSchedules.house_id],
+    references: [houses.id],
+  }),
+}));
+
+// Drug Test Schedule Executions (log of each schedule run)
+export const drugTestScheduleExecutions = pgTable(
+  'drug_test_schedule_executions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    org_id: uuid('org_id').notNull().references(() => organizations.id),
+    schedule_id: uuid('schedule_id').notNull().references(() => drugTestSchedules.id),
+    executed_at: timestamp('executed_at').defaultNow().notNull(),
+    residents_selected: integer('residents_selected').notNull(),
+    residents_tested: integer('residents_tested').default(0),
+    status: text('status').notNull().default('pending'), // 'pending', 'in_progress', 'completed'
+    notes: text('notes'),
+    created_by: uuid('created_by'),
+  },
+  (table) => ({
+    schedule_id_idx: index('drug_test_schedule_executions_schedule_id_idx').on(table.schedule_id),
+    executed_at_idx: index('drug_test_schedule_executions_executed_at_idx').on(table.executed_at),
+  })
+);
+
+export const drugTestScheduleExecutionsRelations = relations(drugTestScheduleExecutions, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [drugTestScheduleExecutions.org_id],
+    references: [organizations.id],
+  }),
+  schedule: one(drugTestSchedules, {
+    fields: [drugTestScheduleExecutions.schedule_id],
+    references: [drugTestSchedules.id],
+  }),
+}));
+
+// Family Portal Access Tokens (secure access for family members)
+export const familyPortalTokens = pgTable(
+  'family_portal_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    org_id: uuid('org_id').notNull().references(() => organizations.id),
+    contact_id: uuid('contact_id').notNull().references(() => residents.id), // References resident_contacts via resident
+    resident_id: uuid('resident_id').notNull().references(() => residents.id),
+    token_hash: text('token_hash').notNull(), // Hashed access token
+    email: text('email').notNull(),
+    is_active: boolean('is_active').default(true),
+    last_accessed_at: timestamp('last_accessed_at'),
+    expires_at: timestamp('expires_at'),
+    created_at: timestamp('created_at').defaultNow().notNull(),
+    created_by: uuid('created_by'),
+  },
+  (table) => ({
+    org_id_idx: index('family_portal_tokens_org_id_idx').on(table.org_id),
+    resident_id_idx: index('family_portal_tokens_resident_id_idx').on(table.resident_id),
+    token_hash_idx: index('family_portal_tokens_token_hash_idx').on(table.token_hash),
+  })
+);
+
+export const familyPortalTokensRelations = relations(familyPortalTokens, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [familyPortalTokens.org_id],
+    references: [organizations.id],
+  }),
+  resident: one(residents, {
+    fields: [familyPortalTokens.resident_id],
+    references: [residents.id],
+  }),
+}));
