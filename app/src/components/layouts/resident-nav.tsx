@@ -8,27 +8,27 @@ import { Home, CreditCard, Calendar, MessageSquare, User } from "lucide-react";
 const navItems = [
   {
     label: "Home",
-    href: "/resident/home",
+    href: "/home",
     icon: Home,
   },
   {
     label: "Payments",
-    href: "/resident/payments",
+    href: "/payments",
     icon: CreditCard,
   },
   {
     label: "Schedule",
-    href: "/resident/schedule",
+    href: "/schedule",
     icon: Calendar,
   },
   {
     label: "Messages",
-    href: "/resident/messages",
+    href: "/inbox",
     icon: MessageSquare,
   },
   {
     label: "Profile",
-    href: "/resident/profile",
+    href: "/profile",
     icon: User,
   },
 ];

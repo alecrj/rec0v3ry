@@ -1,6 +1,6 @@
 "use client";
 
-import { UserButton, OrganizationSwitcher } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import { Bell } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -52,16 +52,6 @@ export function CrmHeader() {
       </div>
 
       <div className="flex items-center gap-4">
-        <OrganizationSwitcher
-          appearance={{
-            elements: {
-              rootBox: "h-9",
-              organizationSwitcherTrigger:
-                "px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50",
-            },
-          }}
-        />
-
         <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
           <Bell className="h-5 w-5 text-slate-600" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
