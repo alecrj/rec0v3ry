@@ -4,10 +4,11 @@
 > Read this FIRST at the start of EVERY session.
 
 ## Current State
-- **Phase**: PHASE-4-BUILD COMPLETE + PHASE-5-VERIFY Ready
-- **Status**: Sprint 20 (Launch Prep) COMPLETE! E2E test suite (5 user flows + PWA + security + performance), audit integrity verifier, compliance checklist script, CI/CD pipeline. 162 source files, 48,628 lines. Zero TS errors, clean `next build`. Phase 5 (verification) next.
-- **Blocking Issues**: None
-- **Last Updated**: 2026-02-17
+- **Phase**: PHASE-5-POLISH (Active)
+- **Status**: Base platform running. Auth working (Clerk), DB connected (Neon), seed data loaded. Now fixing bugs and modernizing UI.
+- **Blocking Issues**: Residents page 404, UI needs modernization, mock data needs replacement
+- **Last Updated**: 2026-02-18
+- **Plan Doc**: See `docs/07_PHASE5_PLAN.md` for full roadmap
 
 ## DECISIONS
 - **Workflow**: Opus direct writes, NO agent teams. One sprint pair per session. Sequential: read docs → backend → tsc → frontend → tsc → integration → next build → update SOURCE_OF_TRUTH.md
