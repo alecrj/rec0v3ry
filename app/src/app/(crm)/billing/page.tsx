@@ -272,9 +272,17 @@ export default function BillingOverviewPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Revenue Trend</h2>
-            <Badge variant="success" size="sm">
-              +15% vs last month
-            </Badge>
+            {revenueData && revenueData.length >= 2 && (() => {
+              const current = revenueData[revenueData.length - 1]?.amount ?? 0;
+              const previous = revenueData[revenueData.length - 2]?.amount ?? 0;
+              if (previous === 0) return null;
+              const pct = Math.round(((current - previous) / previous) * 100);
+              return (
+                <Badge variant={pct >= 0 ? "success" : "error"} size="sm">
+                  {pct >= 0 ? "+" : ""}{pct}% vs last month
+                </Badge>
+              );
+            })()}
           </div>
           {isLoading ? (
             <div className="h-32 flex items-end gap-2">

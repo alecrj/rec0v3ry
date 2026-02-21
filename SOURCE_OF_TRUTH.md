@@ -7,9 +7,9 @@
 ## Current State
 - **Phase**: PRODUCT RESET — Operator-first, money-first rebuild
 - **Execution Plan**: `docs/11_PRODUCT_RESET_PLAN.md` — 92 checkboxes, Phases A-J
-- **Status**: Phases A-G COMPLETE (71/92 boxes). Payment flow, automations, referrals, DocuSign all built. Next: Phase H (React Native mobile app).
+- **Status**: Phases A-G COMPLETE (71 boxes). NEW Phase G2: Web App Perfection (28 boxes) inserted before mobile. All API credentials configured. Next: Phase G2 — make every flow work end-to-end.
 - **Safety Commit**: `4725b95` — full Phase 5-6 build snapshot before overhaul
-- **Blocking Issues**: API credentials needed (Stripe, Plaid, DocuSign) for live testing
+- **Blocking Issues**: None — all credentials (Stripe test, Plaid sandbox, DocuSign dev) configured in .env.local
 - **Last Updated**: 2026-02-21
 - **Design System**: "Obsidian" — Geist font, zinc dark (#09090B), indigo accent (#6366F1). See globals.css for tokens.
 - **THE RULE**: Nothing gets checked off until it works with real data. No mock data. No faking it.
@@ -32,6 +32,7 @@
 | E | Automations (11 pre-built, internal cron, toggle UI) | COMPLETE |
 | F | Referrals & Admissions (shareable intake link, referral tracking) | COMPLETE |
 | G | DocuSign Integration (real e-signatures) | COMPLETE |
+| G2 | Web App Perfection (end-to-end flows, real integrations) | **NEXT** |
 | H | React Native Mobile App (Expo, operator + resident, App Store) | NOT STARTED |
 | I | Messaging Polish (iMessage-style, push notifications) | NOT STARTED |
 | J | Final Polish & Ship (E2E testing, app store submission) | NOT STARTED |

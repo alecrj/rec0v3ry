@@ -65,7 +65,8 @@ export type ResourceType =
   | 'consent'
   | 'disclosure'
   | 'audit_log'
-  | 'user';
+  | 'user'
+  | 'report';
 
 /**
  * Permission definition

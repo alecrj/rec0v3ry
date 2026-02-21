@@ -198,6 +198,64 @@ One app for sober home operators and residents. Operators open their phone and i
 - [x] G7. **Document status tracking** — pending, sent, viewed, signed, voided
 - [x] G8. Clean build
 
+### Phase G2: Web App Perfection (NEW — inserted before mobile)
+**Goal**: Every flow works end-to-end with real data. No dead buttons. No fake numbers. Test with real Stripe/Plaid/DocuSign.
+
+**Lead → Resident (one-click conversion):**
+- [ ] G2-1. **One-click lead conversion** — "Approve" button on lead does EVERYTHING:
+  - Assigns bed (owner picks house/bed in modal)
+  - Creates resident record from lead data
+  - Generates first month's invoice
+  - Sends DocuSign envelope (house rules + financial agreement)
+  - Sends welcome message with app invite link
+  - Moves lead to "Moved In" stage
+- [ ] G2-2. **Resident self-signup** — invite link flow:
+  - System sends SMS/email with signup link
+  - Resident creates Clerk account
+  - Auto-linked to their resident profile (scopeType=resident, scopeId=residentId)
+  - Sees resident experience on login
+
+**Dashboard as command center:**
+- [ ] G2-3. **Record Payment inline modal** — opens from dashboard, not page navigation
+- [ ] G2-4. **Add Resident inline modal** — quick-add from dashboard
+- [ ] G2-5. **Outstanding balance drill-down** — tap outstanding amount → see who owes what → tap resident → record payment
+- [ ] G2-6. **Action items that DO things** — each action item has an inline action button, not just a link
+- [ ] G2-7. **Remove all hardcoded/mock data** — every number comes from real queries
+- [ ] G2-8. **Empty state that guides** — new org sees "Add your first house" → "Add your first resident" → "Create first invoice" progression
+
+**Expense tracking (multi-card, per-house):**
+- [ ] G2-9. **Plaid Link end-to-end** — operator connects bank account, sees transactions
+- [ ] G2-10. **Card-to-house mapping** — each linked account/card can be assigned to a house (or "all houses")
+  - One card per house (e.g., Home Depot card → Hope House)
+  - Multiple cards per house (e.g., owner personal card + house card → both map to Hope House)
+  - Unassigned cards → transactions need manual house assignment
+- [ ] G2-11. **Auto-categorization** — transactions auto-categorized (Maintenance, Supplies, Utilities, Food, etc.)
+- [ ] G2-12. **P&L per house** — Revenue (rent collected) - Expenses (categorized) = Profit, per house, per month
+- [ ] G2-13. **Manual expense entry** — for cash purchases, receipts, etc.
+
+**Stripe payments end-to-end:**
+- [ ] G2-14. **Resident "Pay Now" flow** — resident taps Pay → Stripe Checkout → card/Apple Pay/Google Pay → webhook → payment recorded → ledger updated → dashboard updated
+- [ ] G2-15. **Stripe Connect onboarding** — operator connects Stripe account (for receiving payouts)
+- [ ] G2-16. **Fee configuration tested** — absorb fees vs pass to resident, verify math
+
+**DocuSign end-to-end:**
+- [ ] G2-17. **Send envelope from template** — owner picks template + resident → DocuSign sends
+- [ ] G2-18. **Embedded signing** — resident signs in-app (iframe)
+- [ ] G2-19. **Webhook completion** — signed doc saved, status updated, linked to resident profile
+
+**Automation crons (make them actually work):**
+- [ ] G2-20. **Chore auto-rotation cron** — weekly rotation, residents notified
+- [ ] G2-21. **Random drug test selection cron** — picks residents per settings, notifies owner
+- [ ] G2-22. **Empty bed alert** — when bed vacated, calculate lost revenue, notify waitlist
+- [ ] G2-23. **Auto-invoice generation** — monthly invoice cron tested with real data
+- [ ] G2-24. **Weekly P&L digest** — automated report to owner
+
+**Integration testing:**
+- [ ] G2-25. **Full operator flow** — signup → setup org → add house → add resident → collect rent → track expenses → view P&L
+- [ ] G2-26. **Full applicant→resident flow** — public form → lead → approve → documents → bed → paying resident
+- [ ] G2-27. **Full resident flow** — login → pay rent → view chores → message manager → sign document
+- [ ] G2-28. Clean build + all crons tested
+
 ### Phase H: React Native Mobile App
 **Goal**: One native app, operator runs entire business from phone, residents pay and communicate
 
