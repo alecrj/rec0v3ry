@@ -241,8 +241,8 @@ export default function ComposeMessagePage() {
               <div>
                 <p className="text-sm font-medium text-amber-300">Consent Required</p>
                 <p className="text-sm text-amber-300 mt-1">
-                  One or more recipients do not have active Part 2 consent.
-                  Messages containing protected health information cannot be sent
+                  One or more recipients do not have active consent.
+                  Messages containing sensitive information cannot be sent
                   without proper consent on file.
                 </p>
               </div>

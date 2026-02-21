@@ -17,6 +17,8 @@ import {
   CheckCircle,
   Loader2,
   GripVertical,
+  Building2,
+  ExternalLink,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@clerk/nextjs";
@@ -50,8 +52,17 @@ interface Lead {
   created_at: string | Date;
 }
 
+// Simplified visual stages that group underlying statuses
+const SIMPLIFIED_STAGES = [
+  { id: "new", label: "New", color: "bg-zinc-500", statuses: ["new"] },
+  { id: "screening", label: "Screening", color: "bg-indigo-500", statuses: ["contacted", "qualified", "touring"] },
+  { id: "approved", label: "Approved", color: "bg-green-500", statuses: ["applied", "accepted", "deposit_pending"] },
+  { id: "moved_in", label: "Moved In", color: "bg-emerald-500", statuses: ["converted"] },
+] as const;
+
+// Full underlying statuses for the detailed view
 const PIPELINE_STAGES = [
-  { id: "new", label: "New", color: "bg-zinc-800/400" },
+  { id: "new", label: "New", color: "bg-zinc-500" },
   { id: "contacted", label: "Contacted", color: "bg-indigo-500" },
   { id: "qualified", label: "Qualified", color: "bg-cyan-500" },
   { id: "touring", label: "Touring", color: "bg-purple-500" },
@@ -59,6 +70,8 @@ const PIPELINE_STAGES = [
   { id: "accepted", label: "Accepted", color: "bg-green-500" },
   { id: "deposit_pending", label: "Deposit Pending", color: "bg-orange-500" },
 ] as const;
+
+type ViewMode = "simple" | "detailed";
 
 function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (leadId: string, currentStatus: string) => void; onMarkLost?: (leadId: string) => void }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -169,7 +182,7 @@ function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (
   );
 }
 
-function PipelineColumn({ stage, leads, isLoading, onMoveNext, onMarkLost }: { stage: typeof PIPELINE_STAGES[number]; leads: Lead[]; isLoading?: boolean; onMoveNext?: (leadId: string, currentStatus: string) => void; onMarkLost?: (leadId: string) => void }) {
+function PipelineColumn({ stage, leads, isLoading, onMoveNext, onMarkLost }: { stage: { id: string; label: string; color: string }; leads: Lead[]; isLoading?: boolean; onMoveNext?: (leadId: string, currentStatus: string) => void; onMarkLost?: (leadId: string) => void }) {
   return (
     <div className="flex-1 min-w-[280px] max-w-[320px]">
       <div className="flex items-center justify-between mb-3">
@@ -177,7 +190,7 @@ function PipelineColumn({ stage, leads, isLoading, onMoveNext, onMarkLost }: { s
           <div className={`w-3 h-3 rounded-full ${stage.color}`} />
           <h3 className="font-semibold text-zinc-100 text-sm">{stage.label}</h3>
           <span className="bg-zinc-800 text-zinc-400 text-xs font-medium px-2 py-0.5 rounded-full">
-            {isLoading ? "—" : leads.length}
+            {isLoading ? "--" : leads.length}
           </span>
         </div>
       </div>
@@ -300,6 +313,7 @@ export default function AdmissionsPage() {
   const { toast } = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("simple");
 
   const { userId } = useAuth();
 
@@ -311,7 +325,7 @@ export default function AdmissionsPage() {
 
   const utils = trpc.useUtils();
   const { data: kanbanData, isLoading, error } = trpc.lead.getKanban.useQuery(
-    { orgId: orgId! },
+    { orgId: orgId!, excludeTerminal: false },
     { enabled: !!orgId }
   );
 
@@ -366,6 +380,19 @@ export default function AdmissionsPage() {
     });
   };
 
+  // Helper to collect leads from grouped statuses
+  const getGroupedLeads = (statuses: readonly string[]): Lead[] => {
+    if (!kanbanData) return [];
+    const result: Lead[] = [];
+    for (const status of statuses) {
+      const leads = kanbanData[status];
+      if (leads) {
+        result.push(...(leads as Lead[]));
+      }
+    }
+    return result;
+  };
+
   const totalLeads = statsData?.total || 0;
   const conversionRate = statsData?.conversionRate || 0;
   const readyToAdmit = (kanbanData?.deposit_pending?.length || 0) + (kanbanData?.accepted?.length || 0);
@@ -376,13 +403,20 @@ export default function AdmissionsPage() {
         title="Admissions Pipeline"
         description="Track and manage prospective residents"
         actions={
-          <Button
-            variant="primary"
-            icon={<Plus className="h-4 w-4" />}
-            onClick={() => setShowCreateModal(true)}
-          >
-            Add Lead
-          </Button>
+          <div className="flex items-center gap-3">
+            <Link href="/admissions/referrals">
+              <Button variant="secondary" icon={<Building2 className="h-4 w-4" />}>
+                Referral Sources
+              </Button>
+            </Link>
+            <Button
+              variant="primary"
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => setShowCreateModal(true)}
+            >
+              Add Lead
+            </Button>
+          </div>
         }
       />
 
@@ -393,59 +427,109 @@ export default function AdmissionsPage() {
       <StatCardGrid columns={4}>
         <StatCard
           title="Active Leads"
-          value={isLoading ? "—" : String(totalLeads)}
+          value={isLoading ? "--" : String(totalLeads)}
           icon={<Users className="h-5 w-5" />}
           loading={isLoading}
         />
         <StatCard
           title="Converted (Total)"
-          value={isLoading ? "—" : String(statsData?.stages?.converted || 0)}
+          value={isLoading ? "--" : String(statsData?.stages?.converted || 0)}
           variant="success"
           icon={<CheckCircle className="h-5 w-5" />}
           loading={isLoading}
         />
         <StatCard
           title="Conversion Rate"
-          value={isLoading ? "—" : `${conversionRate}%`}
+          value={isLoading ? "--" : `${conversionRate}%`}
           icon={<TrendingUp className="h-5 w-5" />}
           loading={isLoading}
         />
         <StatCard
           title="Ready to Admit"
-          value={isLoading ? "—" : String(readyToAdmit)}
+          value={isLoading ? "--" : String(readyToAdmit)}
           variant="warning"
           icon={<UserPlus className="h-5 w-5" />}
           loading={isLoading}
         />
       </StatCardGrid>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-          <input
-            type="text"
-            placeholder="Search leads..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
-          />
+      {/* Toolbar: Search + View Toggle + Intake Link */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex-1 relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search leads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+            />
+          </div>
+
+          {/* View mode toggle */}
+          <div className="flex items-center bg-zinc-800/40 rounded-lg border border-zinc-800 p-0.5">
+            <button
+              onClick={() => setViewMode("simple")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                viewMode === "simple"
+                  ? "bg-zinc-700 text-zinc-100"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Simple
+            </button>
+            <button
+              onClick={() => setViewMode("detailed")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                viewMode === "detailed"
+                  ? "bg-zinc-700 text-zinc-100"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Detailed
+            </button>
+          </div>
         </div>
+
+        {/* Public intake form link */}
+        {userData && (
+          <Link
+            href={`/apply/${(userData as any).org_slug || "your-org"}`}
+            target="_blank"
+            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-indigo-400 transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Public Intake Form
+          </Link>
+        )}
       </div>
 
       {/* Kanban Board */}
       <div className="overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-max">
-          {PIPELINE_STAGES.map((stage) => (
-            <PipelineColumn
-              key={stage.id}
-              stage={stage}
-              leads={(kanbanData?.[stage.id] || []) as Lead[]}
-              isLoading={isLoading}
-              onMoveNext={handleMoveNext}
-              onMarkLost={handleMarkLost}
-            />
-          ))}
+          {viewMode === "simple"
+            ? SIMPLIFIED_STAGES.map((stage) => (
+                <PipelineColumn
+                  key={stage.id}
+                  stage={stage}
+                  leads={getGroupedLeads(stage.statuses)}
+                  isLoading={isLoading}
+                  onMoveNext={handleMoveNext}
+                  onMarkLost={handleMarkLost}
+                />
+              ))
+            : PIPELINE_STAGES.map((stage) => (
+                <PipelineColumn
+                  key={stage.id}
+                  stage={stage}
+                  leads={(kanbanData?.[stage.id] || []) as Lead[]}
+                  isLoading={isLoading}
+                  onMoveNext={handleMoveNext}
+                  onMarkLost={handleMarkLost}
+                />
+              ))
+          }
         </div>
       </div>
 

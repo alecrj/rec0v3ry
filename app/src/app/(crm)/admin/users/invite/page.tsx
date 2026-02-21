@@ -147,10 +147,10 @@ export default function InviteUserPage() {
                 className={inputClass}
               >
                 <option value="">Select a role</option>
-                <option value="org_owner">Organization Owner</option>
-                <option value="org_admin">Organization Admin</option>
-                <option value="property_manager">Property Manager</option>
-                <option value="house_manager">House Manager</option>
+                <option value="org_owner">Owner</option>
+                <option value="org_admin">Owner</option>
+                <option value="property_manager">Manager</option>
+                <option value="house_manager">Manager</option>
                 <option value="staff">Staff</option>
               </select>
               <p className="text-xs text-zinc-500 mt-1.5">

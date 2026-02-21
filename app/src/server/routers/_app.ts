@@ -45,6 +45,13 @@ import { maintenanceRouter } from './maintenance';
 import { familyPortalRouter } from './familyPortal';
 // Sprint 19: Reporting
 import { reportingRouter } from './reporting';
+// Expense Tracking
+import { expenseRouter } from './expense';
+import { plaidRouter } from './plaid';
+// Referrals
+import { referralSourceRouter } from './referralSource';
+// Automations
+import { automationRouter } from './automation';
 
 /**
  * Main application router
@@ -96,6 +103,13 @@ export const appRouter = router({
   familyPortal: familyPortalRouter,
   // Sprint 19: Reporting
   reporting: reportingRouter,
+  // Expense Tracking
+  expense: expenseRouter,
+  plaid: plaidRouter,
+  // Referrals
+  referralSource: referralSourceRouter,
+  // Automations
+  automation: automationRouter,
 });
 
 /**

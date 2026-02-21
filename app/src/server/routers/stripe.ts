@@ -344,6 +344,142 @@ export const stripeRouter = router({
     }),
 
   /**
+   * Create Stripe Checkout Session (D1)
+   * Resident taps "Pay" → redirected to Stripe hosted page → card, ACH, Apple Pay, Google Pay
+   */
+  createCheckoutSession: protectedProcedure
+    .input(
+      z.object({
+        invoiceId: z.string().uuid(),
+        residentId: z.string().uuid(),
+        amountCents: z.number().int().positive(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      const [org] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
+
+      if (!org) throw new Error('Organization not found');
+
+      const settings = (org.settings as any) || {};
+      const stripeSettings = settings.stripe || {};
+
+      if (!stripeSettings.accountId) {
+        throw new Error('Stripe payments not configured for this organization');
+      }
+
+      // Fee handling: absorb vs pass-through
+      const feeMode = stripeSettings.feeMode || 'absorb'; // 'absorb' | 'pass_through'
+      let checkoutAmount = input.amountCents;
+      if (feeMode === 'pass_through') {
+        // Add ~3% convenience fee for card, ~1% for ACH
+        const convenienceFee = Math.round(input.amountCents * 0.03 + 30);
+        checkoutAmount = input.amountCents + convenienceFee;
+      }
+
+      const platformFee = Math.round(input.amountCents * ((stripeSettings.platformFeePercent || 2.5) / 100) + (stripeSettings.platformFeeFixedCents || 30));
+
+      const session = await stripe.checkout.sessions.create(
+        {
+          mode: 'payment',
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: 'Rent Payment',
+                  description: `Invoice payment`,
+                },
+                unit_amount: checkoutAmount,
+              },
+              quantity: 1,
+            },
+          ],
+          payment_method_types: ['card', 'us_bank_account'],
+          payment_intent_data: {
+            application_fee_amount: platformFee,
+            metadata: {
+              org_id: orgId,
+              resident_id: input.residentId,
+              invoice_id: input.invoiceId,
+              source: 'checkout',
+            },
+          },
+          success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/pay?success=true`,
+          cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/pay?canceled=true`,
+          metadata: {
+            org_id: orgId,
+            resident_id: input.residentId,
+            invoice_id: input.invoiceId,
+          },
+        },
+        {
+          stripeAccount: stripeSettings.accountId,
+        }
+      );
+
+      return { checkoutUrl: session.url, sessionId: session.id };
+    }),
+
+  /**
+   * Get fee configuration for org (D3)
+   */
+  getFeeConfig: protectedProcedure.query(async ({ ctx }) => {
+    const orgId = (ctx as any).orgId as string;
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1);
+
+    const settings = (org?.settings as any) || {};
+    const stripeSettings = settings.stripe || {};
+
+    return {
+      feeMode: stripeSettings.feeMode || 'absorb',
+      connected: !!stripeSettings.accountId,
+      chargesEnabled: stripeSettings.chargesEnabled || false,
+    };
+  }),
+
+  /**
+   * Update fee configuration (D3)
+   */
+  updateFeeConfig: protectedProcedure
+    .input(z.object({ feeMode: z.enum(['absorb', 'pass_through']) }))
+    .mutation(async ({ ctx, input }) => {
+      const orgId = (ctx as any).orgId as string;
+      const [org] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
+
+      if (!org) throw new Error('Organization not found');
+
+      const settings = (org.settings as any) || {};
+      const updatedSettings = {
+        ...settings,
+        stripe: {
+          ...(settings.stripe || {}),
+          feeMode: input.feeMode,
+        },
+      };
+
+      await db
+        .update(organizations)
+        .set({ settings: updatedSettings, updated_at: new Date() })
+        .where(eq(organizations.id, orgId));
+
+      return { feeMode: input.feeMode };
+    }),
+
+  /**
    * Create PaymentIntent for invoice payment (resident-facing)
    */
   createPaymentIntent: protectedProcedure

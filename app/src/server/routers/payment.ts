@@ -8,7 +8,8 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
 import { db } from '../db/client';
-import { payments, invoices, ledgerAccounts, ledgerEntries } from '../db/schema/payments';
+import { payments, invoices, invoiceLineItems, ledgerAccounts, ledgerEntries } from '../db/schema/payments';
+import { organizations } from '../db/schema/orgs';
 import { eq, and, isNull, desc, gte, lte, sql } from 'drizzle-orm';
 import { NotFoundError, InvalidInputError } from '@/lib/errors';
 
@@ -33,8 +34,9 @@ const recordManualPaymentSchema = z.object({
   residentId: z.string().uuid(),
   invoiceId: z.string().uuid().optional(),
   amount: z.string(), // Decimal string
-  paymentMethodType: z.enum(['cash', 'check', 'wire', 'other']),
+  paymentMethodType: z.enum(['cash', 'check', 'wire', 'cashapp', 'venmo', 'zelle', 'money_order', 'other']),
   paymentDate: z.string().datetime(),
+  referenceNumber: z.string().optional(), // External ref (Cash App ID, Venmo note, etc.)
   notes: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 });
@@ -231,7 +233,7 @@ export const paymentRouter = router({
             status: 'succeeded',
             payment_date: new Date(input.paymentDate),
             notes: input.notes || null,
-            metadata: input.metadata || null,
+            metadata: { ...(input.metadata || {}), referenceNumber: input.referenceNumber || null },
             created_by: userId,
             updated_by: userId,
           })
@@ -526,4 +528,178 @@ export const paymentRouter = router({
         entries,
       };
     }),
+
+  /**
+   * Get payment & billing settings (D7, D9)
+   * Reminder schedule + late fee config stored in org settings
+   */
+  getPaymentSettings: protectedProcedure.query(async ({ ctx }) => {
+    const orgId = (ctx as any).orgId as string;
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1);
+
+    const settings = (org?.settings as any) || {};
+    const paymentSettings = settings.payment || {};
+
+    return {
+      reminders: {
+        enabled: paymentSettings.remindersEnabled ?? false,
+        daysBefore: paymentSettings.reminderDaysBefore ?? 3,
+        dayOf: paymentSettings.reminderDayOf ?? true,
+        daysAfter: paymentSettings.reminderDaysAfter ?? [1, 7],
+      },
+      lateFees: {
+        enabled: paymentSettings.lateFeesEnabled ?? false,
+        type: paymentSettings.lateFeeType ?? 'flat', // 'flat' | 'percentage'
+        amount: paymentSettings.lateFeeAmount ?? '25.00',
+        percentage: paymentSettings.lateFeePercentage ?? '5',
+        gracePeriodDays: paymentSettings.gracePeriodDays ?? 5,
+      },
+    };
+  }),
+
+  /**
+   * Update payment & billing settings (D7, D9)
+   */
+  updatePaymentSettings: protectedProcedure
+    .input(z.object({
+      reminders: z.object({
+        enabled: z.boolean(),
+        daysBefore: z.number().min(0).max(30),
+        dayOf: z.boolean(),
+        daysAfter: z.array(z.number().min(1).max(90)),
+      }).optional(),
+      lateFees: z.object({
+        enabled: z.boolean(),
+        type: z.enum(['flat', 'percentage']),
+        amount: z.string().optional(),
+        percentage: z.string().optional(),
+        gracePeriodDays: z.number().min(0).max(30),
+      }).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const orgId = (ctx as any).orgId as string;
+      const [org] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
+
+      if (!org) throw new Error('Organization not found');
+
+      const settings = (org.settings as any) || {};
+      const current = settings.payment || {};
+
+      const updated: Record<string, unknown> = { ...current };
+
+      if (input.reminders) {
+        updated.remindersEnabled = input.reminders.enabled;
+        updated.reminderDaysBefore = input.reminders.daysBefore;
+        updated.reminderDayOf = input.reminders.dayOf;
+        updated.reminderDaysAfter = input.reminders.daysAfter;
+      }
+
+      if (input.lateFees) {
+        updated.lateFeesEnabled = input.lateFees.enabled;
+        updated.lateFeeType = input.lateFees.type;
+        updated.lateFeeAmount = input.lateFees.amount;
+        updated.lateFeePercentage = input.lateFees.percentage;
+        updated.gracePeriodDays = input.lateFees.gracePeriodDays;
+      }
+
+      await db
+        .update(organizations)
+        .set({
+          settings: { ...settings, payment: updated },
+          updated_at: new Date(),
+        })
+        .where(eq(organizations.id, orgId));
+
+      return { success: true };
+    }),
+
+  /**
+   * Apply late fees to overdue invoices (D10)
+   * Called by n8n daily cron or manually by operator
+   */
+  applyLateFees: protectedProcedure.mutation(async ({ ctx }) => {
+    const orgId = (ctx as any).orgId as string;
+    const userId = ctx.user!.id;
+
+    // Get settings
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1);
+
+    const settings = ((org?.settings as any) || {}).payment || {};
+    if (!settings.lateFeesEnabled) return { applied: 0 };
+
+    const graceDays = settings.gracePeriodDays || 5;
+    const now = new Date();
+    const graceCutoff = new Date(now);
+    graceCutoff.setDate(graceCutoff.getDate() - graceDays);
+
+    // Find overdue invoices past grace period
+    const overdueInvoices = await db.query.invoices.findMany({
+      where: and(
+        eq(invoices.org_id, orgId),
+        isNull(invoices.deleted_at),
+        gte(sql`${invoices.amount_due}::numeric`, sql`0.01`),
+        lte(invoices.due_date, graceCutoff.toISOString().split('T')[0]),
+      ),
+    });
+
+    let applied = 0;
+    for (const inv of overdueInvoices) {
+      // Check if late fee already applied (metadata flag)
+      const meta = (inv.metadata as any) || {};
+      const lastLateFee = meta.lastLateFeeDate;
+      const thisMonth = now.toISOString().substring(0, 7);
+      if (lastLateFee === thisMonth) continue; // Already applied this month
+
+      // Calculate fee
+      let feeAmount: number;
+      if (settings.lateFeeType === 'percentage') {
+        feeAmount = parseFloat(inv.total) * (parseFloat(settings.lateFeePercentage || '5') / 100);
+      } else {
+        feeAmount = parseFloat(settings.lateFeeAmount || '25');
+      }
+      feeAmount = Math.round(feeAmount * 100) / 100;
+
+      // Add line item
+      await db.insert(invoiceLineItems).values({
+        invoice_id: inv.id,
+        description: 'Late fee',
+        payment_type: 'late_fee',
+        quantity: 1,
+        unit_price: feeAmount.toFixed(2),
+        amount: feeAmount.toFixed(2),
+      });
+
+      // Update invoice totals
+      const newTotal = parseFloat(inv.total) + feeAmount;
+      const newDue = parseFloat(inv.amount_due || '0') + feeAmount;
+
+      await db
+        .update(invoices)
+        .set({
+          total: newTotal.toFixed(2),
+          subtotal: (parseFloat(inv.subtotal) + feeAmount).toFixed(2),
+          amount_due: newDue.toFixed(2),
+          status: 'overdue',
+          metadata: { ...meta, lastLateFeeDate: thisMonth },
+          updated_by: userId,
+        })
+        .where(eq(invoices.id, inv.id));
+
+      applied++;
+    }
+
+    return { applied };
+  }),
 });

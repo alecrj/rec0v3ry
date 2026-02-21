@@ -48,7 +48,7 @@ const sensitivityConfig: Record<string, { variant: "info" | "warning" | "error" 
   public: { variant: "default", label: "Public" },
   internal: { variant: "info", label: "Internal" },
   confidential: { variant: "warning", label: "Confidential" },
-  part2_protected: { variant: "error", label: "Part 2" },
+  part2_protected: { variant: "error", label: "Protected" },
 };
 
 const typeLabels: Record<string, string> = {
@@ -207,7 +207,7 @@ function CreateDocumentModal({
                 <option value="public">Public</option>
                 <option value="internal">Internal</option>
                 <option value="confidential">Confidential</option>
-                <option value="part2_protected">Part 2 Protected</option>
+                <option value="part2_protected">Protected</option>
               </select>
             </div>
           </div>

@@ -134,7 +134,9 @@ export default function BillingOverviewPage() {
   const [payForm, setPayForm] = useState({
     residentId: "",
     amount: "",
-    paymentMethodType: "cash" as "cash" | "check" | "wire" | "other",
+    paymentMethodType: "cash" as "cash" | "check" | "wire" | "cashapp" | "venmo" | "zelle" | "money_order" | "other",
+    referenceNumber: "",
+    paymentDate: new Date().toISOString().split("T")[0]!,
     notes: "",
   });
 
@@ -146,7 +148,7 @@ export default function BillingOverviewPage() {
       utils.payment.list.invalidate();
       utils.reporting.getFinancialSummary.invalidate();
       utils.invoice.list.invalidate();
-      setPayForm({ residentId: "", amount: "", paymentMethodType: "cash", notes: "" });
+      setPayForm({ residentId: "", amount: "", paymentMethodType: "cash", referenceNumber: "", paymentDate: new Date().toISOString().split("T")[0]!, notes: "" });
       setShowPaymentModal(false);
     },
     onError: (err) => toast("error", "Failed to record payment", err.message),
@@ -434,7 +436,8 @@ export default function BillingOverviewPage() {
                   residentId: payForm.residentId,
                   amount: payForm.amount,
                   paymentMethodType: payForm.paymentMethodType,
-                  paymentDate: new Date().toISOString(),
+                  referenceNumber: payForm.referenceNumber || undefined,
+                  paymentDate: new Date(payForm.paymentDate + "T12:00:00").toISOString(),
                   notes: payForm.notes || undefined,
                 });
               }}
@@ -470,18 +473,43 @@ export default function BillingOverviewPage() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Payment Method <span className="text-red-400">*</span></label>
+                  <select
+                    value={payForm.paymentMethodType}
+                    onChange={(e) => setPayForm({ ...payForm, paymentMethodType: e.target.value as typeof payForm.paymentMethodType })}
+                    className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="cashapp">Cash App</option>
+                    <option value="venmo">Venmo</option>
+                    <option value="zelle">Zelle</option>
+                    <option value="check">Check</option>
+                    <option value="money_order">Money Order</option>
+                    <option value="wire">Wire Transfer</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date</label>
+                  <input
+                    type="date"
+                    value={payForm.paymentDate}
+                    onChange={(e) => setPayForm({ ...payForm, paymentDate: e.target.value })}
+                    className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Payment Method <span className="text-red-400">*</span></label>
-                <select
-                  value={payForm.paymentMethodType}
-                  onChange={(e) => setPayForm({ ...payForm, paymentMethodType: e.target.value as "cash" | "check" | "wire" | "other" })}
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Reference # / Transaction ID</label>
+                <input
+                  type="text"
+                  value={payForm.referenceNumber}
+                  onChange={(e) => setPayForm({ ...payForm, referenceNumber: e.target.value })}
                   className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                >
-                  <option value="cash">Cash</option>
-                  <option value="check">Check</option>
-                  <option value="wire">Wire Transfer</option>
-                  <option value="other">Other</option>
-                </select>
+                  placeholder="e.g. Cash App $cashtag, Venmo ID"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>

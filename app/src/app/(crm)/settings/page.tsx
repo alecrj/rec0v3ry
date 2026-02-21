@@ -5,6 +5,8 @@ import {
   Users,
   UserCheck,
   Crown,
+  CreditCard,
+  Zap,
   ShieldCheck,
   Shield,
   FileSearch,
@@ -15,6 +17,8 @@ import {
   PenTool,
   Archive,
   ChevronRight,
+  Link2,
+  Building2,
 } from "lucide-react";
 import { PageContainer, PageHeader } from "@/components/ui";
 
@@ -30,22 +34,36 @@ const settingsSections = [
     ],
   },
   {
-    title: "Compliance",
+    title: "Payments & Billing",
     items: [
-      { label: "Compliance Dashboard", description: "Overview of consent and audit status", href: "/compliance/dashboard", icon: ShieldCheck, color: "text-green-400 bg-green-500/10" },
-      { label: "Consents", description: "42 CFR Part 2 consent management", href: "/compliance/consents", icon: Shield, color: "text-green-400 bg-green-500/10" },
-      { label: "Disclosures", description: "Accounting of disclosures", href: "/compliance/disclosures", icon: FileSearch, color: "text-green-400 bg-green-500/10" },
-      { label: "Audit Log", description: "Full activity audit trail", href: "/compliance/audit-log", icon: BookOpen, color: "text-green-400 bg-green-500/10" },
-      { label: "Break-Glass Access", description: "Emergency access log", href: "/compliance/break-glass", icon: ShieldAlert, color: "text-red-400 bg-red-500/10" },
+      { label: "Payment Settings", description: "Stripe, fees, reminders, late fees", href: "/settings/payments", icon: CreditCard, color: "text-indigo-400 bg-indigo-500/10" },
+      { label: "Automations", description: "Automatic reminders and alerts", href: "/settings/automations", icon: Zap, color: "text-amber-400 bg-amber-500/10" },
     ],
   },
   {
-    title: "Documents",
+    title: "Compliance",
+    items: [
+      { label: "Compliance Dashboard", description: "Overview of consent and audit status", href: "/settings/compliance/dashboard", icon: ShieldCheck, color: "text-green-400 bg-green-500/10" },
+      { label: "Consents", description: "Consent management", href: "/settings/compliance/consents", icon: Shield, color: "text-green-400 bg-green-500/10" },
+      { label: "Disclosures", description: "Accounting of disclosures", href: "/settings/compliance/disclosures", icon: FileSearch, color: "text-green-400 bg-green-500/10" },
+      { label: "Audit Log", description: "Full activity audit trail", href: "/settings/compliance/audit-log", icon: BookOpen, color: "text-green-400 bg-green-500/10" },
+      { label: "Break-Glass Access", description: "Emergency access log", href: "/settings/compliance/break-glass", icon: ShieldAlert, color: "text-red-400 bg-red-500/10" },
+    ],
+  },
+  {
+    title: "Documents & E-Sign",
     items: [
       { label: "Document Library", description: "All uploaded documents", href: "/documents/library", icon: FolderOpen, color: "text-zinc-400 bg-zinc-500/10" },
       { label: "Templates", description: "Document templates", href: "/documents/templates", icon: FileStack, color: "text-zinc-400 bg-zinc-500/10" },
       { label: "Signatures", description: "E-signature tracking", href: "/documents/signatures", icon: PenTool, color: "text-zinc-400 bg-zinc-500/10" },
       { label: "Retention Policies", description: "Document retention rules", href: "/documents/retention", icon: Archive, color: "text-zinc-400 bg-zinc-500/10" },
+      { label: "DocuSign Integration", description: "E-signature connection and setup", href: "/settings/docusign", icon: Link2, color: "text-indigo-400 bg-indigo-500/10" },
+    ],
+  },
+  {
+    title: "Connections",
+    items: [
+      { label: "Bank Connections", description: "Plaid bank account linking", href: "/settings/connections", icon: Building2, color: "text-blue-400 bg-blue-500/10" },
     ],
   },
 ];

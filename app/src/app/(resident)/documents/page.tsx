@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   FileText,
   PenTool,
@@ -9,16 +10,80 @@ import {
   Eye,
   Loader2,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
+// ── Embedded Signing Modal ─────────────────────────────────
+function EmbeddedSigningModal({
+  isOpen,
+  onClose,
+  signingUrl,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  signingUrl: string | null;
+}) {
+  if (!isOpen || !signingUrl) return null;
+
+  // Check if URL is a real DocuSign URL (not placeholder) for iframe embedding
+  const isRealDocuSignUrl = signingUrl.startsWith("https://");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-4xl mx-4 border border-zinc-800 h-[85vh] flex flex-col">
+        <div className="p-4 border-b border-zinc-800 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <PenTool className="h-4 w-4 text-indigo-400" />
+            <h2 className="text-lg font-semibold text-zinc-100">Sign Document</h2>
+          </div>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {isRealDocuSignUrl ? (
+          <div className="flex-1">
+            <iframe
+              src={signingUrl}
+              className="w-full h-full rounded-b-2xl"
+              title="DocuSign Signing"
+              allow="camera; microphone"
+            />
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <PenTool className="h-12 w-12 text-indigo-400 mb-4" />
+            <h3 className="text-lg font-semibold text-zinc-100 mb-2">DocuSign Signing</h3>
+            <p className="text-sm text-zinc-400 mb-6 max-w-md">
+              The signing experience will open here when DocuSign is fully configured.
+              For now, click below to open the signing page in a new tab.
+            </p>
+            <a
+              href={signingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 text-sm"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open Signing Page
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ResidentDocumentsPage() {
   const { toast } = useToast();
   const { data: userData } = trpc.user.getCurrentUser.useQuery();
   const residentId = userData?.scope_type === "resident" ? userData.scope_id : undefined;
+
+  const [signingUrl, setSigningUrl] = useState<string | null>(null);
 
   const { data: docsData, isLoading } = trpc.document.list.useQuery(
     { residentId: residentId! },
@@ -28,7 +93,7 @@ export default function ResidentDocumentsPage() {
   const getSigningUrl = trpc.esign.getSigningUrl.useMutation({
     onSuccess: (data) => {
       if (data.signingUrl) {
-        window.open(data.signingUrl, "_blank");
+        setSigningUrl(data.signingUrl);
       } else {
         toast("info", "Signing URL not available", "The document may not be ready for signing yet.");
       }
@@ -49,14 +114,14 @@ export default function ResidentDocumentsPage() {
 
   const documents = docsData?.items ?? [];
   const pendingSignatures = documents.filter(
-    (d) => d.docusign_status === "sent" || d.status === "pending_signature"
+    (d) => d.docusign_status === "sent" || d.docusign_status === "delivered" || d.status === "pending_signature"
   );
   const signedDocuments = documents.filter(
     (d) => d.docusign_status === "completed" || d.status === "signed"
   );
   const otherDocuments = documents.filter(
     (d) =>
-      !["sent", "completed"].includes(d.docusign_status ?? "") &&
+      !["sent", "delivered", "completed"].includes(d.docusign_status ?? "") &&
       !["pending_signature", "signed"].includes(d.status)
   );
 
@@ -146,11 +211,16 @@ export default function ResidentDocumentsPage() {
                   </div>
                   <div>
                     <p className="font-medium text-zinc-100">{doc.title ?? doc.description}</p>
-                    {doc.created_at && (
-                      <p className="text-sm text-zinc-400">
-                        Requested {new Date(doc.created_at).toLocaleDateString()}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {doc.created_at && (
+                        <p className="text-sm text-zinc-400">
+                          Requested {new Date(doc.created_at).toLocaleDateString()}
+                        </p>
+                      )}
+                      {doc.docusign_status === "delivered" && (
+                        <span className="text-xs text-indigo-400 font-medium">Viewed</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <button
@@ -161,7 +231,7 @@ export default function ResidentDocumentsPage() {
                   {getSigningUrl.isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <PenTool className="h-3.5 w-3.5" />
                   )}
                   Sign Now
                 </button>
@@ -242,6 +312,13 @@ export default function ResidentDocumentsPage() {
           </div>
         </div>
       </div>
+
+      {/* Embedded Signing Modal */}
+      <EmbeddedSigningModal
+        isOpen={!!signingUrl}
+        onClose={() => setSigningUrl(null)}
+        signingUrl={signingUrl}
+      />
     </div>
   );
 }

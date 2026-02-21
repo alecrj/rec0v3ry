@@ -52,11 +52,15 @@ const routeParentMap: Record<string, string> = {
   "/operations": "/operations",
   "/messages": "/messages",
   "/reports": "/reports",
-  "/compliance": "/settings",
+  "/settings/compliance": "/settings",
   "/admin/users": "/settings",
   "/admin/family-portal": "/settings",
   "/admin/subscription": "/settings",
   "/documents": "/settings",
+  "/settings/payments": "/settings",
+  "/settings/automations": "/settings",
+  "/settings/docusign": "/settings",
+  "/settings/connections": "/settings",
   "/settings": "/settings",
 };
 

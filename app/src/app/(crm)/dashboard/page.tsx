@@ -4,17 +4,20 @@ import Link from "next/link";
 import {
   AlertCircle,
   ArrowRight,
-  CheckCircle2,
   Clock,
+  DollarSign,
+  Bed,
+  Users,
+  Wrench,
+  ClipboardList,
+  UserPlus,
+  Megaphone,
+  Plus,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import {
   PageContainer,
-  PageHeader,
-  StatCard,
-  StatCardGrid,
   Badge,
-  PriorityBadge,
   Button,
   SkeletonListItem,
 } from "@/components/ui";
@@ -44,163 +47,206 @@ function formatTimeAgo(isoString: string) {
   return `${diffDays}d ago`;
 }
 
-function ActionItem({
-  title,
-  description,
-  priority,
-  count,
-  href,
-}: {
-  title: string;
-  description: string;
-  priority: "high" | "medium" | "low";
-  count?: number;
+function MoneyNumber({ label, value, variant = "default", href }: {
+  label: string;
+  value: string;
+  variant?: "default" | "success" | "danger" | "warning";
   href?: string;
 }) {
+  const colorMap = {
+    default: "text-zinc-100",
+    success: "text-green-400",
+    danger: "text-red-400",
+    warning: "text-amber-400",
+  };
+
   const content = (
-    <div className="flex items-start gap-3 px-3 py-2.5 rounded-md hover:bg-zinc-800/50 transition-colors group cursor-pointer">
-      <PriorityBadge priority={priority} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-zinc-200">{title}</p>
-          {count !== undefined && count > 0 && (
-            <Badge variant="default" size="sm">
-              {count}
-            </Badge>
-          )}
-        </div>
-        <p className="text-sm text-zinc-500 mt-0.5">{description}</p>
-      </div>
-      <ArrowRight className="h-4 w-4 text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
+    <div className={href ? "cursor-pointer group" : ""}>
+      <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
+      <p className={`text-2xl font-semibold font-mono tracking-tight ${colorMap[variant]} ${href ? "group-hover:text-indigo-400 transition-colors" : ""}`}>
+        {value}
+      </p>
     </div>
   );
 
-  if (href) {
-    return <Link href={href}>{content}</Link>;
-  }
+  if (href) return <Link href={href}>{content}</Link>;
   return content;
 }
 
-function ActivityItem({
-  actor,
-  description,
-  timestamp,
-}: {
-  actor: string;
-  description: string;
-  timestamp: string;
+function ActionRow({ icon: Icon, title, detail, href, priority = "medium" }: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  detail: string;
+  href: string;
+  priority?: "high" | "medium" | "low";
 }) {
+  const dotColor = priority === "high" ? "bg-red-500" : priority === "medium" ? "bg-amber-500" : "bg-zinc-600";
+
   return (
-    <div className="flex items-start gap-3 py-3">
-      <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-        <span className="text-xs font-semibold text-zinc-400">
-          {actor.charAt(0).toUpperCase()}
-        </span>
-      </div>
+    <Link href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-800/50 transition-colors group">
+      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
+      <Icon className="h-4 w-4 text-zinc-500 flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-400">
-          <span className="font-medium text-zinc-200">{actor}</span>{" "}
-          {description}
-        </p>
-        <p className="text-xs text-zinc-600 mt-0.5">{formatTimeAgo(timestamp)}</p>
+        <p className="text-sm font-medium text-zinc-200 truncate">{title}</p>
+        <p className="text-xs text-zinc-500 truncate">{detail}</p>
       </div>
-    </div>
+      <ArrowRight className="h-4 w-4 text-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+    </Link>
   );
 }
 
-function OnboardingChecklist({
-  hasProperties,
-  hasHouses,
-  hasResidents,
-  hasRates,
-}: {
-  hasProperties: boolean;
-  hasHouses: boolean;
-  hasResidents: boolean;
-  hasRates: boolean;
+function QuickAction({ icon: Icon, label, href }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  href: string;
 }) {
-  const steps = [
-    { done: true, label: "Create your account", href: "#" },
-    { done: hasProperties, label: "Add your first property", href: "/admin/properties" },
-    { done: hasHouses, label: "Add a house with rooms and beds", href: "/admin/properties" },
-    { done: hasRates, label: "Set up billing rates", href: "/billing/rates" },
-    { done: hasResidents, label: "Add your first resident", href: "/residents" },
-  ];
-  const completedCount = steps.filter((s) => s.done).length;
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-800 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all text-sm font-medium text-zinc-300 hover:text-indigo-400"
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
+  );
+}
+
+function HouseCard({ house }: {
+  house: {
+    id: string;
+    name: string;
+    beds: { occupied: number; total: number };
+    revenueMTD: number;
+    outstanding: number;
+    lostRevenue: number;
+  };
+}) {
+  const occupancy = house.beds.total > 0 ? Math.round((house.beds.occupied / house.beds.total) * 100) : 0;
 
   return (
-    <div className="border border-zinc-800 rounded-lg p-6">
-      <h2 className="text-base font-semibold text-zinc-100">Get started with RecoveryOS</h2>
-      <p className="text-sm text-zinc-500 mt-1">
-        Complete these steps to start managing your sober living homes.
-      </p>
-      <div className="mt-3 flex items-center gap-3">
-        <div className="h-1.5 bg-zinc-800 rounded-full flex-1 overflow-hidden">
-          <div
-            className="h-full bg-indigo-500 rounded-full transition-all"
-            style={{ width: `${(completedCount / steps.length) * 100}%` }}
-          />
+    <Link
+      href={`/occupancy/beds`}
+      className="flex-shrink-0 w-[280px] p-4 rounded-xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800/30 transition-all snap-start"
+    >
+      <p className="text-sm font-semibold text-zinc-100 mb-3">{house.name}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-600">Beds</p>
+          <p className="text-lg font-semibold font-mono text-zinc-200">
+            {house.beds.occupied}/{house.beds.total}
+            <span className="text-xs text-zinc-500 font-normal ml-1">{occupancy}%</span>
+          </p>
         </div>
-        <span className="text-xs font-medium text-zinc-500 font-mono">
-          {completedCount}/{steps.length}
-        </span>
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-600">Collected</p>
+          <p className="text-lg font-semibold font-mono text-green-400">{formatCurrency(house.revenueMTD)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-600">Outstanding</p>
+          <p className={`text-sm font-semibold font-mono ${house.outstanding > 0 ? "text-red-400" : "text-zinc-500"}`}>
+            {house.outstanding > 0 ? formatCurrency(house.outstanding) : "$0"}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-600">Lost Rev</p>
+          <p className={`text-sm font-semibold font-mono ${house.lostRevenue > 0 ? "text-amber-400" : "text-zinc-500"}`}>
+            {house.lostRevenue > 0 ? formatCurrency(house.lostRevenue) : "$0"}
+          </p>
+        </div>
       </div>
-      <div className="mt-4 space-y-0.5">
-        {steps.map((step, i) => (
-          <Link
-            key={i}
-            href={step.href}
-            className={`flex items-center gap-3 p-2.5 rounded-md transition-colors ${
-              step.done
-                ? "text-zinc-600"
-                : "text-zinc-200 hover:bg-zinc-800/50"
-            }`}
-          >
-            {step.done ? (
-              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-            ) : (
-              <div className="h-5 w-5 rounded-full border-2 border-zinc-700 flex-shrink-0" />
-            )}
-            <span className={`text-sm font-medium ${step.done ? "line-through" : ""}`}>
-              {step.label}
-            </span>
-            {!step.done && (
-              <ArrowRight className="h-4 w-4 text-zinc-700 ml-auto" />
-            )}
-          </Link>
-        ))}
-      </div>
-    </div>
+    </Link>
   );
 }
 
 export default function DashboardPage() {
   const { data, isLoading, error } = trpc.reporting.getDashboardData.useQuery();
-  const { data: propertiesData } = trpc.property.list.useQuery();
-  const { data: residentStats } = trpc.resident.getStats.useQuery();
-  const { data: ratesData } = trpc.rate.list.useQuery({ activeOnly: true });
 
-  const hasProperties = (propertiesData?.length ?? 0) > 0;
-  const hasHouses = (propertiesData ?? []).some((p) => p.house_count > 0);
-  const hasResidents = (residentStats?.total ?? 0) > 0;
-  const hasRates = (ratesData?.length ?? 0) > 0;
-  const isNewOrg = !hasProperties && !hasResidents;
+  // Get MTD P&L for Profit calculation
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+  const today = now.toISOString().split("T")[0];
+  const { data: pnl, isLoading: pnlLoading } = trpc.expense.getPandL.useQuery({
+    startDate: startOfMonth,
+    endDate: today,
+  });
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
-  const hasActionItems =
-    (data?.actionItems.highPriorityIncidents || 0) > 0 ||
-    (data?.actionItems.expiringConsents || 0) > 0 ||
-    (data?.actionItems.pendingPasses || 0) > 0 ||
-    (data?.outstanding.invoiceCount || 0) > 0;
+  // Build action items sorted by money impact
+  const actions: { icon: React.ComponentType<{ className?: string }>; title: string; detail: string; href: string; priority: "high" | "medium" | "low"; moneyImpact: number }[] = [];
+
+  if (data) {
+    if (data.actionItems.lateRent.count > 0) {
+      actions.push({
+        icon: DollarSign,
+        title: `${data.actionItems.lateRent.count} resident${data.actionItems.lateRent.count > 1 ? "s" : ""} late on rent`,
+        detail: `${formatCurrency(data.actionItems.lateRent.totalAmount)} outstanding`,
+        href: "/billing/invoices",
+        priority: "high",
+        moneyImpact: data.actionItems.lateRent.totalAmount,
+      });
+    }
+    if (data.actionItems.emptyBeds.count > 0 && data.actionItems.emptyBeds.lostRevenue > 0) {
+      actions.push({
+        icon: Bed,
+        title: `${data.actionItems.emptyBeds.count} bed${data.actionItems.emptyBeds.count > 1 ? "s" : ""} empty`,
+        detail: `${formatCurrency(data.actionItems.emptyBeds.lostRevenue)}/mo lost revenue`,
+        href: "/occupancy/beds",
+        priority: "high",
+        moneyImpact: data.actionItems.emptyBeds.lostRevenue,
+      });
+    }
+    if (data.actionItems.pendingMaintenance > 0) {
+      actions.push({
+        icon: Wrench,
+        title: `${data.actionItems.pendingMaintenance} maintenance request${data.actionItems.pendingMaintenance > 1 ? "s" : ""} pending`,
+        detail: "Review and assign",
+        href: "/operations/maintenance",
+        priority: "medium",
+        moneyImpact: 0,
+      });
+    }
+    if (data.actionItems.newApplicants.count > 0) {
+      actions.push({
+        icon: UserPlus,
+        title: `New applicant${data.actionItems.newApplicants.count > 1 ? "s" : ""}: ${data.actionItems.newApplicants.names.slice(0, 2).join(", ")}`,
+        detail: `${data.actionItems.newApplicants.count} in pipeline`,
+        href: "/admissions",
+        priority: "medium",
+        moneyImpact: 0,
+      });
+    }
+    if (data.actionItems.incompleteChores > 0) {
+      actions.push({
+        icon: ClipboardList,
+        title: `${data.actionItems.incompleteChores} chore${data.actionItems.incompleteChores > 1 ? "s" : ""} incomplete today`,
+        detail: "Review and follow up",
+        href: "/operations/chores",
+        priority: "low",
+        moneyImpact: 0,
+      });
+    }
+    if (data.actionItems.pendingPasses > 0) {
+      actions.push({
+        icon: Users,
+        title: `${data.actionItems.pendingPasses} pass request${data.actionItems.pendingPasses > 1 ? "s" : ""} pending`,
+        detail: "Review and approve",
+        href: "/operations/passes",
+        priority: "low",
+        moneyImpact: 0,
+      });
+    }
+    // Sort by money impact (highest first), then priority
+    actions.sort((a, b) => b.moneyImpact - a.moneyImpact);
+  }
 
   return (
     <PageContainer>
-      {/* Greeting — large, confident */}
+      {/* Greeting */}
       <div>
         <h1 className="text-2xl font-semibold text-zinc-50 tracking-tight">{greeting}</h1>
-        <p className="text-sm text-zinc-500 mt-1">Here&apos;s what&apos;s happening across your properties.</p>
+        <p className="text-sm text-zinc-500 mt-1">Here&apos;s how your business is doing.</p>
       </div>
 
       {error && (
@@ -213,253 +259,158 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && isNewOrg && (
-        <OnboardingChecklist
-          hasProperties={hasProperties}
-          hasHouses={hasHouses}
-          hasResidents={hasResidents}
-          hasRates={hasRates}
-        />
-      )}
-
-      {/* Stats — no card wrappers, separated by dividers */}
-      <div className="flex items-start gap-0 divide-x divide-zinc-800">
-        <div className="flex-1 pr-6">
-          <StatCard
-            title="Occupancy Rate"
-            value={isLoading ? "\u2014" : `${data?.occupancy.rate || 0}%`}
-            subtitle={
-              isLoading
-                ? "Loading..."
-                : `${data?.occupancy.occupied || 0} of ${data?.occupancy.total || 0} beds`
-            }
-            loading={isLoading}
-          />
-        </div>
-        <div className="flex-1 px-6">
-          <StatCard
-            title="Revenue MTD"
-            value={isLoading ? "\u2014" : formatCurrency(data?.revenueMTD || 0)}
-            subtitle="Month to date"
-            loading={isLoading}
-          />
-        </div>
-        <div className="flex-1 px-6">
-          <StatCard
-            title="Outstanding"
-            value={isLoading ? "\u2014" : formatCurrency(data?.outstanding.total || 0)}
-            subtitle={
-              isLoading
-                ? "Loading..."
-                : `${data?.outstanding.invoiceCount || 0} invoices`
-            }
-            loading={isLoading}
-          />
-        </div>
-        <div className="flex-1 pl-6">
-          <StatCard
-            title="Expiring Consents"
-            value={isLoading ? "\u2014" : String(data?.expiringConsents.count || 0)}
-            subtitle="Within 30 days"
-            loading={isLoading}
-          />
-        </div>
+      {/* B1: Money Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {isLoading || pnlLoading ? (
+          <>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-3 w-16 bg-zinc-800 rounded mb-2" />
+                <div className="h-7 w-24 bg-zinc-800 rounded" />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <MoneyNumber
+              label="Collected MTD"
+              value={formatCurrency(data?.money.collectedMTD || 0)}
+              variant="success"
+            />
+            <MoneyNumber
+              label="Outstanding"
+              value={formatCurrency(data?.money.outstanding || 0)}
+              variant={data?.money.outstanding ? "danger" : "default"}
+              href="/billing/invoices"
+            />
+            <MoneyNumber
+              label="Lost Revenue"
+              value={data?.money.lostRevenue ? `${formatCurrency(data.money.lostRevenue)}/mo` : "$0"}
+              variant={data?.money.lostRevenue ? "warning" : "default"}
+              href="/occupancy/beds"
+            />
+            <MoneyNumber
+              label="Profit MTD"
+              value={formatCurrency(pnl?.profit || 0)}
+              variant={
+                !pnl ? "default" :
+                pnl.profit > 0 ? "success" :
+                pnl.profit < 0 ? "danger" : "default"
+              }
+              href="/billing/expenses/pnl"
+            />
+          </>
+        )}
       </div>
 
-      {/* Two-column: Needs Attention + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Needs Attention */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Needs Attention
-            </h2>
-            {!isLoading && hasActionItems && (
-              <Badge variant="error" size="sm">
-                {(data?.actionItems.highPriorityIncidents || 0) +
-                  (data?.actionItems.expiringConsents || 0)}{" "}
-                urgent
+      {/* B2: Beds Row */}
+      <div className="flex items-center gap-6 py-3 border-y border-zinc-800/50">
+        <div className="flex items-center gap-2">
+          <Bed className="h-4 w-4 text-zinc-500" />
+          <span className="text-sm text-zinc-400">Beds</span>
+        </div>
+        {isLoading ? (
+          <div className="h-4 w-48 bg-zinc-800 rounded animate-pulse" />
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-semibold font-mono text-zinc-100">
+                {data?.occupancy.occupied}/{data?.occupancy.total}
+              </span>
+              <Badge variant={
+                (data?.occupancy.rate || 0) >= 90 ? "success" :
+                (data?.occupancy.rate || 0) >= 70 ? "warning" : "error"
+              } size="sm">
+                {data?.occupancy.rate}%
               </Badge>
+            </div>
+            {(data?.occupancy.empty || 0) > 0 && (
+              <Link href="/occupancy/beds" className="text-sm text-amber-400 hover:text-amber-300 transition-colors">
+                {data?.occupancy.empty} empty = {formatCurrency(data?.money.lostRevenue || 0)}/mo lost
+              </Link>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* B3 + B4: Action Items + Quick Actions side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Action Items (2/3 width) */}
+        <div className="lg:col-span-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+            Needs Attention
+            {actions.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-zinc-600">({actions.length})</span>
+            )}
+          </h2>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <SkeletonListItem key={i} />)}
+            </div>
+          ) : actions.length > 0 ? (
+            <div className="space-y-0.5">
+              {actions.map((action, i) => (
+                <ActionRow key={i} {...action} />
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-sm text-zinc-600">All clear. Your business is running smoothly.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions + Recent Activity (1/3 width) */}
+        <div className="space-y-6">
+          {/* B4: Quick Actions */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Quick Actions</h2>
+            <div className="grid grid-cols-1 gap-2">
+              <QuickAction icon={DollarSign} label="Record Payment" href="/billing" />
+              <QuickAction icon={Plus} label="Add Resident" href="/residents" />
+              <QuickAction icon={Megaphone} label="Send Announcement" href="/messages/announcements" />
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Recent Activity</h2>
+            {isLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => <SkeletonListItem key={i} />)}
+              </div>
+            ) : data?.recentActivity && data.recentActivity.length > 0 ? (
+              <div className="divide-y divide-zinc-800/50">
+                {data.recentActivity.slice(0, 5).map((activity) => (
+                  <div key={activity.id} className="py-2.5">
+                    <p className="text-sm text-zinc-400">
+                      <span className="font-medium text-zinc-300">{activity.actor}</span>{" "}
+                      {activity.description}
+                    </p>
+                    <p className="text-xs text-zinc-600 mt-0.5">{formatTimeAgo(activity.timestamp)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-4 text-center">
+                <Clock className="h-4 w-4 text-zinc-700 mx-auto mb-1" />
+                <p className="text-xs text-zinc-600">No recent activity</p>
+              </div>
             )}
           </div>
-          {isLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <SkeletonListItem key={i} />
-              ))}
-            </div>
-          ) : hasActionItems ? (
-            <div className="space-y-0.5">
-              {(data?.actionItems.highPriorityIncidents || 0) > 0 && (
-                <ActionItem
-                  priority="high"
-                  title="Incidents require attention"
-                  description="Review and address critical incidents"
-                  count={data?.actionItems.highPriorityIncidents}
-                  href="/operations/incidents"
-                />
-              )}
-              {(data?.actionItems.expiringConsents || 0) > 0 && (
-                <ActionItem
-                  priority="high"
-                  title="Consents expiring soon"
-                  description="42 CFR Part 2 renewal required"
-                  count={data?.actionItems.expiringConsents}
-                  href="/compliance/consents"
-                />
-              )}
-              {(data?.actionItems.pendingPasses || 0) > 0 && (
-                <ActionItem
-                  priority="medium"
-                  title="Pass requests pending"
-                  description="Review and approve requests"
-                  count={data?.actionItems.pendingPasses}
-                  href="/operations/passes"
-                />
-              )}
-              {(data?.outstanding.invoiceCount || 0) > 0 && (
-                <ActionItem
-                  priority="medium"
-                  title="Outstanding invoices"
-                  description={`${formatCurrency(data?.outstanding.total || 0)} overdue`}
-                  count={data?.outstanding.invoiceCount}
-                  href="/billing/invoices"
-                />
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-600 py-4">All clear for today.</p>
-          )}
-        </div>
-
-        {/* Recent Activity */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Recent Activity
-            </h2>
-            <Link
-              href="/compliance/audit-log"
-              className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
-            >
-              View all
-            </Link>
-          </div>
-          {isLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <SkeletonListItem key={i} />
-              ))}
-            </div>
-          ) : (
-            <div className="divide-y divide-zinc-800/50 max-h-[320px] overflow-y-auto scrollbar-thin">
-              {data?.recentActivity.map((activity) => (
-                <ActivityItem
-                  key={activity.id}
-                  actor={activity.actor}
-                  description={activity.description}
-                  timestamp={activity.timestamp}
-                />
-              ))}
-              {(!data?.recentActivity || data.recentActivity.length === 0) && (
-                <div className="py-6 text-center">
-                  <Clock className="h-5 w-5 text-zinc-700 mx-auto mb-2" />
-                  <p className="text-sm text-zinc-500">No recent activity</p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Expiring Consents Table */}
-      {!isLoading && data?.expiringConsents.items && data.expiringConsents.items.length > 0 && (
+      {/* B5: House Cards (if multiple houses) */}
+      {!isLoading && data?.houseCards && data.houseCards.length > 1 && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                Expiring Consents
-              </h2>
-              <p className="text-xs text-zinc-600 mt-0.5">
-                Requiring renewal in the next 30 days
-              </p>
-            </div>
-            <Link href="/compliance/consents">
-              <Button variant="ghost" size="sm">
-                View All
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                    Resident
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                    Type
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                    Expires
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                    Status
-                  </th>
-                  <th className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/50">
-                {data.expiringConsents.items.map((consent) => (
-                  <tr
-                    key={consent.id}
-                    className="hover:bg-zinc-800/40 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <p className="text-sm font-medium text-zinc-200">
-                        {consent.residentName}
-                      </p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="text-sm text-zinc-400">
-                        {consent.consentType.replace(/_/g, " ")}
-                      </p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="text-sm text-zinc-400 font-mono">
-                        {consent.expiresAt
-                          ? new Date(consent.expiresAt).toLocaleDateString()
-                          : "\u2014"}
-                      </p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge
-                        variant={
-                          (consent.daysRemaining || 0) <= 7
-                            ? "error"
-                            : (consent.daysRemaining || 0) <= 14
-                              ? "warning"
-                              : "info"
-                        }
-                        dot
-                      >
-                        {consent.daysRemaining} days
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <Link href="/compliance/consents">
-                        <Button variant="ghost" size="sm">
-                          Renew
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+            Houses ({data.houseCards.length})
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
+            {data.houseCards.map((house) => (
+              <HouseCard key={house.id} house={house} />
+            ))}
           </div>
         </div>
       )}

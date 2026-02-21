@@ -23,15 +23,15 @@ export const dynamic = "force-dynamic";
 type UserRole = "super_admin" | "org_owner" | "property_manager" | "house_manager" | "case_manager" | "staff" | "resident" | "family" | "referral_source";
 
 const roleConfig: Record<UserRole, { variant: "error" | "warning" | "info" | "success" | "default"; label: string }> = {
-  super_admin: { variant: "error", label: "Super Admin" },
+  super_admin: { variant: "error", label: "Admin" },
   org_owner: { variant: "info", label: "Owner" },
-  property_manager: { variant: "success", label: "Property Manager" },
-  house_manager: { variant: "success", label: "House Manager" },
-  case_manager: { variant: "info", label: "Case Manager" },
+  property_manager: { variant: "success", label: "Manager" },
+  house_manager: { variant: "success", label: "Manager" },
+  case_manager: { variant: "info", label: "Staff" },
   staff: { variant: "default", label: "Staff" },
   resident: { variant: "warning", label: "Resident" },
   family: { variant: "default", label: "Family" },
-  referral_source: { variant: "default", label: "Referral Source" },
+  referral_source: { variant: "default", label: "Referral" },
 };
 
 export default function UsersPage() {
@@ -284,10 +284,10 @@ export default function UsersPage() {
                   onChange={(e) => setEditRole(e.target.value)}
                   className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
-                  <option value="org_owner">Organization Owner</option>
-                  <option value="property_manager">Property Manager</option>
-                  <option value="house_manager">House Manager</option>
-                  <option value="case_manager">Case Manager</option>
+                  <option value="org_owner">Owner</option>
+                  <option value="property_manager">Manager</option>
+                  <option value="house_manager">Manager</option>
+                  <option value="case_manager">Staff</option>
                   <option value="staff">Staff</option>
                 </select>
               </div>

@@ -33,11 +33,20 @@ export * from './messaging-extended';
 export * from './compliance';
 export * from './compliance-extended';
 
+// Expenses
+export * from './expenses';
+
 // Audit
 export * from './audit';
 
 // Files
 export * from './files';
 
+// Automations
+export * from './automations';
+
 // Integrations
 export * from './integrations';
+
+// Referrals
+export * from './referrals';

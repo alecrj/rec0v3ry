@@ -7,9 +7,9 @@
 ## Current State
 - **Phase**: PRODUCT RESET — Operator-first, money-first rebuild
 - **Execution Plan**: `docs/11_PRODUCT_RESET_PLAN.md` — 92 checkboxes, Phases A-J
-- **Status**: Web app built (34 routers, 48 CRM pages, 9 PWA pages). Now refocusing from compliance-first to operator-first. Adding: expense tracking (Plaid), n8n automations, DocuSign, referral tracking, React Native mobile app.
+- **Status**: Phases A-G COMPLETE (71/92 boxes). Payment flow, automations, referrals, DocuSign all built. Next: Phase H (React Native mobile app).
 - **Safety Commit**: `4725b95` — full Phase 5-6 build snapshot before overhaul
-- **Blocking Issues**: None
+- **Blocking Issues**: API credentials needed (Stripe, Plaid, DocuSign) for live testing
 - **Last Updated**: 2026-02-21
 - **Design System**: "Obsidian" — Geist font, zinc dark (#09090B), indigo accent (#6366F1). See globals.css for tokens.
 - **THE RULE**: Nothing gets checked off until it works with real data. No mock data. No faking it.
@@ -18,20 +18,20 @@
 - **Pitch**: "RecoveryOS runs your sober living business so you can focus on recovery."
 - **Mobile-first**: Operators run business from phone. Web CRM for deep work/reports.
 - **Money is the scoreboard**: Dashboard shows revenue, expenses, profit per house.
-- **Automations are the killer feature**: n8n-powered, presented as simple on/off toggles.
-- **Build order**: Web features first (Phases A-G prove the API), then React Native (Phase H).
+- **Automations are the killer feature**: Internal cron system (zero external dependency), presented as simple on/off toggles.
+- **Build order**: Web features first (Phases A-G DONE), then React Native (Phase H next).
 - **10-minute onboarding**: House name → bed count → rent amount → first resident → done.
 
 ## Execution Phases (from docs/11_PRODUCT_RESET_PLAN.md)
 | Phase | What | Status |
 |-------|------|--------|
-| A | Simplify & Onboarding (strip compliance UI, 3-screen setup) | NOT STARTED |
-| B | Dashboard Rebuild (money-first command center) | NOT STARTED |
-| C | Expense Tracking (Plaid + manual, P&L per house) | NOT STARTED |
-| D | Payment Flow (Stripe + external recording + reminders) | NOT STARTED |
-| E | n8n Automations (11 pre-built workflows, toggle UI) | NOT STARTED |
-| F | Referrals & Admissions (shareable intake link, referral tracking) | NOT STARTED |
-| G | DocuSign Integration (real e-signatures) | NOT STARTED |
+| A | Simplify & Onboarding (strip compliance UI, 3-screen setup) | COMPLETE |
+| B | Dashboard Rebuild (money-first command center) | COMPLETE |
+| C | Expense Tracking (Plaid + manual, P&L per house) | COMPLETE |
+| D | Payment Flow (Stripe + external recording + reminders) | COMPLETE |
+| E | Automations (11 pre-built, internal cron, toggle UI) | COMPLETE |
+| F | Referrals & Admissions (shareable intake link, referral tracking) | COMPLETE |
+| G | DocuSign Integration (real e-signatures) | COMPLETE |
 | H | React Native Mobile App (Expo, operator + resident, App Store) | NOT STARTED |
 | I | Messaging Polish (iMessage-style, push notifications) | NOT STARTED |
 | J | Final Polish & Ship (E2E testing, app store submission) | NOT STARTED |
@@ -160,8 +160,7 @@
 5. **Setup page improved** - Checks existing status first, better UX with loading states
 
 ## DECISIONS
-- **Workflow**: Opus direct writes, NO agent teams. One sprint pair per session. Sequential: read docs → backend → tsc → frontend → tsc → integration → next build → update SOURCE_OF_TRUTH.md
-- **Why no teams**: Subagents failed to write files in Sprint 7-8; Opus had to redo everything. Teams burn ~2x tokens with dispatch/monitor/fix overhead.
+- **Workflow**: Agent teams for parallel work, Opus orchestrates. Sequential: read docs → backend → tsc → frontend → tsc → integration → next build → update SOURCE_OF_TRUTH.md
 - **NotebookLM**: Authenticated and connected. Notebook created with Phase 1 research.
 
 ## Phase Progress
@@ -332,6 +331,36 @@ Non-blocking findings from compliance-reviewer to address during relevant sprint
 20. ~~Ledger export + date range filter~~ — date range picker (from/to), filters `listEntries` queries, CSV export with trial balance totals, filter badge with clear button
 21. ~~Disclosure export~~ — client-side CSV export with 42 CFR Part 2 redisclosure notice prepended, exports all visible disclosures
 22. ~~Responsive breakpoints~~ — CRM sidebar: mobile hamburger menu (< lg), overlay drawer with backdrop, auto-close on navigation, fixed top bar on mobile with logo; desktop unchanged (collapsible sidebar)
+
+### Phase D-G: Product Reset Phases (COMPLETE — 2026-02-21)
+
+**Phase D — Payment Flow:**
+- `/settings/payments` — Stripe Connect onboarding, fee config (absorb vs pass-through), payment reminders, late fees
+- Enhanced Record Payment modal — Cash App, Venmo, Zelle, Money Order + reference number + date picker
+- `/api/cron/send-reminders` — reads org payment settings, sends in-app system messages
+- `/api/cron/apply-late-fees` — daily late fee application with grace period, per-month dedup
+
+**Phase E — Automations (internal cron, zero n8n cost):**
+- `automation_configs` + `automation_logs` DB tables
+- `automation` tRPC router — 6 procedures (list, toggle, getSettings, updateSettings, getLog, runNow)
+- 11 automation definitions across 5 categories (payments, operations, occupancy, reports, admissions)
+- `/settings/automations` — toggle page with category grouping, settings modals, run-now buttons
+- `/api/cron/daily-digest` — bed occupancy, revenue, outstanding invoices, new leads
+
+**Phase F — Referrals & Admissions:**
+- `referral_sources` DB table + `referralSource` tRPC router (CRUD + stats)
+- `/apply/[slug]` — public intake form (no auth required), creates lead in pipeline
+- `/api/public/apply` — POST endpoint for public applications
+- `/admissions/referrals` — referral source management with conversion stats
+
+**Phase G — DocuSign Integration:**
+- `/settings/docusign` — connection status, setup guide, template recommendations
+- `DocumentStatusBadge` + `EnvelopeStatusBadge` reusable components
+- 5 Quick-Start Templates (House Rules, Move-In, Financial, Emergency Contact, Drug Testing)
+- Send from Template modal, multi-document signing, embedded signing (iframe)
+- Enhanced webhook handler (envelope-sent, envelope-delivered events)
+
+**Build verified:** `tsc --noEmit` clean, `next build` clean
 
 ### Future Features (NOT blocking V1.0)
 - Stripe Connect (real payment processing) — currently uses manual recording

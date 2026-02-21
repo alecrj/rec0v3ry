@@ -138,16 +138,16 @@ export default function FamilyPortalPage() {
         }
       />
 
-      {/* Part 2 Notice */}
+      {/* Privacy Notice */}
       <Card variant="outlined" className="border-amber-500/30 bg-amber-500/10">
         <CardContent>
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-amber-300">42 CFR Part 2 Compliance</h3>
+              <h3 className="text-sm font-semibold text-amber-300">Privacy Notice</h3>
               <p className="text-sm text-amber-300 mt-1">
                 Family portal access requires active consent from the resident. All data viewed through the
-                portal is logged for compliance auditing. Family members can only view information they have
+                portal is logged. Family members can only view information they have
                 been explicitly consented to access.
               </p>
             </div>

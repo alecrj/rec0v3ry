@@ -12,6 +12,8 @@ import { db } from '../db/client';
 import { organizations, properties, houses, rooms, beds } from '../db/schema/orgs';
 import { residents, admissions } from '../db/schema/residents';
 import { waitlistEntries, bedTransfers, discharges } from '../db/schema/resident-tracking';
+import { conversations, conversationMembers, messages } from '../db/schema/messaging';
+import { users } from '../db/schema/users';
 import { eq, and, isNull, sql, desc, asc, or, gte, lte, isNotNull, inArray } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
@@ -904,5 +906,141 @@ export const occupancyRouter = router({
         .orderBy(properties.name, houses.name, rooms.name, beds.name);
 
       return availableBeds;
+    }),
+
+  /**
+   * Notify top waitlist entry when a bed becomes available
+   * Creates a system message in the resident's conversation
+   */
+  notifyWaitlist: protectedProcedure
+    .input(z.object({
+      houseId: z.string().uuid(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      // Get the house name
+      const [house] = await db
+        .select({ id: houses.id, name: houses.name })
+        .from(houses)
+        .where(
+          and(
+            eq(houses.id, input.houseId),
+            eq(houses.org_id, orgId),
+            isNull(houses.deleted_at)
+          )
+        )
+        .limit(1);
+
+      if (!house) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'House not found' });
+      }
+
+      // Find top waitlist entry for this house (by priority, then by added_at)
+      const topEntries = await db
+        .select({
+          id: waitlistEntries.id,
+          resident_id: waitlistEntries.resident_id,
+          resident_first_name: residents.first_name,
+          resident_last_name: residents.last_name,
+        })
+        .from(waitlistEntries)
+        .innerJoin(residents, eq(waitlistEntries.resident_id, residents.id))
+        .where(
+          and(
+            eq(waitlistEntries.org_id, orgId),
+            or(
+              eq(waitlistEntries.house_id, input.houseId),
+              isNull(waitlistEntries.house_id)
+            ),
+            isNull(waitlistEntries.removed_at)
+          )
+        )
+        .orderBy(
+          sql`case ${waitlistEntries.priority} when 'urgent' then 1 when 'high' then 2 when 'normal' then 3 when 'low' then 4 else 5 end`,
+          asc(waitlistEntries.added_at)
+        )
+        .limit(1);
+
+      if (topEntries.length === 0) {
+        return { notified: false, message: 'No one on the waitlist for this house' };
+      }
+
+      const entry = topEntries[0];
+
+      // Find if the resident has a user account
+      // Look for user linked to this resident (by matching resident record)
+      // For now, create/find a system notification conversation
+      const notificationContent = `A bed has become available at ${house.name}! Please contact us as soon as possible to discuss your move-in options.`;
+
+      // Try to find an existing system conversation for this resident
+      const existingConversations = await db
+        .select({
+          conversation_id: conversationMembers.conversation_id,
+        })
+        .from(conversationMembers)
+        .innerJoin(conversations, eq(conversationMembers.conversation_id, conversations.id))
+        .where(
+          and(
+            eq(conversationMembers.resident_id, entry.resident_id),
+            eq(conversations.org_id, orgId),
+            eq(conversations.conversation_type, 'direct'),
+            isNull(conversationMembers.left_at)
+          )
+        )
+        .limit(1);
+
+      let conversationId: string;
+
+      if (existingConversations.length > 0) {
+        conversationId = existingConversations[0].conversation_id;
+      } else {
+        // Create a new conversation for this resident
+        const [newConversation] = await db
+          .insert(conversations)
+          .values({
+            org_id: orgId,
+            conversation_type: 'direct',
+            title: `Waitlist - ${entry.resident_first_name} ${entry.resident_last_name}`,
+            created_by: ctx.user!.id,
+          })
+          .returning({ id: conversations.id });
+
+        conversationId = newConversation.id;
+
+        // Add the system user and resident as members
+        await db.insert(conversationMembers).values([
+          {
+            org_id: orgId,
+            conversation_id: conversationId,
+            user_id: ctx.user!.id,
+          },
+          {
+            org_id: orgId,
+            conversation_id: conversationId,
+            resident_id: entry.resident_id,
+          },
+        ]);
+      }
+
+      // Send system notification message
+      const [message] = await db
+        .insert(messages)
+        .values({
+          org_id: orgId,
+          conversation_id: conversationId,
+          sender_user_id: ctx.user!.id,
+          content: notificationContent,
+          is_system_message: true,
+          status: 'sent',
+        })
+        .returning({ id: messages.id });
+
+      return {
+        notified: true,
+        residentName: `${entry.resident_first_name} ${entry.resident_last_name}`,
+        messageId: message.id,
+        conversationId,
+      };
     }),
 });

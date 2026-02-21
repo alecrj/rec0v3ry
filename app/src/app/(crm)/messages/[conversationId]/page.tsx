@@ -185,7 +185,7 @@ export default function ConversationPage({
           </div>
         </div>
 
-        {/* Redisclosure Notice for Part 2 Data */}
+        {/* Confidentiality Notice */}
         {sensitivityLevel === "part2_protected" && messagesData?.redisclosureNotice && (
           <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
             <div className="flex items-start gap-2">

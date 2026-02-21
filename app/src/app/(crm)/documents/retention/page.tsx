@@ -50,7 +50,7 @@ const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg b
 
 const RETENTION_PRESETS = [
   { label: "3 years (operational)", value: "1095" },
-  { label: "6 years (medical/Part 2)", value: "2190" },
+  { label: "6 years (medical)", value: "2190" },
   { label: "7 years (financial/IRS)", value: "2555" },
   { label: "10 years", value: "3650" },
   { label: "Indefinite", value: "indefinite" },
@@ -157,7 +157,7 @@ function PolicyFormModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={inputClass}
-              placeholder="e.g. Part 2 Consent Records"
+              placeholder="e.g. Consent Records"
             />
           </div>
 
@@ -291,9 +291,9 @@ export default function RetentionDashboardPage() {
         <div className="flex items-start gap-3">
           <Info className="h-5 w-5 text-indigo-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-indigo-100">Regulatory Minimums</p>
+            <p className="text-sm font-medium text-indigo-100">Recommended Minimums</p>
             <p className="text-sm text-indigo-200 mt-1">
-              42 CFR Part 2: 6 years &bull; HIPAA Medical: 6 years &bull; Financial/IRS: 7 years &bull; Operational: 3 years
+              Medical Records: 6 years &bull; Financial/IRS: 7 years &bull; Operational: 3 years
             </p>
           </div>
         </div>

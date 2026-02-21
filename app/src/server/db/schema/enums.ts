@@ -80,6 +80,10 @@ export const paymentMethodType = pgEnum('payment_method_type', [
   'cash',
   'check',
   'wire',
+  'cashapp',
+  'venmo',
+  'zelle',
+  'money_order',
   'other',
 ]);
 

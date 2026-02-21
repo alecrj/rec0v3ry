@@ -10,6 +10,8 @@ import {
   Eye,
   X,
   ExternalLink,
+  FileText,
+  XCircle,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import {
@@ -23,6 +25,7 @@ import {
   SkeletonTable,
   useToast,
 } from "@/components/ui";
+import { DocumentStatusBadge } from "@/components/document-status-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -45,12 +48,20 @@ function SendForSignatureModal({
 }) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
-  const [documentId, setDocumentId] = useState("");
+  const [documentIds, setDocumentIds] = useState<string[]>([]);
   const [signerEmail, setSignerEmail] = useState("");
   const [signerName, setSignerName] = useState("");
+  const [residentId, setResidentId] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
 
   const { data: draftDocs } = trpc.document.list.useQuery(
     { status: "draft", limit: 100 },
+    { enabled: isOpen }
+  );
+
+  const { data: residents } = trpc.resident.list.useQuery(
+    { limit: 200 },
     { enabled: isOpen }
   );
 
@@ -65,10 +76,30 @@ function SendForSignatureModal({
   });
 
   function resetAndClose() {
-    setDocumentId("");
+    setDocumentIds([]);
     setSignerEmail("");
     setSignerName("");
+    setResidentId("");
+    setEmailSubject("");
+    setEmailBody("");
     onClose();
+  }
+
+  function handleResidentChange(id: string) {
+    setResidentId(id);
+    const resident = (residents?.items ?? []).find((r) => r.id === id);
+    if (resident) {
+      setSignerName(`${resident.first_name} ${resident.last_name}`);
+      if (resident.email) {
+        setSignerEmail(resident.email);
+      }
+    }
+  }
+
+  function toggleDocument(docId: string) {
+    setDocumentIds((prev) =>
+      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
+    );
   }
 
   if (!isOpen) return null;
@@ -78,11 +109,11 @@ function SendForSignatureModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between sticky top-0 bg-zinc-900 z-10">
           <div>
             <h2 className="text-xl font-semibold text-zinc-100">Send for Signature</h2>
-            <p className="text-sm text-zinc-500 mt-1">Send a draft document for e-signature</p>
+            <p className="text-sm text-zinc-500 mt-1">Send document(s) for e-signature via DocuSign</p>
           </div>
           <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-300">
             <X className="h-5 w-5" />
@@ -92,30 +123,70 @@ function SendForSignatureModal({
           onSubmit={(e) => {
             e.preventDefault();
             createEnvelope.mutate({
-              documentIds: [documentId],
-              signers: [{ email: signerEmail, name: signerName }],
+              documentIds,
+              signers: [{
+                email: signerEmail,
+                name: signerName,
+                residentId: residentId || undefined,
+              }],
+              emailSubject: emailSubject || undefined,
+              emailBody: emailBody || undefined,
             });
           }}
           className="p-6 space-y-4"
         >
+          {/* Document Selection */}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Document <span className="text-red-400">*</span>
+              Document(s) <span className="text-red-400">*</span>
+            </label>
+            {documents.length === 0 ? (
+              <p className="text-xs text-zinc-500 py-2">No draft documents available. Create a document first.</p>
+            ) : (
+              <div className="space-y-1 max-h-40 overflow-y-auto border border-zinc-800 rounded-lg p-2">
+                {documents.map((doc) => (
+                  <label
+                    key={doc.id}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+                      documentIds.includes(doc.id)
+                        ? "bg-indigo-500/10 text-indigo-300"
+                        : "hover:bg-zinc-800/60 text-zinc-400"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={documentIds.includes(doc.id)}
+                      onChange={() => toggleDocument(doc.id)}
+                      className="rounded border-zinc-600 text-indigo-500 focus:ring-indigo-500/20 bg-zinc-800"
+                    />
+                    <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="text-sm truncate">{doc.title}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            {documentIds.length > 0 && (
+              <p className="text-xs text-zinc-500 mt-1">{documentIds.length} document(s) selected</p>
+            )}
+          </div>
+
+          {/* Recipient */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Recipient (Resident)
             </label>
             <select
-              required
-              value={documentId}
-              onChange={(e) => setDocumentId(e.target.value)}
+              value={residentId}
+              onChange={(e) => handleResidentChange(e.target.value)}
               className={inputClass}
             >
-              <option value="">Select a draft document...</option>
-              {documents.map((doc) => (
-                <option key={doc.id} value={doc.id}>{doc.title}</option>
+              <option value="">Select a resident...</option>
+              {(residents?.items ?? []).map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.first_name} {r.last_name}
+                </option>
               ))}
             </select>
-            {documents.length === 0 && (
-              <p className="text-xs text-zinc-500 mt-1">No draft documents available. Create a document first.</p>
-            )}
           </div>
 
           <div>
@@ -145,12 +216,34 @@ function SendForSignatureModal({
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Subject Line</label>
+            <input
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              className={inputClass}
+              placeholder="Please sign this document"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Message (Optional)</label>
+            <textarea
+              rows={2}
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              placeholder="Optional message..."
+            />
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={resetAndClose}>Cancel</Button>
             <Button
               type="submit"
               variant="primary"
-              disabled={!documentId || !signerEmail || !signerName || createEnvelope.isPending}
+              icon={<Send className="h-4 w-4" />}
+              disabled={documentIds.length === 0 || !signerEmail || !signerName || createEnvelope.isPending}
             >
               {createEnvelope.isPending ? "Sending..." : "Send for Signature"}
             </Button>
@@ -169,7 +262,7 @@ function ViewDocModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  doc: { id: string; title: string; status: string; created_at: string; resident?: { first_name: string; last_name: string } | null } | null;
+  doc: { id: string; title: string; status: string; docusign_status?: string | null; docusign_envelope_id?: string | null; created_at: string; resident?: { first_name: string; last_name: string } | null } | null;
 }) {
   const { toast } = useToast();
 
@@ -212,7 +305,9 @@ function ViewDocModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</label>
-              <p className="text-sm text-zinc-100 mt-1 capitalize">{doc.status.replace("_", " ")}</p>
+              <div className="mt-1">
+                <DocumentStatusBadge status={doc.status} />
+              </div>
             </div>
             <div>
               <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Resident</label>
@@ -221,10 +316,33 @@ function ViewDocModal({
               </p>
             </div>
           </div>
-          {getStatus.data && (
+          {doc.docusign_status && (
             <div>
-              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Envelope Status</label>
-              <p className="text-sm text-zinc-100 mt-1 capitalize">{getStatus.data.status}</p>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">DocuSign Status</label>
+              <div className="mt-1">
+                <DocumentStatusBadge status={doc.docusign_status} />
+              </div>
+            </div>
+          )}
+          {doc.docusign_envelope_id && (
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Envelope ID</label>
+              <p className="text-xs text-zinc-500 mt-1 font-mono">{doc.docusign_envelope_id}</p>
+            </div>
+          )}
+          {getStatus.data?.signatures && getStatus.data.signatures.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Signers</label>
+              <div className="mt-2 space-y-2">
+                {getStatus.data.signatures.map((sig) => (
+                  <div key={sig.id} className="flex items-center justify-between py-1.5 px-3 bg-zinc-800/30 rounded-lg">
+                    <span className="text-sm text-zinc-300">{sig.signerName}</span>
+                    <Badge variant={sig.signedAt ? "success" : "warning"} size="sm">
+                      {sig.signedAt ? `Signed ${new Date(sig.signedAt).toLocaleDateString()}` : "Pending"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           {doc.status === "pending_signature" && (
@@ -301,15 +419,6 @@ export default function SignatureTrackerPage() {
     { id: "signed", label: "Signed" },
     { id: "voided", label: "Voided" },
   ];
-
-  const getStatusBadge = (status: string) => {
-    const config: Record<string, { variant: "success" | "warning" | "default"; label: string }> = {
-      signed: { variant: "success", label: "Signed" },
-      pending_signature: { variant: "warning", label: "Pending" },
-      voided: { variant: "default", label: "Voided" },
-    };
-    return config[status] ?? { variant: "default" as const, label: status };
-  };
 
   return (
     <PageContainer>
@@ -396,47 +505,67 @@ export default function SignatureTrackerPage() {
         />
       ) : (
         <div className="space-y-3">
-          {signatureDocs.map((doc) => {
-            const badge = getStatusBadge(doc.status);
-            return (
-              <div key={doc.id} className="border border-zinc-800 rounded-lg p-4 hover:bg-zinc-800/30 transition-colors">
-                <div className="flex items-start justify-between">
+          {signatureDocs.map((doc) => (
+            <div key={doc.id} className="border border-zinc-800 rounded-lg p-4 hover:bg-zinc-800/30 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-lg ${
+                    doc.status === "signed" ? "bg-green-500/10" :
+                    doc.status === "pending_signature" ? "bg-amber-500/10" :
+                    "bg-zinc-800"
+                  }`}>
+                    {doc.status === "signed" ? (
+                      <CheckCircle className="h-4 w-4 text-green-400" />
+                    ) : doc.status === "pending_signature" ? (
+                      <Clock className="h-4 w-4 text-amber-400" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-zinc-500" />
+                    )}
+                  </div>
                   <div>
                     <h3 className="text-sm font-medium text-zinc-100">{doc.title}</h3>
                     <p className="text-xs text-zinc-500 mt-0.5">
                       {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "Organization"} &bull;{" "}
                       Created {new Date(doc.created_at).toLocaleDateString()}
                     </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                    <button
-                      className="p-1 text-zinc-500 hover:text-indigo-400"
-                      title="View Details"
-                      onClick={() => setViewingDoc(doc)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
+                    {doc.docusign_envelope_id && (
+                      <p className="text-xs text-zinc-600 mt-0.5 font-mono">
+                        Envelope: {doc.docusign_envelope_id.slice(0, 20)}...
+                      </p>
+                    )}
                   </div>
                 </div>
-
-                {doc.status === "pending_signature" && (
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      className="text-xs text-red-400 hover:text-red-300 font-medium"
-                      onClick={() => {
-                        if (window.confirm("Void this document?")) {
-                          voidEnvelope.mutate({ documentId: doc.id, reason: "Voided by admin" });
-                        }
-                      }}
-                    >
-                      Void Document
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <DocumentStatusBadge status={doc.status} />
+                  {doc.docusign_status && doc.docusign_status !== doc.status && (
+                    <DocumentStatusBadge status={doc.docusign_status} size="sm" />
+                  )}
+                  <button
+                    className="p-1 text-zinc-500 hover:text-indigo-400"
+                    title="View Details"
+                    onClick={() => setViewingDoc(doc)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-            );
-          })}
+
+              {doc.status === "pending_signature" && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    className="text-xs text-red-400 hover:text-red-300 font-medium"
+                    onClick={() => {
+                      if (window.confirm("Void this document?")) {
+                        voidEnvelope.mutate({ documentId: doc.id, reason: "Voided by admin" });
+                      }
+                    }}
+                  >
+                    Void Document
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 

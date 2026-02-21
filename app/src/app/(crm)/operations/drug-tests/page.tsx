@@ -154,7 +154,7 @@ export default function DrugTestsPage() {
     <PageContainer>
       <PageHeader
         title="Drug Testing"
-        description="Track drug tests and results (Part 2 protected)"
+        description="Track drug tests and results"
         actions={
           <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setShowCreateModal(true)}>
             New Test
@@ -220,7 +220,7 @@ export default function DrugTestsPage() {
             <CardTitle>Test Log</CardTitle>
             <div className="flex items-center gap-1.5 mt-1.5">
               <Shield className="h-3.5 w-3.5 text-amber-400" />
-              <p className="text-xs text-zinc-500">Results are 42 CFR Part 2 protected — consent required to view</p>
+              <p className="text-xs text-zinc-500">Protected records — consent required to view</p>
             </div>
           </div>
         </CardHeader>
@@ -256,7 +256,7 @@ export default function DrugTestsPage() {
               <h2 className="text-xl font-bold text-zinc-100">Record Drug Test</h2>
               <div className="flex items-center gap-1.5 mt-1.5">
                 <Shield className="h-3.5 w-3.5 text-amber-400" />
-                <p className="text-xs text-zinc-500">42 CFR Part 2 protected record</p>
+                <p className="text-xs text-zinc-500">Protected record</p>
               </div>
             </div>
             <form

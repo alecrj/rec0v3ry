@@ -71,6 +71,10 @@ export async function POST(req: Request) {
         await handleAccountUpdated(event.data.object as Stripe.Account);
         break;
 
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+
       case 'payment_intent.succeeded':
         await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
         break;
@@ -102,6 +106,18 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Handle checkout.session.completed (D2)
+ * Stripe Checkout flow completed — payment handled by payment_intent.succeeded
+ */
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  console.log(`[Stripe Webhook] Checkout completed: ${session.id}`);
+  // Payment recording is handled by payment_intent.succeeded which fires separately.
+  // This handler logs the checkout completion for tracking.
+  const metadata = session.metadata || {};
+  console.log(`[Stripe Webhook] Checkout for org=${metadata.org_id} resident=${metadata.resident_id} invoice=${metadata.invoice_id}`);
 }
 
 /**

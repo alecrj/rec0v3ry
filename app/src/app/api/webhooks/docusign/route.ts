@@ -71,6 +71,14 @@ export async function POST(req: Request) {
         await handleEnvelopeCompleted(payload);
         break;
 
+      case 'envelope-sent':
+        await handleEnvelopeSent(payload);
+        break;
+
+      case 'envelope-delivered':
+        await handleEnvelopeDelivered(payload);
+        break;
+
       case 'recipient-completed':
         await handleRecipientCompleted(payload);
         break;
@@ -97,6 +105,38 @@ export async function POST(req: Request) {
 // ============================================================
 // EVENT HANDLERS
 // ============================================================
+
+async function handleEnvelopeSent(payload: DocuSignWebhookPayload) {
+  const envelopeId = payload.data?.envelopeId;
+  if (!envelopeId) return;
+
+  console.log(`[DocuSign Webhook] Envelope sent: ${envelopeId}`);
+
+  await db
+    .update(documents)
+    .set({
+      docusign_status: 'sent',
+      status: 'pending_signature',
+      updated_by: 'system',
+    })
+    .where(eq(documents.docusign_envelope_id, envelopeId));
+}
+
+async function handleEnvelopeDelivered(payload: DocuSignWebhookPayload) {
+  const envelopeId = payload.data?.envelopeId;
+  if (!envelopeId) return;
+
+  console.log(`[DocuSign Webhook] Envelope delivered: ${envelopeId}`);
+
+  // Mark as delivered — recipient has opened/viewed the document
+  await db
+    .update(documents)
+    .set({
+      docusign_status: 'delivered',
+      updated_by: 'system',
+    })
+    .where(eq(documents.docusign_envelope_id, envelopeId));
+}
 
 async function handleEnvelopeCompleted(payload: DocuSignWebhookPayload) {
   const envelopeId = payload.data?.envelopeId;

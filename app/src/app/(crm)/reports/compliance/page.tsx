@@ -343,7 +343,7 @@ export default function ComplianceReportPage() {
             Consents Expiring Within 30 Days
           </h2>
           <a
-            href="/compliance/consents"
+            href="/settings/compliance/consents"
             className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
           >
             View All Consents
@@ -440,7 +440,7 @@ export default function ComplianceReportPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a
-          href="/compliance/audit"
+          href="/settings/compliance/audit-log"
           className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800/40 transition-colors"
         >
           <div className="p-2 bg-purple-500/15 rounded-lg">
@@ -452,7 +452,7 @@ export default function ComplianceReportPage() {
           </div>
         </a>
         <a
-          href="/compliance/disclosures"
+          href="/settings/compliance/disclosures"
           className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800/40 transition-colors"
         >
           <div className="p-2 bg-indigo-500/15 rounded-lg">
@@ -464,7 +464,7 @@ export default function ComplianceReportPage() {
           </div>
         </a>
         <a
-          href="/compliance/breaches"
+          href="/settings/compliance/break-glass"
           className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800/40 transition-colors"
         >
           <div className="p-2 bg-red-500/15 rounded-lg">

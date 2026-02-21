@@ -464,7 +464,7 @@ export default function ResidentDetailPage({
                 description="View & upload documents"
               />
               <QuickAction
-                href={`/compliance/consents?resident=${resident.id}`}
+                href={`/settings/compliance/consents?resident=${resident.id}`}
                 icon={Shield}
                 label="Consents"
                 description={`${resident.activeConsentsCount} active consent${resident.activeConsentsCount !== 1 ? "s" : ""}`}
@@ -496,14 +496,14 @@ export default function ResidentDetailPage({
                         No active consents
                       </p>
                       <p className="text-xs text-amber-400 mt-0.5">
-                        Part 2 consent required for treatment records
+                        Consent required for treatment records
                       </p>
                     </div>
                   </div>
                 </div>
               )}
               <Link
-                href={`/compliance/consents?resident=${resident.id}`}
+                href={`/settings/compliance/consents?resident=${resident.id}`}
                 className="block text-center text-sm text-indigo-400 hover:text-indigo-300 font-medium py-2"
               >
                 Manage Consents

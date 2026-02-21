@@ -59,7 +59,7 @@ const INTAKE_CHECKLIST = [
   { id: "photo_id", label: "Photo ID Upload", icon: Upload, required: true, completed: false },
   { id: "insurance_card", label: "Insurance Card Upload", icon: Upload, required: false, completed: false },
   { id: "court_documents", label: "Court Documents", icon: FileText, required: false, completed: false },
-  { id: "part2_consent", label: "Part 2 Consent Form", icon: Shield, required: true, completed: false },
+  { id: "part2_consent", label: "Consent Form", icon: Shield, required: true, completed: false },
   { id: "privacy_notice", label: "Privacy Notice Acknowledgment", icon: Shield, required: true, completed: false },
   { id: "house_rules", label: "House Rules Agreement", icon: Home, required: true, completed: false },
   { id: "financial_agreement", label: "Financial Agreement", icon: FileText, required: true, completed: false },
@@ -430,9 +430,9 @@ function ConvertToResidentModal({ isOpen, onClose, leadId, lead }: ConvertModalP
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
               <div className="text-sm text-amber-300">
-                <p className="font-medium">Part 2 Consent Required</p>
+                <p className="font-medium">Consent Required</p>
                 <p className="mt-1">
-                  Intake cannot be completed without at least one active 42 CFR Part 2 consent form.
+                  Intake cannot be completed without an active consent form.
                   The resident will need to complete this during intake.
                 </p>
               </div>
