@@ -2,13 +2,39 @@
 
 > This is the SINGLE source of truth for project status.
 > Read this FIRST at the start of EVERY session.
+> Then read `docs/11_PRODUCT_RESET_PLAN.md` for the execution checklist.
 
 ## Current State
-- **Phase**: PHASE-6-V1-COMPLETION — **ALL SPRINTS COMPLETE (A-E)**
-- **Status**: 34 routers, 40+ CRM pages, 9 PWA pages. Auth (Clerk) + DB (Neon) connected. Build clean. **Obsidian Design System applied** (dark zinc, indigo accent, Geist font). Responsive CRM sidebar. All PWA buttons wired. Ledger + disclosure exports working.
-- **Blocking Issues**: None — ready for Phase 5 Verification
-- **Last Updated**: 2026-02-20
+- **Phase**: PRODUCT RESET — Operator-first, money-first rebuild
+- **Execution Plan**: `docs/11_PRODUCT_RESET_PLAN.md` — 92 checkboxes, Phases A-J
+- **Status**: Web app built (34 routers, 48 CRM pages, 9 PWA pages). Now refocusing from compliance-first to operator-first. Adding: expense tracking (Plaid), n8n automations, DocuSign, referral tracking, React Native mobile app.
+- **Safety Commit**: `4725b95` — full Phase 5-6 build snapshot before overhaul
+- **Blocking Issues**: None
+- **Last Updated**: 2026-02-21
 - **Design System**: "Obsidian" — Geist font, zinc dark (#09090B), indigo accent (#6366F1). See globals.css for tokens.
+- **THE RULE**: Nothing gets checked off until it works with real data. No mock data. No faking it.
+
+## Product Vision (2026-02-21 Reset)
+- **Pitch**: "RecoveryOS runs your sober living business so you can focus on recovery."
+- **Mobile-first**: Operators run business from phone. Web CRM for deep work/reports.
+- **Money is the scoreboard**: Dashboard shows revenue, expenses, profit per house.
+- **Automations are the killer feature**: n8n-powered, presented as simple on/off toggles.
+- **Build order**: Web features first (Phases A-G prove the API), then React Native (Phase H).
+- **10-minute onboarding**: House name → bed count → rent amount → first resident → done.
+
+## Execution Phases (from docs/11_PRODUCT_RESET_PLAN.md)
+| Phase | What | Status |
+|-------|------|--------|
+| A | Simplify & Onboarding (strip compliance UI, 3-screen setup) | NOT STARTED |
+| B | Dashboard Rebuild (money-first command center) | NOT STARTED |
+| C | Expense Tracking (Plaid + manual, P&L per house) | NOT STARTED |
+| D | Payment Flow (Stripe + external recording + reminders) | NOT STARTED |
+| E | n8n Automations (11 pre-built workflows, toggle UI) | NOT STARTED |
+| F | Referrals & Admissions (shareable intake link, referral tracking) | NOT STARTED |
+| G | DocuSign Integration (real e-signatures) | NOT STARTED |
+| H | React Native Mobile App (Expo, operator + resident, App Store) | NOT STARTED |
+| I | Messaging Polish (iMessage-style, push notifications) | NOT STARTED |
+| J | Final Polish & Ship (E2E testing, app store submission) | NOT STARTED |
 
 ### Obsidian Design System (COMPLETE — 2026-02-20)
 
