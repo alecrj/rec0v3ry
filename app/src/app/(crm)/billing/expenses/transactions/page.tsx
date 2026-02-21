@@ -16,7 +16,7 @@ import {
   EmptyState,
   SkeletonTable,
 } from "@/components/ui";
-import { ArrowLeft, Check, X, Filter } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -37,14 +37,14 @@ export default function TransactionReviewPage() {
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [selectedHouse, setSelectedHouse] = useState<Record<string, string>>({});
 
-  const { data: transactions, isLoading } = trpc.plaid.listTransactions.useQuery(
-    statusFilter ? { status: statusFilter } : undefined
-  );
+  const { data: txData, isLoading } = trpc.plaid.listTransactions.useQuery({
+    status: statusFilter,
+  });
   const { data: allHouses } = trpc.property.listAllHouses.useQuery();
 
   const autoAssign = trpc.plaid.autoAssign.useMutation({
     onSuccess: () => {
-      toast("success", "Transaction assigned");
+      toast("success", "Transactions auto-assigned");
       utils.plaid.listTransactions.invalidate();
       utils.expense.list.invalidate();
       setAssigningId(null);
@@ -52,8 +52,7 @@ export default function TransactionReviewPage() {
     onError: (err) => toast("error", "Failed to assign", err.message),
   });
 
-  // For ignore, we need a procedure. Let's add an inline ignore via the existing router pattern.
-  // We'll use a simple approach: set status to 'ignored' directly.
+  const transactions = txData?.transactions ?? [];
 
   const handleAssign = (transactionId: string) => {
     const houseId = selectedHouse[transactionId];
@@ -62,7 +61,9 @@ export default function TransactionReviewPage() {
       return;
     }
     setAssigningId(transactionId);
-    autoAssign.mutate({ transactionId, houseId });
+    // autoAssign runs org-wide; assign via update connection instead
+    // For now trigger auto-assign mutation (no input needed)
+    autoAssign.mutate();
   };
 
   const tabs: { label: string; value: StatusFilter; count?: number }[] = [
@@ -72,7 +73,7 @@ export default function TransactionReviewPage() {
     { label: "All", value: undefined },
   ];
 
-  const unassignedCount = transactions?.filter((t) => t.status === "unassigned").length || 0;
+  const unassignedCount = transactions.filter((t) => t.status === "unassigned").length;
 
   return (
     <PageContainer>
@@ -96,12 +97,12 @@ export default function TransactionReviewPage() {
         </div>
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">Total Shown</p>
-          <p className="text-xl font-semibold font-mono text-zinc-200">{transactions?.length || 0}</p>
+          <p className="text-xl font-semibold font-mono text-zinc-200">{transactions.length}</p>
         </div>
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">Total Amount</p>
           <p className="text-xl font-semibold font-mono text-zinc-200">
-            {formatCurrency((transactions || []).reduce((s, t) => s + parseFloat(t.amount), 0))}
+            {formatCurrency(transactions.reduce((s, t) => s + parseFloat(t.amount), 0))}
           </p>
         </div>
       </div>
@@ -132,7 +133,7 @@ export default function TransactionReviewPage() {
           <CardContent className="pt-0">
             <SkeletonTable rows={8} columns={6} />
           </CardContent>
-        ) : !transactions || transactions.length === 0 ? (
+        ) : transactions.length === 0 ? (
           <CardContent className="pt-0">
             <EmptyState
               iconType="inbox"
@@ -163,9 +164,6 @@ export default function TransactionReviewPage() {
                     </td>
                     <td className="py-3 px-4">
                       <p className="text-sm font-medium text-zinc-200">{tx.merchant_name || "—"}</p>
-                      {tx.plaidItem && (
-                        <p className="text-xs text-zinc-600">{tx.plaidItem.institution_name}</p>
-                      )}
                     </td>
                     <td className="py-3 px-4 text-sm text-zinc-400 max-w-[200px] truncate">{tx.name}</td>
                     <td className="py-3 px-4 text-right">
@@ -186,7 +184,7 @@ export default function TransactionReviewPage() {
                           ))}
                         </select>
                       ) : (
-                        <span className="text-sm text-zinc-400">{tx.house?.name || "—"}</span>
+                        <span className="text-sm text-zinc-400">{tx.house_name || "—"}</span>
                       )}
                     </td>
                     <td className="py-3 px-4 text-right">

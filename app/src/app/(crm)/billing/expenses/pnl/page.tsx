@@ -1,336 +1,298 @@
 "use client";
 
+/**
+ * P&L Per House Page
+ *
+ * G2-16: P&L per house
+ *
+ * Shows org-wide P&L at top, then per-house breakdown with:
+ * - Revenue (from payments/invoices)
+ * - Expenses (categorized)
+ * - Profit / Loss
+ * - Category breakdown
+ */
+
 import { useState } from "react";
-import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 import {
-  PageContainer,
-  PageHeader,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-  Badge,
-  EmptyState,
-  SkeletonTable,
-} from "@/components/ui";
-import { TrendingUp, TrendingDown, Calendar, ArrowLeft, Filter } from "lucide-react";
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Home,
+  Loader2,
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-const inputClass =
-  "h-9 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
-
-function formatCurrency(amount: number) {
+function formatCurrency(value: string | number): string {
+  const n = typeof value === "string" ? parseFloat(value) : value;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(amount);
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
-function getMonthRange() {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return {
-    start: startOfMonth.toISOString().split("T")[0],
-    end: endOfMonth.toISOString().split("T")[0],
+function ProfitBadge({ profit }: { profit: string }) {
+  const n = parseFloat(profit);
+  const isPositive = n >= 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-sm font-semibold ${
+        isPositive ? "text-emerald-400" : "text-red-400"
+      }`}
+    >
+      {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+      {isPositive ? "+" : ""}
+      {formatCurrency(profit)}
+    </span>
+  );
+}
+
+function HouseCard({
+  house,
+}: {
+  house: {
+    house_id: string;
+    house_name: string;
+    revenue: string;
+    expenses: string;
+    profit: string;
+    categories: Array<{ category: string; color: string | null; total: number }>;
   };
-}
-
-function MoneyMetric({ label, value, variant = "default" }: {
-  label: string;
-  value: number;
-  variant?: "default" | "success" | "danger" | "warning";
 }) {
-  const colorMap = {
-    default: "text-zinc-100",
-    success: "text-green-400",
-    danger: "text-red-400",
-    warning: "text-amber-400",
-  };
+  const [expanded, setExpanded] = useState(false);
+  const profit = parseFloat(house.profit);
+  const isPositive = profit >= 0;
 
   return (
-    <div>
-      <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500 mb-1">{label}</p>
-      <p className={`text-3xl font-semibold font-mono tracking-tight ${colorMap[variant]}`}>
-        {formatCurrency(value)}
-      </p>
-    </div>
-  );
-}
+    <div className="bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden">
+      {/* Summary row */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-4 p-5 hover:bg-zinc-800/50 transition-colors text-left"
+      >
+        <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
+          <Home className="h-5 w-5 text-zinc-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white font-semibold truncate">{house.house_name}</p>
+        </div>
 
-function BarChart({ data, maxValue }: { data: { name: string; value: number; color: string | null }[]; maxValue: number }) {
-  if (data.length === 0) {
-    return <EmptyState iconType="inbox" title="No data" description="No expenses in this period" />;
-  }
-
-  return (
-    <div className="space-y-3">
-      {data.map((item, idx) => {
-        const percent = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
-        const barColor = item.color || "#71717a";
-
-        return (
-          <div key={idx}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-zinc-300">{item.name}</span>
-              <span className="text-sm font-mono text-zinc-400">{formatCurrency(item.value)}</span>
-            </div>
-            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full transition-all duration-500"
-                style={{ width: `${percent}%`, backgroundColor: barColor }}
-              />
-            </div>
+        {/* Stats */}
+        <div className="hidden md:flex items-center gap-6 text-sm">
+          <div className="text-center">
+            <p className="text-zinc-500 text-xs">Revenue</p>
+            <p className="text-emerald-400 font-semibold">{formatCurrency(house.revenue)}</p>
           </div>
-        );
-      })}
-    </div>
-  );
-}
-
-export default function PandLPage() {
-  const defaultRange = getMonthRange();
-  const [startDate, setStartDate] = useState(defaultRange.start);
-  const [endDate, setEndDate] = useState(defaultRange.end);
-  const [filterHouseId, setFilterHouseId] = useState("");
-
-  // Queries
-  const { data: pnl, isLoading, refetch } = trpc.expense.getPandL.useQuery({
-    startDate,
-    endDate,
-    houseId: filterHouseId || undefined,
-  });
-  const { data: allHouses } = trpc.property.listAllHouses.useQuery();
-
-  const profit = pnl ? pnl.profit : 0;
-  const profitMargin = pnl && pnl.revenue > 0 ? (pnl.profit / pnl.revenue) * 100 : 0;
-
-  const handlePresetRange = (preset: "mtd" | "last30" | "ytd") => {
-    const now = new Date();
-    let start: string;
-    let end: string;
-
-    if (preset === "mtd") {
-      start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-      end = now.toISOString().split("T")[0];
-    } else if (preset === "last30") {
-      const thirtyDaysAgo = new Date(now);
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-      start = thirtyDaysAgo.toISOString().split("T")[0];
-      end = now.toISOString().split("T")[0];
-    } else {
-      // ytd
-      start = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0];
-      end = now.toISOString().split("T")[0];
-    }
-
-    setStartDate(start);
-    setEndDate(end);
-  };
-
-  return (
-    <PageContainer>
-      <PageHeader
-        title="Profit & Loss"
-        description="Revenue vs expenses with per-house and per-category breakdowns"
-        actions={
-          <Link href="/billing/expenses">
-            <Button variant="secondary" icon={<ArrowLeft className="h-4 w-4" />}>
-              Back to Expenses
-            </Button>
-          </Link>
-        }
-      />
-
-      {/* Date Range Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Report Period</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 flex-wrap">
-            <Calendar className="h-4 w-4 text-zinc-500" />
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className={inputClass}
-            />
-            <span className="text-sm text-zinc-500">to</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className={inputClass}
-            />
-            <div className="flex gap-2 ml-auto">
-              <button
-                onClick={() => handlePresetRange("mtd")}
-                className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-indigo-400 border border-zinc-800 hover:border-indigo-500/40 rounded-lg transition-colors"
-              >
-                MTD
-              </button>
-              <button
-                onClick={() => handlePresetRange("last30")}
-                className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-indigo-400 border border-zinc-800 hover:border-indigo-500/40 rounded-lg transition-colors"
-              >
-                Last 30d
-              </button>
-              <button
-                onClick={() => handlePresetRange("ytd")}
-                className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-indigo-400 border border-zinc-800 hover:border-indigo-500/40 rounded-lg transition-colors"
-              >
-                YTD
-              </button>
-            </div>
+          <div className="text-center">
+            <p className="text-zinc-500 text-xs">Expenses</p>
+            <p className="text-red-400 font-semibold">{formatCurrency(house.expenses)}</p>
           </div>
-          {allHouses && allHouses.length > 1 && (
-            <div className="flex items-center gap-3 mt-3">
-              <Filter className="h-4 w-4 text-zinc-500" />
-              <select
-                value={filterHouseId}
-                onChange={(e) => setFilterHouseId(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">All Houses</option>
-                {allHouses.map((h) => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
-                ))}
-              </select>
-              {filterHouseId && (
-                <button
-                  onClick={() => setFilterHouseId("")}
-                  className="text-xs text-indigo-400 hover:text-indigo-300"
-                >
-                  Clear filter
-                </button>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <div className="text-center min-w-[80px]">
+            <p className="text-zinc-500 text-xs">Profit</p>
+            <ProfitBadge profit={house.profit} />
+          </div>
+        </div>
 
-      {/* P&L Summary */}
-      {isLoading ? (
-        <Card>
-          <CardContent className="py-8">
-            <div className="grid grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-3 w-16 bg-zinc-800 rounded mb-2" />
-                  <div className="h-9 w-24 bg-zinc-800 rounded" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : pnl ? (
-        <>
-          <Card>
-            <CardContent className="py-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <MoneyMetric label="Total Revenue" value={pnl.revenue} variant="success" />
-                <MoneyMetric label="Total Expenses" value={pnl.expenses} variant="danger" />
-                <div>
-                  <MoneyMetric
-                    label="Net Profit"
-                    value={profit}
-                    variant={profit > 0 ? "success" : profit < 0 ? "danger" : "default"}
+        {expanded ? (
+          <ChevronDown className="h-4 w-4 text-zinc-500 shrink-0" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-zinc-500 shrink-0" />
+        )}
+      </button>
+
+      {/* Mobile stats */}
+      <div className="md:hidden grid grid-cols-3 gap-2 px-5 pb-4 border-t border-zinc-800">
+        <div className="text-center pt-3">
+          <p className="text-zinc-500 text-xs">Revenue</p>
+          <p className="text-emerald-400 font-semibold text-sm">{formatCurrency(house.revenue)}</p>
+        </div>
+        <div className="text-center pt-3">
+          <p className="text-zinc-500 text-xs">Expenses</p>
+          <p className="text-red-400 font-semibold text-sm">{formatCurrency(house.expenses)}</p>
+        </div>
+        <div className="text-center pt-3">
+          <p className="text-zinc-500 text-xs">Profit</p>
+          <ProfitBadge profit={house.profit} />
+        </div>
+      </div>
+
+      {/* Category breakdown */}
+      {expanded && house.categories.length > 0 && (
+        <div className="border-t border-zinc-700 p-5 space-y-3">
+          <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wide">
+            Expense Breakdown
+          </p>
+          <div className="space-y-2">
+            {house.categories.map((cat) => {
+              const pct = parseFloat(house.expenses) > 0
+                ? (cat.total / parseFloat(house.expenses)) * 100
+                : 0;
+              return (
+                <div key={cat.category} className="flex items-center gap-3">
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: cat.color ?? "#6366f1" }}
                   />
-                  <div className="flex items-center gap-2 mt-2">
-                    {profit > 0 ? (
-                      <TrendingUp className="h-4 w-4 text-green-400" />
-                    ) : profit < 0 ? (
-                      <TrendingDown className="h-4 w-4 text-red-400" />
-                    ) : null}
-                    <span className={`text-sm font-mono ${profit > 0 ? "text-green-400" : profit < 0 ? "text-red-400" : "text-zinc-500"}`}>
-                      {profitMargin.toFixed(1)}% margin
+                  <span className="text-sm text-zinc-300 flex-1">{cat.category}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 bg-zinc-800 rounded-full h-1.5">
+                      <div
+                        className="h-1.5 rounded-full"
+                        style={{
+                          width: `${Math.min(pct, 100)}%`,
+                          backgroundColor: cat.color ?? "#6366f1",
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm text-zinc-400 text-right w-20">
+                      {formatCurrency(cat.total)}
                     </span>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {expanded && house.categories.length === 0 && (
+        <div className="border-t border-zinc-700 p-5 text-sm text-zinc-500">
+          No categorized expenses in this period.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Main Page ---
+
+export default function PnLPage() {
+  const today = new Date();
+  const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
+  const todayStr = today.toISOString().slice(0, 10);
+
+  const [startDate, setStartDate] = useState(firstOfMonth);
+  const [endDate, setEndDate] = useState(todayStr);
+
+  const { data, isLoading, error } = trpc.expense.getPandL.useQuery({
+    startDate,
+    endDate,
+  });
+
+  return (
+    <div className="p-6 space-y-6 max-w-5xl">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/billing/expenses"
+          className="text-zinc-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-white">Profit & Loss</h1>
+          <p className="text-zinc-400 mt-1">Revenue vs. expenses per house</p>
+        </div>
+      </div>
+
+      {/* Date range picker */}
+      <div className="flex items-center gap-3">
+        <div>
+          <label className="text-xs text-zinc-400 block mb-1">Start Date</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-zinc-400 block mb-1">End Date</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-zinc-400">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading P&L data...
+        </div>
+      ) : error ? (
+        <div className="text-red-400 text-sm">{error.message}</div>
+      ) : data ? (
+        <>
+          {/* Overall summary */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-zinc-400 text-sm mb-2">
+                <DollarSign className="h-4 w-4 text-emerald-400" />
+                Total Revenue
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-3xl font-bold text-emerald-400">
+                {formatCurrency(data.overall.revenue)}
+              </p>
+            </div>
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-zinc-400 text-sm mb-2">
+                <TrendingDown className="h-4 w-4 text-red-400" />
+                Total Expenses
+              </div>
+              <p className="text-3xl font-bold text-red-400">
+                {formatCurrency(data.overall.expenses)}
+              </p>
+            </div>
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-zinc-400 text-sm mb-2">
+                {parseFloat(data.overall.profit) >= 0 ? (
+                  <TrendingUp className="h-4 w-4 text-indigo-400" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-orange-400" />
+                )}
+                Net Profit
+              </div>
+              <p
+                className={`text-3xl font-bold ${
+                  parseFloat(data.overall.profit) >= 0 ? "text-indigo-400" : "text-orange-400"
+                }`}
+              >
+                {parseFloat(data.overall.profit) >= 0 ? "+" : ""}
+                {formatCurrency(data.overall.profit)}
+              </p>
+            </div>
+          </div>
 
-          {/* Expense Breakdown by Category */}
-          {pnl.categoryBreakdown.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Expenses by Category</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BarChart
-                  data={pnl.categoryBreakdown.map((c) => ({
-                    name: c.name,
-                    value: c.total,
-                    color: c.color,
-                  }))}
-                  maxValue={Math.max(...pnl.categoryBreakdown.map((c) => c.total))}
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Per-House Breakdown */}
-          {pnl.houseBreakdown.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Profit by House</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-zinc-800">
-                        <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">House</th>
-                        <th className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Revenue</th>
-                        <th className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Expenses</th>
-                        <th className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Profit</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/50">
-                      {pnl.houseBreakdown.map((house, idx) => (
-                        <tr key={idx} className="hover:bg-zinc-800/30 transition-colors">
-                          <td className="py-3 px-4 text-sm font-medium text-zinc-200">{house.name}</td>
-                          <td className="py-3 px-4 text-right">
-                            <span className="text-sm font-semibold font-mono text-green-400">
-                              {formatCurrency(house.revenue)}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <span className="text-sm font-semibold font-mono text-red-400">
-                              {formatCurrency(house.expenses)}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <span className={`text-sm font-semibold font-mono ${house.profit > 0 ? "text-green-400" : house.profit < 0 ? "text-red-400" : "text-zinc-400"}`}>
-                              {formatCurrency(house.profit)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Per-house breakdown */}
+          {data.houses.length > 0 ? (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-white">By House</h2>
+              {data.houses.map((house) => (
+                <HouseCard key={house.house_id} house={house} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-12 text-center">
+              <Home className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
+              <p className="text-white font-semibold mb-1">No houses found</p>
+              <p className="text-zinc-400 text-sm">
+                Add properties and houses to see P&L breakdowns.
+              </p>
+            </div>
           )}
         </>
-      ) : (
-        <Card>
-          <CardContent className="py-8">
-            <EmptyState
-              iconType="inbox"
-              title="No P&L data"
-              description="No revenue or expenses recorded in this period"
-            />
-          </CardContent>
-        </Card>
-      )}
-    </PageContainer>
+      ) : null}
+    </div>
   );
 }

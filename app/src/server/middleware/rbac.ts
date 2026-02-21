@@ -48,7 +48,6 @@ const PERMISSION_MATRIX: Record<
     invoice: ['create', 'read', 'update', 'delete', 'export'],
     payment: ['create', 'read', 'update', 'delete', 'export'],
     ledger: ['read', 'export'],
-    report: ['read', 'export'],
     chore: ['create', 'read', 'update', 'delete'],
     meeting: ['create', 'read', 'update', 'delete'],
     pass: ['create', 'read', 'update', 'delete'],
@@ -60,6 +59,9 @@ const PERMISSION_MATRIX: Record<
     disclosure: ['read', 'export'],
     audit_log: ['read'],
     user: ['create', 'read', 'update', 'delete'],
+    expense: ['create', 'read', 'update', 'delete', 'export'],
+    plaid_connection: ['create', 'read', 'update', 'delete'],
+    report: ['read', 'export'],
   },
 
   org_admin: {
@@ -73,7 +75,6 @@ const PERMISSION_MATRIX: Record<
     invoice: ['read', 'export'],
     payment: ['read', 'export'],
     ledger: ['read'],
-    report: ['read', 'export'],
     chore: ['create', 'read', 'update', 'delete'],
     meeting: ['create', 'read', 'update', 'delete'],
     pass: ['create', 'read', 'update', 'delete'],
@@ -84,6 +85,9 @@ const PERMISSION_MATRIX: Record<
     consent: ['create', 'read', 'update'],
     disclosure: ['read', 'export'],
     user: ['create', 'read', 'update'],
+    expense: ['create', 'read', 'update', 'delete', 'export'],
+    plaid_connection: ['create', 'read', 'update', 'delete'],
+    report: ['read', 'export'],
   },
 
   property_manager: {
@@ -96,7 +100,6 @@ const PERMISSION_MATRIX: Record<
     invoice: ['create', 'read', 'update', 'export'],
     payment: ['create', 'read', 'update', 'export'],
     ledger: ['read'],
-    report: ['read'],
     chore: ['create', 'read', 'update', 'delete'],
     meeting: ['create', 'read', 'update', 'delete'],
     pass: ['create', 'read', 'update', 'delete'],
@@ -106,6 +109,9 @@ const PERMISSION_MATRIX: Record<
     message: ['create', 'read', 'update'],
     consent: ['create', 'read', 'update'],
     disclosure: ['read'],
+    expense: ['create', 'read', 'update', 'delete'],
+    plaid_connection: ['read'],
+    report: ['read'],
   },
 
   house_manager: {
@@ -117,7 +123,6 @@ const PERMISSION_MATRIX: Record<
     invoice: ['create', 'read', 'update'],
     payment: ['create', 'read', 'update'],
     ledger: ['read'],
-    report: ['read'],
     chore: ['create', 'read', 'update', 'delete'],
     meeting: ['create', 'read', 'update', 'delete'],
     pass: ['create', 'read', 'update', 'delete'],
@@ -127,6 +132,9 @@ const PERMISSION_MATRIX: Record<
     message: ['create', 'read', 'update'],
     consent: ['create', 'read', 'update'],
     disclosure: ['read'],
+    expense: ['create', 'read', 'update'],
+    plaid_connection: ['read'],
+    report: ['read'],
   },
 
   staff: {

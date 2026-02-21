@@ -85,6 +85,7 @@ export const plaidItems = pgTable(
     account_mask: text('account_mask'), // last 4 digits
     account_type: text('account_type'), // checking, credit, etc.
     cursor: text('cursor'), // Plaid sync cursor for incremental sync
+    default_house_id: uuid('default_house_id').references(() => houses.id), // G2-14: auto-assign to house
     is_active: boolean('is_active').default(true),
     last_synced_at: timestamp('last_synced_at'),
     created_at: timestamp('created_at').defaultNow().notNull(),
@@ -99,6 +100,10 @@ export const plaidItemsRelations = relations(plaidItems, ({ one }) => ({
   organization: one(organizations, {
     fields: [plaidItems.org_id],
     references: [organizations.id],
+  }),
+  defaultHouse: one(houses, {
+    fields: [plaidItems.default_house_id],
+    references: [houses.id],
   }),
 }));
 

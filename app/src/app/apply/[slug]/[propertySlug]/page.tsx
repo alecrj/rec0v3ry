@@ -21,15 +21,16 @@ interface OrgData {
 
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
-export default function OrgIntakePage() {
+export default function PropertyIntakePage() {
   const params = useParams();
   const orgSlug = params.slug as string;
+  const propertySlug = params.propertySlug as string;
 
   const [org, setOrg] = useState<OrgData | null>(null);
+  const [property, setProperty] = useState<OrgProperty | null>(null);
   const [orgLoading, setOrgLoading] = useState(true);
   const [orgError, setOrgError] = useState<string | null>(null);
 
-  const [selectedPropertySlug, setSelectedPropertySlug] = useState<string>("");
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -52,10 +53,14 @@ export default function OrgIntakePage() {
         }
         const data: OrgData = await res.json();
         setOrg(data);
-        // Pre-select first property if only one
-        if (data.properties.length === 1) {
-          setSelectedPropertySlug(data.properties[0].slug);
+
+        // Find the matching property
+        const matched = data.properties.find((p) => p.slug === propertySlug);
+        if (!matched) {
+          setOrgError("Property not found");
+          return;
         }
+        setProperty(matched);
       } catch {
         setOrgError("Failed to load organization info");
       } finally {
@@ -63,7 +68,7 @@ export default function OrgIntakePage() {
       }
     }
     loadOrg();
-  }, [orgSlug]);
+  }, [orgSlug, propertySlug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -84,7 +89,7 @@ export default function OrgIntakePage() {
           phone: form.phone || undefined,
           preferredMoveInDate: form.preferredMoveInDate || undefined,
           notes: form.notes || undefined,
-          propertySlug: selectedPropertySlug || undefined,
+          propertySlug,
           source: "Intake Form",
         }),
       });
@@ -111,7 +116,7 @@ export default function OrgIntakePage() {
     );
   }
 
-  if (orgError || !org) {
+  if (orgError || !org || !property) {
     return (
       <div className="min-h-screen bg-[#09090B] flex items-center justify-center px-4">
         <div className="bg-[#18181B] border border-zinc-800 rounded-xl p-8 max-w-md w-full text-center">
@@ -136,7 +141,8 @@ export default function OrgIntakePage() {
           </div>
           <h1 className="text-white text-xl font-semibold mb-2">Application Submitted</h1>
           <p className="text-zinc-400 text-sm">
-            Thank you, {form.firstName}! The team at <strong className="text-white">{org.name}</strong> will reach out to you soon.
+            Thank you, {form.firstName}! The team at{" "}
+            <strong className="text-white">{org.name}</strong> ({property.name}) will reach out to you soon.
           </p>
         </div>
       </div>
@@ -163,34 +169,25 @@ export default function OrgIntakePage() {
           )}
           <h1 className="text-white text-2xl font-bold text-center">{org.name}</h1>
           <p className="text-zinc-400 text-sm mt-1 text-center">
-            Sober Living Application
+            {property.name} — {property.city}, {property.state}
           </p>
+          <p className="text-zinc-500 text-xs mt-0.5 text-center">Sober Living Application</p>
         </div>
 
         {/* Form Card */}
         <div className="bg-[#18181B] border border-zinc-800 rounded-xl p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Property Selector — only if multiple properties */}
-            {org.properties.length > 1 && (
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                  Which location are you interested in?
-                </label>
-                <select
-                  value={selectedPropertySlug}
-                  onChange={(e) => setSelectedPropertySlug(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="">Any location</option>
-                  {org.properties.map((prop) => (
-                    <option key={prop.id} value={prop.slug}>
-                      {prop.name} — {prop.city}, {prop.state}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+          {/* Pre-selected property badge */}
+          <div className="flex items-center gap-2 mb-4 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
+            <svg className="w-4 h-4 text-indigo-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-indigo-300 text-sm font-medium">
+              Applying for: {property.name}
+            </span>
+          </div>
 
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
             <div className="grid grid-cols-2 gap-3">
               <div>

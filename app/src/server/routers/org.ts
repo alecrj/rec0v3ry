@@ -11,6 +11,39 @@ import { eq, and, isNull, sql } from 'drizzle-orm';
 
 export const orgRouter = router({
   /**
+   * Get the current user's organization (no input required)
+   * Uses orgId from the tenant middleware context
+   */
+  getCurrent: protectedProcedure
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+
+      const [org] = await db
+        .select({
+          id: organizations.id,
+          name: organizations.name,
+          slug: organizations.slug,
+          settings: organizations.settings,
+          created_at: organizations.created_at,
+          updated_at: organizations.updated_at,
+        })
+        .from(organizations)
+        .where(
+          and(
+            eq(organizations.id, orgId),
+            isNull(organizations.deleted_at)
+          )
+        )
+        .limit(1);
+
+      if (!org) {
+        throw new Error('Organization not found');
+      }
+
+      return org;
+    }),
+
+  /**
    * Get current organization details
    * Permission: org:read
    */

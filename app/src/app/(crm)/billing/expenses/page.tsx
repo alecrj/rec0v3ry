@@ -1,226 +1,484 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+/**
+ * Expenses Page
+ *
+ * G2-15: Auto-categorization
+ * G2-17: Manual expense entry
+ *
+ * Lists all expenses with ability to add manual entries.
+ * Each expense shows category (with auto-suggested override).
+ */
+
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
-import { useToast } from "@/components/ui/toast";
 import {
-  PageContainer,
-  PageHeader,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-  Badge,
-  EmptyState,
-  SkeletonTable,
-} from "@/components/ui";
-import { Plus, X, Receipt, DollarSign, Filter } from "lucide-react";
+  Plus,
+  Receipt,
+  Filter,
+  Home,
+  Tag,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  X,
+  TrendingDown,
+  Link as LinkIcon,
+} from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-const inputClass =
-  "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+// --- Add Expense Modal ---
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
+function AddExpenseModal({
+  onClose,
+  onSuccess,
+  categories,
+  houses,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+  categories: Array<{ id: string; name: string; color: string | null }>;
+  houses: Array<{ id: string; name: string }>;
+}) {
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [description, setDescription] = useState("");
+  const [vendorName, setVendorName] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [houseId, setHouseId] = useState("");
+  const [receiptUrl, setReceiptUrl] = useState("");
+  const [suggestedCategory, setSuggestedCategory] = useState<{
+    category_id: string;
+    category_name: string;
+    confidence: string;
+  } | null>(null);
 
-export default function ExpensesPage() {
-  const { toast } = useToast();
   const utils = trpc.useUtils();
+  const createMutation = trpc.expense.create.useMutation({
+    onSuccess: () => {
+      utils.expense.list.invalidate();
+      onSuccess();
+    },
+  });
 
-  const [showCreate, setShowCreate] = useState(false);
-  const [filterHouseId, setFilterHouseId] = useState("");
-  const [filterCategoryId, setFilterCategoryId] = useState("");
-
-  // Queries
-  const { data: expenses, isLoading } = trpc.expense.list.useQuery(
-    {
-      houseId: filterHouseId || undefined,
-      categoryId: filterCategoryId || undefined,
-    }
+  const { data: suggestionData } = trpc.expense.suggestCategory.useQuery(
+    { merchant_name: vendorName },
+    { enabled: vendorName.length >= 2 }
   );
-  const { data: categories } = trpc.expense.getCategories.useQuery();
-  const { data: allHouses } = trpc.property.listAllHouses.useQuery();
 
-  // Create form state
-  const [form, setForm] = useState({
-    amount: "",
-    description: "",
-    vendor: "",
-    houseId: "",
-    categoryId: "",
-    expenseDate: new Date().toISOString().split("T")[0],
-  });
+  useEffect(() => {
+    if (suggestionData && !categoryId) {
+      setSuggestedCategory(suggestionData);
+      setCategoryId(suggestionData.category_id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestionData]);
 
-  const createExpense = trpc.expense.create.useMutation({
-    onSuccess: () => {
-      toast("success", "Expense recorded");
-      utils.expense.list.invalidate();
-      setShowCreate(false);
-      setForm({ amount: "", description: "", vendor: "", houseId: "", categoryId: "", expenseDate: new Date().toISOString().split("T")[0] });
-    },
-    onError: (err) => toast("error", "Failed to save", err.message),
-  });
+  const handleVendorBlur = () => {
+    // Input blur triggers re-query via vendorName state change
+  };
 
-  const deleteExpense = trpc.expense.delete.useMutation({
-    onSuccess: () => {
-      toast("success", "Expense deleted");
-      utils.expense.list.invalidate();
-    },
-    onError: (err) => toast("error", "Failed to delete", err.message),
-  });
-
-  const handleCreate = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createExpense.mutate({
-      amount: form.amount,
-      description: form.description,
-      vendor: form.vendor || undefined,
-      houseId: form.houseId || undefined,
-      categoryId: form.categoryId || undefined,
-      expenseDate: form.expenseDate,
+    if (!amount || !date) return;
+
+    createMutation.mutate({
+      amount,
+      expense_date: date,
+      description: description || undefined,
+      vendor: vendorName || undefined,
+      category_id: categoryId || undefined,
+      house_id: houseId || undefined,
+      receipt_url: receiptUrl || undefined,
     });
   };
 
-  // Stats
-  const totalAmount = (expenses || []).reduce((s, e) => s + parseFloat(e.amount), 0);
-  const thisMonth = (expenses || []).filter((e) => {
-    const now = new Date();
-    return e.expense_date.startsWith(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-full max-w-lg">
+        <div className="flex items-center justify-between p-6 border-b border-zinc-700">
+          <h2 className="text-lg font-semibold text-white">Add Expense</h2>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Amount + Date row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-zinc-400 block mb-1">
+                Amount <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg pl-7 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-zinc-400 block mb-1">
+                Date <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          {/* Vendor Name */}
+          <div>
+            <label className="text-xs text-zinc-400 block mb-1">Vendor / Merchant</label>
+            <input
+              type="text"
+              value={vendorName}
+              onChange={(e) => { setVendorName(e.target.value); setSuggestedCategory(null); }}
+              onBlur={handleVendorBlur}
+              placeholder="e.g. Home Depot, Walmart"
+              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="text-xs text-zinc-400 block mb-1">Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What was this expense for?"
+              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="text-xs text-zinc-400 block mb-1">Category</label>
+            {suggestedCategory && (
+              <div className="flex items-center gap-1 text-xs text-indigo-400 mb-1">
+                <Tag className="h-3 w-3" />
+                Auto-suggested: {suggestedCategory.category_name}
+                {suggestedCategory.confidence === "learned" ? " (learned)" : ""}
+              </div>
+            )}
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">Select category...</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* House */}
+          <div>
+            <label className="text-xs text-zinc-400 block mb-1">House</label>
+            <select
+              value={houseId}
+              onChange={(e) => setHouseId(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">No specific house</option>
+              {houses.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Receipt URL */}
+          <div>
+            <label className="text-xs text-zinc-400 block mb-1">Receipt URL (optional)</label>
+            <input
+              type="url"
+              value={receiptUrl}
+              onChange={(e) => setReceiptUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          {createMutation.error && (
+            <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">
+              <AlertCircle className="h-4 w-4" />
+              {createMutation.error.message}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createMutation.isPending || !amount || !date}
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              Add Expense
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// --- Category Badge ---
+
+function CategoryBadge({ name, color }: { name: string | null; color: string | null }) {
+  if (!name) {
+    return (
+      <span className="text-xs text-zinc-500 italic">Uncategorized</span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+      style={{
+        backgroundColor: color ? `${color}20` : "#6366f120",
+        color: color ?? "#6366f1",
+      }}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full inline-block"
+        style={{ backgroundColor: color ?? "#6366f1" }}
+      />
+      {name}
+    </span>
+  );
+}
+
+// --- Main Page ---
+
+export default function ExpensesPage() {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
+  const [filterHouse, setFilterHouse] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+
+  const utils = trpc.useUtils();
+
+  const { data: categoriesData } = trpc.expense.getCategories.useQuery();
+  const { data: housesData } = trpc.property.listAllHouses.useQuery();
+
+  const { data: expensesData, isLoading } = trpc.expense.list.useQuery({
+    houseId: filterHouse || undefined,
+    categoryId: filterCategory || undefined,
+    limit: 100,
   });
-  const thisMonthTotal = thisMonth.reduce((s, e) => s + parseFloat(e.amount), 0);
+
+  const deleteMutation = trpc.expense.delete.useMutation({
+    onSuccess: () => utils.expense.list.invalidate(),
+  });
+
+  const categories = categoriesData ?? [];
+  const houses = housesData ?? [];
+  const expenses = expensesData?.expenses ?? [];
+
+  const showSuccess = (msg: string) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  // Calculate summary
+  const totalAmount = expenses.reduce((sum, e) => sum + parseFloat(e.amount ?? "0"), 0);
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="Expenses"
-        description="Track business expenses by house"
-        actions={
-          <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setShowCreate(true)}>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Expenses</h1>
+          <p className="text-zinc-400 mt-1">Track and categorize house operating expenses</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/billing/expenses/pnl"
+            className="flex items-center gap-2 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+          >
+            <TrendingDown className="h-4 w-4" />
+            P&amp;L View
+          </Link>
+          <Link
+            href="/settings/plaid"
+            className="flex items-center gap-2 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+          >
+            <LinkIcon className="h-4 w-4" />
+            Bank Connections
+          </Link>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
             Add Expense
-          </Button>
-        }
-      />
+          </button>
+        </div>
+      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">This Month</p>
-          <p className="text-xl font-semibold font-mono text-red-400">{formatCurrency(thisMonthTotal)}</p>
+      {/* Notification */}
+      {notification && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          {notification}
         </div>
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">Total Shown</p>
-          <p className="text-xl font-semibold font-mono text-zinc-200">{formatCurrency(totalAmount)}</p>
+      )}
+
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+          <p className="text-zinc-400 text-sm">Total Expenses</p>
+          <p className="text-2xl font-bold text-white mt-1">${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
         </div>
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">Count</p>
-          <p className="text-xl font-semibold font-mono text-zinc-200">{expenses?.length || 0}</p>
+        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+          <p className="text-zinc-400 text-sm">Total Entries</p>
+          <p className="text-2xl font-bold text-white mt-1">{expenses.length}</p>
+        </div>
+        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+          <p className="text-zinc-400 text-sm">Uncategorized</p>
+          <p className="text-2xl font-bold text-white mt-1">
+            {expenses.filter((e) => !e.category_id).length}
+          </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3">
         <Filter className="h-4 w-4 text-zinc-500" />
         <select
-          value={filterHouseId}
-          onChange={(e) => setFilterHouseId(e.target.value)}
-          className="h-9 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          value={filterHouse}
+          onChange={(e) => setFilterHouse(e.target.value)}
+          className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Houses</option>
-          {allHouses?.map((h) => (
+          {houses.map((h) => (
             <option key={h.id} value={h.id}>{h.name}</option>
           ))}
         </select>
         <select
-          value={filterCategoryId}
-          onChange={(e) => setFilterCategoryId(e.target.value)}
-          className="h-9 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Categories</option>
-          {categories?.map((c) => (
+          {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
-        {(filterHouseId || filterCategoryId) && (
-          <button
-            onClick={() => { setFilterHouseId(""); setFilterCategoryId(""); }}
-            className="text-xs text-indigo-400 hover:text-indigo-300"
-          >
-            Clear filters
-          </button>
-        )}
       </div>
 
-      {/* Expense Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Expense Log</CardTitle>
-        </CardHeader>
+      {/* Expenses Table */}
+      <div className="bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden">
         {isLoading ? (
-          <CardContent className="pt-0"><SkeletonTable rows={6} columns={5} /></CardContent>
-        ) : !expenses || expenses.length === 0 ? (
-          <CardContent className="pt-0">
-            <EmptyState
-              iconType="inbox"
-              title="No expenses yet"
-              description="Add your first expense to start tracking."
-            />
-          </CardContent>
+          <div className="flex items-center justify-center gap-2 py-12 text-zinc-400">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading expenses...
+          </div>
+        ) : expenses.length === 0 ? (
+          <div className="text-center py-16">
+            <Receipt className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
+            <p className="text-white font-semibold mb-1">No expenses found</p>
+            <p className="text-zinc-400 text-sm mb-6">
+              Add a manual expense or connect a bank account to import transactions.
+            </p>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add First Expense
+            </button>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-800">
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Date</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Description</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Category</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">House</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Amount</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500"></th>
+                <tr className="border-b border-zinc-700 bg-zinc-800/50">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Date</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Vendor</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Description</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Category</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">House</th>
+                  <th className="text-right py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Amount</th>
+                  <th className="py-3 px-4 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/50">
+              <tbody>
                 {expenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-zinc-800/30 transition-colors">
-                    <td className="py-3 px-4 text-sm text-zinc-400 font-mono">
-                      {new Date(expense.expense_date + "T12:00:00").toLocaleDateString()}
+                  <tr
+                    key={expense.id}
+                    className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <td className="py-3 px-4 text-sm text-zinc-300 whitespace-nowrap">
+                      {expense.expense_date}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-white font-medium">
+                      {expense.vendor ?? "—"}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-zinc-400 max-w-xs truncate">
+                      {expense.description ?? "—"}
                     </td>
                     <td className="py-3 px-4">
-                      <p className="text-sm font-medium text-zinc-200">{expense.description}</p>
-                      {expense.vendor && (
-                        <p className="text-xs text-zinc-500">{expense.vendor}</p>
-                      )}
+                      <CategoryBadge
+                        name={expense.category_name ?? null}
+                        color={expense.category_color ?? null}
+                      />
                     </td>
-                    <td className="py-3 px-4">
-                      {expense.category ? (
-                        <Badge variant="default" size="sm">
-                          {expense.category.name}
-                        </Badge>
+                    <td className="py-3 px-4 text-sm">
+                      {expense.house_name ? (
+                        <span className="flex items-center gap-1 text-zinc-300">
+                          <Home className="h-3 w-3 text-zinc-500" />
+                          {expense.house_name}
+                        </span>
                       ) : (
-                        <span className="text-xs text-zinc-600">—</span>
+                        <span className="text-zinc-600">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-sm text-zinc-400">
-                      {expense.house?.name || "Org-wide"}
+                    <td className="py-3 px-4 text-right text-sm font-semibold text-white whitespace-nowrap">
+                      ${parseFloat(expense.amount ?? "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-3 px-4 text-right">
-                      <span className="text-sm font-semibold font-mono text-red-400">
-                        {formatCurrency(parseFloat(expense.amount))}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4">
                       <button
-                        onClick={() => deleteExpense.mutate({ id: expense.id })}
-                        className="text-xs text-zinc-600 hover:text-red-400 transition-colors"
-                        disabled={deleteExpense.isPending}
+                        onClick={() => {
+                          if (confirm("Delete this expense?")) {
+                            deleteMutation.mutate({ expenseId: expense.id });
+                          }
+                        }}
+                        className="text-zinc-600 hover:text-red-400 transition-colors"
                       >
-                        Delete
+                        <X className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -229,109 +487,20 @@ export default function ExpensesPage() {
             </table>
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* Create Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreate(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="flex items-center justify-between p-6 border-b border-zinc-800">
-              <div className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-indigo-400" />
-                <h2 className="text-lg font-bold text-zinc-100">Add Expense</h2>
-              </div>
-              <button onClick={() => setShowCreate(false)} className="text-zinc-500 hover:text-zinc-300">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleCreate} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">Amount *</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                    <input
-                      type="text"
-                      required
-                      value={form.amount}
-                      onChange={(e) => setForm({ ...form, amount: e.target.value.replace(/[^0-9.]/g, "") })}
-                      className={`${inputClass} pl-8`}
-                      placeholder="0.00"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={form.expenseDate}
-                    onChange={(e) => setForm({ ...form, expenseDate: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">Description *</label>
-                <input
-                  type="text"
-                  required
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className={inputClass}
-                  placeholder="What was this expense for?"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">Vendor</label>
-                <input
-                  type="text"
-                  value={form.vendor}
-                  onChange={(e) => setForm({ ...form, vendor: e.target.value })}
-                  className={inputClass}
-                  placeholder="Home Depot, Amazon, etc."
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">Category</label>
-                  <select
-                    value={form.categoryId}
-                    onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                    className={inputClass}
-                  >
-                    <option value="">Select category</option>
-                    {categories?.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">House</label>
-                  <select
-                    value={form.houseId}
-                    onChange={(e) => setForm({ ...form, houseId: e.target.value })}
-                    className={inputClass}
-                  >
-                    <option value="">Org-wide</option>
-                    {allHouses?.map((h) => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
-                <Button type="submit" variant="primary" disabled={createExpense.isPending}>
-                  {createExpense.isPending ? "Saving..." : "Add Expense"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* Add Expense Modal */}
+      {showAddModal && (
+        <AddExpenseModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            showSuccess("Expense added successfully");
+          }}
+          categories={categories}
+          houses={houses}
+        />
       )}
-    </PageContainer>
+    </div>
   );
 }

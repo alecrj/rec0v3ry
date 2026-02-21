@@ -36,11 +36,23 @@ export function PlaidLinkButton({ onSuccess }: PlaidLinkButtonProps) {
   }, []);
 
   const onPlaidSuccess = useCallback(
-    (publicToken: string, metadata: { institution?: { name?: string; institution_id?: string } | null }) => {
+    (
+      public_token: string,
+      metadata: {
+        institution?: { name?: string; institution_id?: string } | null;
+        accounts?: Array<{ id?: string; name?: string; mask?: string; type?: string; subtype?: string }>;
+      }
+    ) => {
+      const account = metadata.accounts?.[0];
       exchangeToken.mutate({
-        publicToken,
-        institutionName: metadata.institution?.name || undefined,
-        institutionId: metadata.institution?.institution_id || undefined,
+        public_token,
+        account_id: account?.id ?? "unknown",
+        institution_id: metadata.institution?.institution_id || undefined,
+        institution_name: metadata.institution?.name || undefined,
+        account_name: account?.name || undefined,
+        account_mask: account?.mask || undefined,
+        account_type: account?.type || undefined,
+        account_subtype: account?.subtype || undefined,
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

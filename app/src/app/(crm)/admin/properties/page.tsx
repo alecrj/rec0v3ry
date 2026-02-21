@@ -259,7 +259,6 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
       propertyId: createdPropertyId,
       name: houseName,
       gender_restriction: (gender as "male" | "female" | "coed") || undefined,
-      bathrooms: parseInt(bathrooms, 10) || undefined,
       rooms: roomConfigs.map((room) => ({
         name: room.name,
         floor: 1,

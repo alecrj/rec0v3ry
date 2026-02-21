@@ -10,10 +10,14 @@ import { router, protectedProcedure } from '../trpc';
 import { z } from 'zod';
 import { db } from '../db/client';
 import { leads, residents, admissions } from '../db/schema/residents';
-import { houses } from '../db/schema/orgs';
+import { organizations, houses, beds } from '../db/schema/orgs';
+import { invoices, invoiceLineItems } from '../db/schema/payments';
+import { rateConfigs } from '../db/schema/payment-extended';
+import { conversations, conversationMembers, messages } from '../db/schema/messaging';
 import { users } from '../db/schema/users';
 import { eq, and, isNull, sql, desc, asc, inArray, count } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import crypto from 'crypto';
 
 // Lead status pipeline order
 const PIPELINE_STAGES = [
@@ -365,8 +369,8 @@ export const leadRouter = router({
     }),
 
   /**
-   * Convert lead to resident and create admission
-   * ADM-01: Lead tracking / CRM pipeline
+   * Convert lead to resident — one-click comprehensive admission
+   * G2-1: Creates resident, admission, assigns bed, creates invoice, sends welcome message
    */
   convertToResident: protectedProcedure
     .input(z.object({
@@ -376,8 +380,14 @@ export const leadRouter = router({
       bedId: z.string().uuid().optional(),
       dateOfBirth: z.string(),
       caseManagerId: z.string().uuid().optional(),
+      generateInvoice: z.boolean().default(true),
+      sendDocuments: z.boolean().default(true),
+      monthlyRentAmount: z.string().optional(), // Decimal string, e.g. "800.00"
     }))
     .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+      const userId = ctx.user!.id;
+
       // Get lead
       const [lead] = await db
         .select()
@@ -414,24 +424,158 @@ export const leadRouter = router({
           referral_source: lead.source,
           referral_contact_id: lead.referral_source_id,
           notes: lead.notes,
-          created_by: ctx.user!.id,
+          created_by: userId,
         })
         .returning();
 
-      // Create admission
+      // Create admission with status 'active' (one-click = approved)
       const [admission] = await db
         .insert(admissions)
         .values({
           org_id: lead.org_id,
           resident_id: resident.id,
           house_id: input.houseId,
-          bed_id: input.bedId,
+          bed_id: input.bedId || null,
           admission_date: input.admissionDate,
-          case_manager_id: input.caseManagerId,
-          status: 'pending', // Will be 'active' after intake complete
-          created_by: ctx.user!.id,
+          case_manager_id: input.caseManagerId || null,
+          status: 'active',
+          created_by: userId,
         })
         .returning();
+
+      // Assign bed: mark bed as occupied if bedId provided
+      if (input.bedId) {
+        await db
+          .update(beds)
+          .set({
+            status: 'occupied',
+            updated_at: new Date(),
+            updated_by: userId,
+          })
+          .where(eq(beds.id, input.bedId));
+      }
+
+      // Generate first month's invoice if requested
+      let invoice = null;
+      if (input.generateInvoice) {
+        // Try to find rent rate config for this house, else use provided amount or default $0
+        let rentAmount = input.monthlyRentAmount ? parseFloat(input.monthlyRentAmount) : null;
+
+        if (!rentAmount) {
+          // Look up rate config for this house
+          const [rateConfig] = await db
+            .select()
+            .from(rateConfigs)
+            .where(
+              and(
+                eq(rateConfigs.org_id, orgId),
+                eq(rateConfigs.house_id, input.houseId),
+                eq(rateConfigs.payment_type, 'rent'),
+                isNull(rateConfigs.effective_until),
+              )
+            )
+            .limit(1);
+
+          if (rateConfig) {
+            rentAmount = parseFloat(rateConfig.amount);
+          }
+        }
+
+        if (rentAmount && rentAmount > 0) {
+          // Get org slug for invoice number
+          const [org] = await db
+            .select({ slug: organizations.slug })
+            .from(organizations)
+            .where(eq(organizations.id, orgId))
+            .limit(1);
+
+          const [countResult] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(invoices)
+            .where(and(eq(invoices.org_id, orgId), isNull(invoices.deleted_at)));
+          const invoiceCount = countResult?.count || 0;
+          const invoiceNumber = `INV-${(org?.slug || 'ORG').toUpperCase()}-${(invoiceCount + 1).toString().padStart(5, '0')}`;
+
+          const issueDate = input.admissionDate;
+          // Due date = 30 days after admission
+          const dueDateObj = new Date(input.admissionDate);
+          dueDateObj.setDate(dueDateObj.getDate() + 30);
+          const dueDate = dueDateObj.toISOString().split('T')[0];
+
+          const [newInvoice] = await db
+            .insert(invoices)
+            .values({
+              org_id: orgId,
+              resident_id: resident.id,
+              admission_id: admission.id,
+              invoice_number: invoiceNumber,
+              status: 'pending',
+              issue_date: issueDate,
+              due_date: dueDate,
+              subtotal: rentAmount.toFixed(2),
+              tax_amount: '0',
+              total: rentAmount.toFixed(2),
+              amount_paid: '0',
+              amount_due: rentAmount.toFixed(2),
+              notes: 'First month rent — generated at move-in',
+              created_by: userId,
+              updated_by: userId,
+            })
+            .returning();
+
+          await db
+            .insert(invoiceLineItems)
+            .values({
+              invoice_id: newInvoice.id,
+              description: 'Monthly Rent',
+              payment_type: 'rent',
+              quantity: 1,
+              unit_price: rentAmount.toFixed(2),
+              amount: rentAmount.toFixed(2),
+              start_date: issueDate,
+              end_date: dueDate,
+            });
+
+          invoice = newInvoice;
+        }
+      }
+
+      // Send welcome system message
+      // Create a direct conversation between staff (ctx.user) and resident
+      const [conversation] = await db
+        .insert(conversations)
+        .values({
+          org_id: orgId,
+          conversation_type: 'direct',
+          title: `Welcome — ${lead.first_name} ${lead.last_name}`,
+          created_by: userId,
+        })
+        .returning();
+
+      // Add staff user as member
+      await db.insert(conversationMembers).values({
+        org_id: orgId,
+        conversation_id: conversation.id,
+        user_id: userId,
+      });
+
+      // Add resident as member
+      await db.insert(conversationMembers).values({
+        org_id: orgId,
+        conversation_id: conversation.id,
+        resident_id: resident.id,
+      });
+
+      // Send welcome message
+      const welcomeText = `Welcome to RecoveryOS, ${lead.first_name}! Your admission has been confirmed. Please download the RecoveryOS app to complete your intake, sign documents, and stay connected with your house. We're glad you're here.`;
+
+      await db.insert(messages).values({
+        org_id: orgId,
+        conversation_id: conversation.id,
+        sender_user_id: userId,
+        content: welcomeText,
+        is_system_message: true,
+      });
 
       // Update lead as converted
       await db
@@ -441,7 +585,7 @@ export const leadRouter = router({
           converted_to_resident_id: resident.id,
           converted_at: new Date(),
           updated_at: new Date(),
-          updated_by: ctx.user!.id,
+          updated_by: userId,
         })
         .where(eq(leads.id, input.leadId));
 
@@ -449,6 +593,68 @@ export const leadRouter = router({
         lead,
         resident,
         admission,
+        invoice,
+        conversationId: conversation.id,
+      };
+    }),
+
+  /**
+   * Send app invite to resident
+   * G2-2: Generate invite link for resident self-signup
+   */
+  sendInvite: protectedProcedure
+    .input(z.object({
+      residentId: z.string().uuid(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      // Verify resident exists and belongs to this org
+      const [resident] = await db
+        .select()
+        .from(residents)
+        .where(
+          and(
+            eq(residents.id, input.residentId),
+            eq(residents.org_id, orgId),
+            isNull(residents.deleted_at)
+          )
+        )
+        .limit(1);
+
+      if (!resident) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Resident not found' });
+      }
+
+      // Generate a secure invite token (32 random bytes as hex)
+      const inviteToken = crypto.randomBytes(32).toString('hex');
+
+      // Store token in resident notes as metadata (no schema migration needed)
+      // Format: [INVITE_TOKEN:<token>:<iso-timestamp>]
+      const inviteMarker = `[INVITE_TOKEN:${inviteToken}:${new Date().toISOString()}]`;
+      const existingNotes = resident.notes || '';
+      // Remove any previous invite token from notes
+      const cleanedNotes = existingNotes.replace(/\[INVITE_TOKEN:[^\]]+\]/g, '').trim();
+      const updatedNotes = cleanedNotes ? `${cleanedNotes}\n${inviteMarker}` : inviteMarker;
+
+      await db
+        .update(residents)
+        .set({
+          notes: updatedNotes,
+          updated_at: new Date(),
+          updated_by: ctx.user!.id,
+        })
+        .where(eq(residents.id, input.residentId));
+
+      // Build invite link
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.recoveryos.com';
+      const inviteLink = `${baseUrl}/register?invite=${inviteToken}&resident=${input.residentId}`;
+
+      return {
+        inviteToken,
+        inviteLink,
+        residentId: input.residentId,
+        sentAt: new Date().toISOString(),
       };
     }),
 
@@ -484,6 +690,38 @@ export const leadRouter = router({
         converted: s.converted,
         conversionRate: s.count > 0 ? Math.round((s.converted / s.count) * 100) : 0,
       }));
+    }),
+
+  /**
+   * Quick create lead (orgId from ctx, for dashboard modal)
+   */
+  quickCreate: protectedProcedure
+    .input(z.object({
+      firstName: z.string().min(1).max(255),
+      lastName: z.string().min(1).max(255),
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+      dob: z.string().optional(),
+      source: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+      const notes = input.dob ? `DOB: ${input.dob}` : undefined;
+      const [lead] = await db
+        .insert(leads)
+        .values({
+          org_id: orgId,
+          first_name: input.firstName,
+          last_name: input.lastName,
+          email: input.email,
+          phone: input.phone,
+          notes,
+          source: input.source || 'manual',
+          status: 'new',
+          created_by: ctx.user!.id,
+        })
+        .returning();
+      return lead;
     }),
 
   /**

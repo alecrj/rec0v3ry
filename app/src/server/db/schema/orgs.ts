@@ -34,6 +34,7 @@ export const properties = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     org_id: uuid('org_id').notNull().references(() => organizations.id),
     name: text('name').notNull(),
+    slug: text('slug').notNull().default(''), // URL-safe identifier, auto-generated from name
     address_line1: text('address_line1').notNull(),
     address_line2: text('address_line2'),
     city: text('city').notNull(),
@@ -50,6 +51,7 @@ export const properties = pgTable(
   },
   (table) => ({
     org_id_idx: index('properties_org_id_idx').on(table.org_id),
+    org_slug_idx: index('properties_org_slug_idx').on(table.org_id, table.slug),
     deleted_at_idx: index('properties_deleted_at_idx').on(table.deleted_at),
   })
 );
@@ -70,8 +72,7 @@ export const houses = pgTable(
     org_id: uuid('org_id').notNull().references(() => organizations.id),
     property_id: uuid('property_id').notNull().references(() => properties.id),
     name: text('name').notNull(),
-    capacity: integer('capacity').notNull(), // Max residents (computed from total beds)
-    bathrooms: integer('bathrooms'), // Number of bathrooms in the house
+    capacity: integer('capacity').notNull(), // Max residents
     gender_restriction: text('gender_restriction'), // 'male', 'female', 'coed', null
     address_line1: text('address_line1'),
     address_line2: text('address_line2'),

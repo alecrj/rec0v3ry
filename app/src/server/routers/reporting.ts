@@ -16,12 +16,10 @@
 
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
-import { beds, houses, properties, rooms } from '../db/schema/orgs';
+import { beds, houses, properties } from '../db/schema/orgs';
 import { residents, admissions, leads } from '../db/schema/residents';
 import { invoices, payments, ledgerEntries, ledgerAccounts } from '../db/schema/payments';
-import { rateConfigs } from '../db/schema/payment-extended';
 import { chores, choreAssignments, meetings, meetingAttendance, drugTests, incidents, passes } from '../db/schema/operations';
-import { maintenanceRequests } from '../db/schema/operations-extended';
 import { consents, consentDisclosures, breachIncidents } from '../db/schema/compliance';
 import { auditLogs } from '../db/schema/audit';
 import { eq, and, desc, gte, lte, sql, count, sum, isNull, isNotNull, inArray, ne, or } from 'drizzle-orm';
@@ -916,19 +914,19 @@ export const reportingRouter = router({
     .query(async ({ ctx }) => {
       const orgId = (ctx as unknown as { orgId: string }).orgId;
       const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
       const mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const today = now.toISOString().split('T')[0]!;
 
-      // === All Beds with house info ===
+      // === Occupancy ===
       const allBeds = await ctx.db.query.beds.findMany({
         where: and(eq(beds.org_id, orgId), isNull(beds.deleted_at)),
       });
       const totalBeds = allBeds.length;
       const occupiedBeds = allBeds.filter((b) => b.status === 'occupied').length;
-      const emptyBeds = totalBeds - occupiedBeds;
       const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100 * 10) / 10 : 0;
 
-      // === Revenue (Collected) MTD ===
+      // === Revenue MTD ===
       const mtdPayments = await ctx.db.query.payments.findMany({
         where: and(
           eq(payments.org_id, orgId),
@@ -937,193 +935,208 @@ export const reportingRouter = router({
           gte(payments.payment_date, mtdStart)
         ),
       });
-      const collectedMTD = mtdPayments.reduce((s, p) => s + parseFloat(p.amount), 0);
+      const revenueMTD = mtdPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
-      // === Outstanding (all unpaid invoices) ===
-      const unpaidInvoices = await ctx.db.query.invoices.findMany({
+      // === Outstanding ===
+      const overdueInvoices = await ctx.db.query.invoices.findMany({
         where: and(
           eq(invoices.org_id, orgId),
           isNull(invoices.deleted_at),
           inArray(invoices.status, ['pending', 'overdue']),
+          lte(invoices.due_date, now.toISOString().split('T')[0]!)
+        ),
+      });
+      const totalOutstanding = overdueInvoices.reduce((sum, i) => sum + parseFloat(i.amount_due), 0);
+
+      // === Expiring Consents ===
+      const expiringConsents = await ctx.db.query.consents.findMany({
+        where: and(
+          eq(consents.org_id, orgId),
+          isNull(consents.deleted_at),
+          eq(consents.status, 'active'),
+          isNotNull(consents.expires_at),
+          gte(consents.expires_at, now),
+          lte(consents.expires_at, thirtyDaysFromNow)
         ),
         with: {
-          resident: { columns: { id: true, first_name: true, last_name: true } },
+          resident: {
+            columns: { id: true, first_name: true, last_name: true },
+          },
         },
+        orderBy: [consents.expires_at],
+        limit: 10,
       });
-      const totalOutstanding = unpaidInvoices.reduce((s, i) => s + parseFloat(i.amount_due), 0);
-      const overdueInvoices = unpaidInvoices.filter((i) => i.due_date && i.due_date <= today);
 
-      // === Lost Revenue from Empty Beds ===
-      const activeRates = await ctx.db.query.rateConfigs.findMany({
+      // === Recent Activity (from audit logs) ===
+      const recentActivity = await ctx.db.query.auditLogs.findMany({
         where: and(
-          eq(rateConfigs.org_id, orgId),
-          eq(rateConfigs.is_active, true),
-          eq(rateConfigs.payment_type, 'rent'),
+          eq(auditLogs.org_id, orgId),
+          gte(auditLogs.created_at, thirtyDaysAgo)
         ),
-      });
-      // Get average rate per house, fallback to org average
-      const houseRateMap = new Map<string, number>();
-      let totalRate = 0;
-      let rateCount = 0;
-      for (const r of activeRates) {
-        const amt = parseFloat(r.amount);
-        if (r.house_id) {
-          houseRateMap.set(r.house_id, amt);
-        }
-        totalRate += amt;
-        rateCount++;
-      }
-      const avgRate = rateCount > 0 ? totalRate / rateCount : 0;
-
-      // Map beds to houses to calculate lost revenue
-      const allRooms = await ctx.db.query.rooms.findMany({
-        where: and(eq(rooms.org_id, orgId), isNull(rooms.deleted_at)),
-      });
-      const roomHouseMap = new Map<string, string>();
-      for (const r of allRooms) roomHouseMap.set(r.id, r.house_id);
-
-      let lostRevenue = 0;
-      for (const bed of allBeds) {
-        if (bed.status !== 'occupied') {
-          const houseId = roomHouseMap.get(bed.room_id);
-          const rate = houseId ? (houseRateMap.get(houseId) ?? avgRate) : avgRate;
-          lostRevenue += rate;
-        }
-      }
-
-      // === Houses with stats ===
-      const allHouses = await ctx.db.query.houses.findMany({
-        where: and(eq(houses.org_id, orgId), isNull(houses.deleted_at)),
+        with: {
+          actorUser: {
+            columns: { id: true, first_name: true, last_name: true },
+          },
+        },
+        orderBy: [desc(auditLogs.created_at)],
+        limit: 10,
       });
 
-      const houseCards = allHouses.map((h) => {
-        const houseBeds = allBeds.filter((b) => {
-          const houseId = roomHouseMap.get(b.room_id);
-          return houseId === h.id;
-        });
-        const houseOccupied = houseBeds.filter((b) => b.status === 'occupied').length;
-        const houseTotal = houseBeds.length;
-        const houseRevenue = mtdPayments
-          .filter((p) => (p as unknown as { house_id?: string }).house_id === h.id)
-          .reduce((s, p) => s + parseFloat(p.amount), 0);
-        const houseOutstanding = unpaidInvoices
-          .filter((i) => (i as unknown as { house_id?: string }).house_id === h.id)
-          .reduce((s, i) => s + parseFloat(i.amount_due), 0);
-        const rate = houseRateMap.get(h.id) ?? avgRate;
+      // === Action Items (various alerts) ===
+      // Overdue drug tests
+      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-        return {
-          id: h.id,
-          name: h.name,
-          beds: { occupied: houseOccupied, total: houseTotal },
-          revenueMTD: Math.round(houseRevenue * 100) / 100,
-          outstanding: Math.round(houseOutstanding * 100) / 100,
-          lostRevenue: Math.round((houseTotal - houseOccupied) * rate * 100) / 100,
-        };
-      });
-
-      // === Action Items (sorted by money impact) ===
-      // Late on rent
-      const lateResidents = overdueInvoices.map((i) => ({
-        id: i.id,
-        residentName: i.resident ? `${i.resident.first_name} ${i.resident.last_name}` : 'Unknown',
-        amount: parseFloat(i.amount_due),
-      }));
-
-      // Pending maintenance
-      const pendingMaint = await ctx.db.query.maintenanceRequests.findMany({
+      // High priority incidents
+      const openHighIncidents = await ctx.db.query.incidents.findMany({
         where: and(
-          eq(maintenanceRequests.org_id, orgId),
-          inArray(maintenanceRequests.status, ['open', 'in_progress']),
-        ),
-      });
-
-      // New applicants
-      const newLeads = await ctx.db.query.leads.findMany({
-        where: and(
-          eq(leads.org_id, orgId),
-          isNull(leads.deleted_at),
-          eq(leads.status, 'new'),
+          eq(incidents.org_id, orgId),
+          isNull(incidents.deleted_at),
+          inArray(incidents.severity, ['high', 'critical']),
+          eq(incidents.follow_up_required, true)
         ),
         limit: 5,
       });
 
-      // Incomplete chores today
-      const incompleteChores = await ctx.db.query.choreAssignments.findMany({
-        where: and(
-          eq(choreAssignments.org_id, orgId),
-          eq(choreAssignments.status, 'assigned'),
-          lte(choreAssignments.due_date, today),
-        ),
-      });
-
-      // Pending passes
+      // Pending pass requests
       const pendingPasses = await ctx.db.query.passes.findMany({
         where: and(
           eq(passes.org_id, orgId),
           isNull(passes.deleted_at),
           eq(passes.status, 'requested')
         ),
-      });
-
-      // Recent Activity
-      const recentActivity = await ctx.db.query.auditLogs.findMany({
-        where: and(eq(auditLogs.org_id, orgId)),
-        with: {
-          actorUser: { columns: { id: true, first_name: true, last_name: true } },
-        },
-        orderBy: [desc(auditLogs.created_at)],
-        limit: 8,
+        limit: 5,
       });
 
       return {
-        money: {
-          collectedMTD: Math.round(collectedMTD * 100) / 100,
-          outstanding: Math.round(totalOutstanding * 100) / 100,
-          overdueCount: overdueInvoices.length,
-          lostRevenue: Math.round(lostRevenue * 100) / 100,
-        },
         occupancy: {
           rate: occupancyRate,
           occupied: occupiedBeds,
           total: totalBeds,
-          empty: emptyBeds,
         },
-        houseCards,
-        actionItems: {
-          lateRent: {
-            count: lateResidents.length,
-            totalAmount: Math.round(lateResidents.reduce((s, r) => s + r.amount, 0) * 100) / 100,
-            residents: lateResidents.slice(0, 5),
-          },
-          emptyBeds: {
-            count: emptyBeds,
-            lostRevenue: Math.round(lostRevenue * 100) / 100,
-          },
-          pendingMaintenance: pendingMaint.length,
-          newApplicants: {
-            count: newLeads.length,
-            names: newLeads.map((l) => `${l.first_name} ${l.last_name}`),
-          },
-          incompleteChores: incompleteChores.length,
-          pendingPasses: pendingPasses.length,
+        revenueMTD: Math.round(revenueMTD * 100) / 100,
+        outstanding: {
+          total: Math.round(totalOutstanding * 100) / 100,
+          invoiceCount: overdueInvoices.length,
+        },
+        expiringConsents: {
+          count: expiringConsents.length,
+          items: expiringConsents.map((c) => ({
+            id: c.id,
+            residentName: `${c.resident.first_name} ${c.resident.last_name}`,
+            consentType: c.consent_type,
+            expiresAt: c.expires_at?.toISOString(),
+            daysRemaining: c.expires_at
+              ? Math.floor((c.expires_at.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              : null,
+          })),
         },
         recentActivity: recentActivity.map((a) => ({
           id: a.id,
           action: a.action,
           description: a.description,
+          resourceType: a.resource_type,
           actor: a.actorUser
             ? `${a.actorUser.first_name} ${a.actorUser.last_name}`
             : a.actor_type,
           timestamp: a.created_at.toISOString(),
         })),
-        // Legacy compat for existing references
-        revenueMTD: Math.round(collectedMTD * 100) / 100,
-        outstanding: {
-          total: Math.round(totalOutstanding * 100) / 100,
-          invoiceCount: overdueInvoices.length,
+        actionItems: {
+          highPriorityIncidents: openHighIncidents.length,
+          pendingPasses: pendingPasses.length,
+          expiringConsents: expiringConsents.length,
         },
-        expiringConsents: { count: 0, items: [] },
       };
+    }),
+
+  /**
+   * Get active residents list (for payment modal picker)
+   */
+  getActiveResidents: protectedProcedure
+    .meta({ permission: 'report:read', resource: 'report' })
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+
+      const activeAdmissions = await ctx.db.query.admissions.findMany({
+        where: and(
+          eq(admissions.org_id, orgId),
+          eq(admissions.status, 'active'),
+          isNull(admissions.deleted_at)
+        ),
+        with: {
+          resident: {
+            columns: { id: true, first_name: true, last_name: true, email: true },
+          },
+        },
+        orderBy: [admissions.admission_date],
+      });
+
+      return activeAdmissions.map((a) => ({
+        residentId: a.resident.id,
+        name: `${a.resident.first_name} ${a.resident.last_name}`,
+        email: a.resident.email,
+        admissionId: a.id,
+      }));
+    }),
+
+  /**
+   * Get outstanding balance breakdown per resident (for G2-9 drill-down)
+   */
+  getOutstandingByResident: protectedProcedure
+    .meta({ permission: 'report:read', resource: 'report' })
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+      const now = new Date();
+
+      const overdueInvoices = await ctx.db.query.invoices.findMany({
+        where: and(
+          eq(invoices.org_id, orgId),
+          isNull(invoices.deleted_at),
+          inArray(invoices.status, ['pending', 'overdue']),
+          lte(invoices.due_date, now.toISOString().split('T')[0]!)
+        ),
+        with: {
+          resident: {
+            columns: { id: true, first_name: true, last_name: true },
+          },
+        },
+        orderBy: [invoices.due_date],
+      });
+
+      // Group by resident
+      const residentMap = new Map<string, {
+        residentId: string;
+        residentName: string;
+        totalOwed: number;
+        oldestDueDate: string;
+        invoiceCount: number;
+      }>();
+
+      for (const inv of overdueInvoices) {
+        const key = inv.resident_id;
+        const existing = residentMap.get(key) || {
+          residentId: inv.resident.id,
+          residentName: `${inv.resident.first_name} ${inv.resident.last_name}`,
+          totalOwed: 0,
+          oldestDueDate: inv.due_date,
+          invoiceCount: 0,
+        };
+        existing.totalOwed += parseFloat(inv.amount_due);
+        existing.invoiceCount++;
+        if (inv.due_date < existing.oldestDueDate) {
+          existing.oldestDueDate = inv.due_date;
+        }
+        residentMap.set(key, existing);
+      }
+
+      return Array.from(residentMap.values())
+        .sort((a, b) => b.totalOwed - a.totalOwed)
+        .map((item) => ({
+          ...item,
+          totalOwed: Math.round(item.totalOwed * 100) / 100,
+          daysOverdue: Math.floor(
+            (now.getTime() - new Date(item.oldestDueDate).getTime()) / (1000 * 60 * 60 * 24)
+          ),
+        }));
     }),
 
   // ============================================================

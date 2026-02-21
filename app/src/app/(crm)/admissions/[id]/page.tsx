@@ -1,8 +1,10 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ChevronLeft,
   User,
@@ -18,29 +20,16 @@ import {
   ArrowRight,
   AlertCircle,
   Shield,
-  Upload,
+  BedDouble,
+  DollarSign,
+  Send,
+  Copy,
+  Check,
   Loader2,
-  X,
-  MessageSquare,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc";
-import {
-  PageContainer,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  Button,
-  Badge,
-  ErrorState,
-  useToast,
-} from "@/components/ui";
 
-const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
-
-export const dynamic = "force-dynamic";
-
+// Pipeline stages for status display
 const PIPELINE_STAGES = [
   { id: "new", label: "New" },
   { id: "contacted", label: "Contacted" },
@@ -52,45 +41,35 @@ const PIPELINE_STAGES = [
   { id: "converted", label: "Admitted" },
 ];
 
-const INTAKE_CHECKLIST = [
-  { id: "personal_info", label: "Personal Information", icon: User, required: true, completed: false },
-  { id: "emergency_contacts", label: "Emergency Contacts", icon: Phone, required: true, completed: false },
-  { id: "insurance_info", label: "Insurance Information", icon: FileText, required: false, completed: false },
-  { id: "photo_id", label: "Photo ID Upload", icon: Upload, required: true, completed: false },
-  { id: "insurance_card", label: "Insurance Card Upload", icon: Upload, required: false, completed: false },
-  { id: "court_documents", label: "Court Documents", icon: FileText, required: false, completed: false },
-  { id: "part2_consent", label: "Consent Form", icon: Shield, required: true, completed: false },
-  { id: "privacy_notice", label: "Privacy Notice Acknowledgment", icon: Shield, required: true, completed: false },
-  { id: "house_rules", label: "House Rules Agreement", icon: Home, required: true, completed: false },
-  { id: "financial_agreement", label: "Financial Agreement", icon: FileText, required: true, completed: false },
-  { id: "intake_form", label: "Intake Assessment Form", icon: FileText, required: true, completed: false },
-];
-
 function StatusPipeline({ currentStatus }: { currentStatus: string }) {
   const currentIndex = PIPELINE_STAGES.findIndex((s) => s.id === currentStatus);
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between overflow-x-auto">
       {PIPELINE_STAGES.map((stage, index) => {
         const isCompleted = index < currentIndex;
         const isCurrent = index === currentIndex;
 
         return (
-          <div key={stage.id} className="flex items-center flex-1">
-            <div className="flex flex-col items-center">
+          <div key={stage.id} className="flex items-center flex-1 min-w-0">
+            <div className="flex flex-col items-center min-w-0">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
                   isCompleted
                     ? "bg-green-500 text-white"
                     : isCurrent
                     ? "bg-indigo-500 text-white"
-                    : "bg-zinc-700 text-zinc-500"
+                    : "bg-zinc-700 text-zinc-400"
                 }`}
               >
-                {isCompleted ? <CheckCircle className="h-5 w-5" /> : index + 1}
+                {isCompleted ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  index + 1
+                )}
               </div>
               <span
-                className={`mt-1 text-xs ${
+                className={`mt-1 text-xs whitespace-nowrap ${
                   isCurrent ? "font-medium text-indigo-400" : "text-zinc-500"
                 }`}
               >
@@ -99,7 +78,7 @@ function StatusPipeline({ currentStatus }: { currentStatus: string }) {
             </div>
             {index < PIPELINE_STAGES.length - 1 && (
               <div
-                className={`flex-1 h-1 mx-2 ${
+                className={`flex-1 h-0.5 mx-2 shrink ${
                   index < currentIndex ? "bg-green-500" : "bg-zinc-700"
                 }`}
               />
@@ -111,329 +90,103 @@ function StatusPipeline({ currentStatus }: { currentStatus: string }) {
   );
 }
 
-function IntakeChecklist() {
-  const requiredItems = INTAKE_CHECKLIST.filter((i) => i.required);
-  const completedRequired = requiredItems.filter((i) => i.completed).length;
-  const progress = Math.round((completedRequired / requiredItems.length) * 100);
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between w-full">
-          <CardTitle>Intake Checklist</CardTitle>
-          <span className="text-sm text-zinc-500">
-            {completedRequired}/{requiredItems.length} required
-          </span>
-        </div>
-        <div className="mt-2 h-2 bg-zinc-800 rounded-full overflow-hidden w-full">
-          <div
-            className="h-full bg-indigo-500 rounded-full transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </CardHeader>
-      <div className="divide-y divide-zinc-800/50">
-        {INTAKE_CHECKLIST.map((item) => (
-          <div
-            key={item.id}
-            className={`px-6 py-3 flex items-center justify-between hover:bg-zinc-800/40 cursor-pointer ${
-              item.completed ? "bg-green-500/10/50" : ""
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {item.completed ? (
-                <CheckCircle className="h-5 w-5 text-green-400" />
-              ) : (
-                <Circle className="h-5 w-5 text-zinc-600" />
-              )}
-              <div>
-                <span className={`text-sm ${item.completed ? "text-zinc-500" : "text-zinc-100"}`}>
-                  {item.label}
-                </span>
-                {item.required && !item.completed && (
-                  <span className="ml-2 text-xs text-red-400">Required</span>
-                )}
-              </div>
-            </div>
-            {!item.completed && (
-              <Button variant="ghost" size="sm" className="text-indigo-400">
-                {item.id.includes("upload")
-                  ? "Upload"
-                  : item.id.includes("consent") || item.id.includes("agreement") || item.id.includes("notice")
-                  ? "Sign"
-                  : "Complete"}
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-// ── Edit Lead Modal ────────────────────────────────────────
-function EditLeadModal({
-  isOpen,
-  onClose,
-  lead,
-}: {
+interface ConvertModalProps {
   isOpen: boolean;
   onClose: () => void;
   lead: {
     id: string;
+    org_id: string;
     first_name: string;
     last_name: string;
     email: string | null;
     phone: string | null;
-    source: string | null;
-    preferred_move_in_date: string | null;
-    notes: string | null;
-  };
-}) {
-  const { toast } = useToast();
-  const utils = trpc.useUtils();
-  const [firstName, setFirstName] = useState(lead.first_name);
-  const [lastName, setLastName] = useState(lead.last_name);
-  const [email, setEmail] = useState(lead.email ?? "");
-  const [phone, setPhone] = useState(lead.phone ?? "");
-  const [source, setSource] = useState(lead.source ?? "");
-  const [moveInDate, setMoveInDate] = useState(lead.preferred_move_in_date ?? "");
-
-  const updateMutation = trpc.lead.update.useMutation({
-    onSuccess: () => {
-      toast("success", "Lead updated");
-      utils.lead.getById.invalidate({ leadId: lead.id });
-      onClose();
-    },
-    onError: (err) => toast("error", "Failed to update", err.message),
-  });
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-zinc-100">Edit Lead</h2>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300"><X className="h-5 w-5" /></button>
-        </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            updateMutation.mutate({
-              leadId: lead.id,
-              firstName,
-              lastName,
-              email: email || null,
-              phone: phone || null,
-              source: source || null,
-              preferredMoveInDate: moveInDate || null,
-            });
-          }}
-          className="p-6 space-y-4"
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name *</label>
-              <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name *</label>
-              <input required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Source</label>
-              <input value={source} onChange={(e) => setSource(e.target.value)} className={inputClass} placeholder="e.g. Website, Referral" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Preferred Move-in</label>
-              <input type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} className={inputClass} />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={!firstName || !lastName || updateMutation.isPending}>
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ── Add Note / Log Activity Modal ──────────────────────────
-function AddNoteModal({
-  isOpen,
-  onClose,
-  leadId,
-  existingNotes,
-  activityType,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  leadId: string;
-  existingNotes: string | null;
-  activityType: "note" | "phone_call" | "email" | "tour";
-}) {
-  const { toast } = useToast();
-  const utils = trpc.useUtils();
-  const [content, setContent] = useState("");
-
-  const labels: Record<string, string> = {
-    note: "Add Note",
-    phone_call: "Log Phone Call",
-    email: "Log Email",
-    tour: "Schedule Tour",
-  };
-
-  const placeholders: Record<string, string> = {
-    note: "Enter your note...",
-    phone_call: "Summary of the phone call...",
-    email: "Summary of email sent...",
-    tour: "Tour date, time, and details...",
-  };
-
-  const updateMutation = trpc.lead.update.useMutation({
-    onSuccess: () => {
-      toast("success", `${labels[activityType]} logged`);
-      utils.lead.getById.invalidate({ leadId });
-      setContent("");
-      onClose();
-    },
-    onError: (err) => toast("error", "Failed to save", err.message),
-  });
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">{labels[activityType]}</h2>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300"><X className="h-5 w-5" /></button>
-        </div>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const timestamp = new Date().toLocaleString();
-            const prefix = activityType === "note" ? "" : `[${labels[activityType]}] `;
-            const newEntry = `${prefix}${timestamp}: ${content}`;
-            const updatedNotes = existingNotes
-              ? `${newEntry}\n\n${existingNotes}`
-              : newEntry;
-            updateMutation.mutate({ leadId, notes: updatedNotes });
-          }}
-          className="p-6 space-y-4"
-        >
-          <div>
-            <textarea
-              required
-              rows={4}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
-              placeholder={placeholders[activityType]}
-              autoFocus
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={!content || updateMutation.isPending}>
-              {updateMutation.isPending ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-interface ConvertModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  leadId: string;
-  lead: {
-    first_name: string;
-    last_name: string;
     preferred_move_in_date: string | null;
     house_preference_id: string | null;
   };
 }
 
-function ConvertToResidentModal({ isOpen, onClose, leadId, lead }: ConvertModalProps) {
-  const { toast } = useToast();
+function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
   const router = useRouter();
+  const utils = trpc.useUtils();
+
   const [houseId, setHouseId] = useState(lead.house_preference_id || "");
-  const [admissionDate, setAdmissionDate] = useState(lead.preferred_move_in_date || "");
+  const [bedId, setBedId] = useState("");
+  const [admissionDate, setAdmissionDate] = useState(
+    lead.preferred_move_in_date || new Date().toISOString().split("T")[0]
+  );
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [generateInvoice, setGenerateInvoice] = useState(true);
+  const [sendDocuments, setSendDocuments] = useState(true);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const { data: userData } = trpc.user.getCurrentUser.useQuery();
-  const orgId = userData?.org_id;
+  // Load houses for the org
+  const { data: housesData } = trpc.property.listAllHouses.useQuery(
+    undefined,
+    { enabled: isOpen }
+  );
 
-  const { data: houses } = trpc.org.listHouses.useQuery(
-    { orgId: orgId! },
-    { enabled: !!orgId }
+  // Load available beds when house is selected
+  const { data: availableBeds } = trpc.occupancy.getAvailableBeds.useQuery(
+    { houseId: houseId || undefined },
+    { enabled: isOpen && !!houseId }
   );
 
   const convertMutation = trpc.lead.convertToResident.useMutation({
-    onSuccess: () => {
-      toast("success", "Admission started", `${lead.first_name} ${lead.last_name} has been converted to a resident.`);
-      onClose();
-      router.push("/admissions");
+    onSuccess: (data) => {
+      utils.lead.getById.invalidate({ leadId: lead.id });
+      utils.lead.list.invalidate();
+      utils.lead.getPipelineStats.invalidate();
+      setToastMsg(`${lead.first_name} ${lead.last_name} has been admitted!`);
+      setTimeout(() => {
+        onClose();
+        router.push("/admissions");
+      }, 1500);
     },
-    onError: (err) => toast("error", "Failed to start admission", err.message),
+    onError: (err) => {
+      setToastMsg(`Error: ${err.message}`);
+    },
   });
 
   if (!isOpen) return null;
 
-  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
-  const isValid = houseId && admissionDate && dateOfBirth;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!houseId || !admissionDate || !dateOfBirth) {
+      setToastMsg("Please fill in all required fields.");
+      return;
+    }
     convertMutation.mutate({
-      leadId,
+      leadId: lead.id,
       houseId,
       admissionDate,
+      bedId: bedId || undefined,
       dateOfBirth,
+      generateInvoice,
+      sendDocuments,
     });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-lg mx-4">
         <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-xl font-bold text-zinc-100">Start Admission</h2>
-          <p className="text-sm text-zinc-500 mt-1">
-            Convert {lead.first_name} {lead.last_name} to a resident and begin intake
+          <h2 className="text-xl font-semibold text-white">Approve and Move In</h2>
+          <p className="text-sm text-zinc-400 mt-1">
+            One-click admission for {lead.first_name} {lead.last_name}
           </p>
         </div>
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+          {/* Part 2 notice */}
+          <div className="bg-amber-950/40 border border-amber-700/50 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
-              <div className="text-sm text-amber-300">
-                <p className="font-medium">Consent Required</p>
-                <p className="mt-1">
-                  Intake cannot be completed without an active consent form.
-                  The resident will need to complete this during intake.
+              <Shield className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
+              <div className="text-sm text-amber-200">
+                <p className="font-medium">42 CFR Part 2 Consent Required</p>
+                <p className="mt-1 text-amber-300/80">
+                  Intake cannot be completed without an active Part 2 consent form.
+                  The resident will sign this during intake.
                 </p>
               </div>
             </div>
@@ -441,52 +194,272 @@ function ConvertToResidentModal({ isOpen, onClose, leadId, lead }: ConvertModalP
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">House *</label>
-              <select value={houseId} onChange={(e) => setHouseId(e.target.value)} className={inputClass}>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
+                House <span className="text-red-400">*</span>
+              </label>
+              <select
+                value={houseId}
+                onChange={(e) => {
+                  setHouseId(e.target.value);
+                  setBedId("");
+                }}
+                required
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              >
                 <option value="">Select house...</option>
-                {(houses ?? []).map((h: { id: string; name: string }) => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
+                {housesData?.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Bed (Optional)</label>
-              <select className={inputClass}>
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
+                Bed
+              </label>
+              <select
+                value={bedId}
+                onChange={(e) => setBedId(e.target.value)}
+                disabled={!houseId}
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+              >
                 <option value="">Assign later...</option>
+                {availableBeds?.map((b) => (
+                  <option key={b.bed_id} value={b.bed_id}>
+                    {b.room_name} — {b.bed_name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Admission Date *</label>
-              <input type="date" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} className={inputClass} />
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
+                Move-in Date <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="date"
+                value={admissionDate}
+                onChange={(e) => setAdmissionDate(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date of Birth *</label>
-              <input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className={inputClass} />
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
+                Date of Birth <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="date"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Case Manager</label>
-            <select className={inputClass}>
-              <option value="">Assign later...</option>
-            </select>
+          <div className="space-y-3 pt-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setGenerateInvoice(!generateInvoice)}
+                className={`w-10 h-6 rounded-full flex items-center transition-colors cursor-pointer ${
+                  generateInvoice ? "bg-indigo-600" : "bg-zinc-700"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 bg-white rounded-full mx-1 transition-transform ${
+                    generateInvoice ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-zinc-200">
+                  Generate first month's invoice
+                </span>
+                <p className="text-xs text-zinc-500">
+                  Creates a pending rent invoice based on house rate config
+                </p>
+              </div>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setSendDocuments(!sendDocuments)}
+                className={`w-10 h-6 rounded-full flex items-center transition-colors cursor-pointer ${
+                  sendDocuments ? "bg-indigo-600" : "bg-zinc-700"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 bg-white rounded-full mx-1 transition-transform ${
+                    sendDocuments ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-zinc-200">
+                  Send documents for signing
+                </span>
+                <p className="text-xs text-zinc-500">
+                  House rules + financial agreement via DocuSign (if configured)
+                </p>
+              </div>
+            </label>
           </div>
 
-          <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={!isValid || convertMutation.isPending}
-              loading={convertMutation.isPending}
+          {toastMsg && (
+            <div
+              className={`rounded-lg p-3 text-sm ${
+                toastMsg.startsWith("Error")
+                  ? "bg-red-900/50 border border-red-700 text-red-300"
+                  : "bg-green-900/50 border border-green-700 text-green-300"
+              }`}
             >
-              {convertMutation.isPending ? "Converting..." : "Start Admission"}
-            </Button>
-          </div>
+              {toastMsg}
+            </div>
+          )}
         </form>
+
+        <div className="p-6 border-t border-zinc-800 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={convertMutation.isPending}
+            className="px-4 py-2 text-zinc-300 border border-zinc-700 rounded-lg font-medium hover:bg-zinc-800 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={convertMutation.isPending || !houseId || !admissionDate || !dateOfBirth}
+            className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {convertMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <ArrowRight className="h-4 w-4" />
+                Approve and Move In
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface InviteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  residentId: string;
+  residentName: string;
+}
+
+function SendInviteModal({ isOpen, onClose, residentId, residentName }: InviteModalProps) {
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const inviteMutation = trpc.lead.sendInvite.useMutation({
+    onSuccess: (data) => {
+      setInviteLink(data.inviteLink);
+    },
+    onError: (err) => {
+      setErrorMsg(err.message);
+    },
+  });
+
+  const handleCopy = async () => {
+    if (!inviteLink) return;
+    await navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div className="p-6 border-b border-zinc-800">
+          <h2 className="text-lg font-semibold text-white">Send App Invite</h2>
+          <p className="text-sm text-zinc-400 mt-1">
+            Generate a sign-up link for {residentName}
+          </p>
+        </div>
+        <div className="p-6 space-y-4">
+          {!inviteLink ? (
+            <>
+              <p className="text-sm text-zinc-300">
+                This generates a unique invite link for the resident to create
+                their account in the RecoveryOS app.
+              </p>
+              {errorMsg && (
+                <div className="bg-red-900/50 border border-red-700 text-red-300 rounded-lg p-3 text-sm">
+                  {errorMsg}
+                </div>
+              )}
+              <button
+                onClick={() => inviteMutation.mutate({ residentId })}
+                disabled={inviteMutation.isPending}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {inviteMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Generate Invite Link
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="bg-zinc-800 rounded-lg p-3">
+                <p className="text-xs text-zinc-500 mb-1 font-medium">Invite Link</p>
+                <p className="text-sm text-zinc-200 break-all font-mono">{inviteLink}</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCopy}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-700 text-white rounded-lg font-medium hover:bg-zinc-600"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 text-green-400" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copy Link
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg font-medium hover:bg-zinc-800"
+                >
+                  Done
+                </button>
+              </div>
+              <p className="text-xs text-zinc-500">
+                In production, this link is sent via SMS/email. For now, share it
+                manually with the resident.
+              </p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -496,216 +469,341 @@ export default function LeadDetailPage() {
   const params = useParams();
   const leadId = params.id as string;
   const [showConvertModal, setShowConvertModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [noteModal, setNoteModal] = useState<{ open: boolean; type: "note" | "phone_call" | "email" | "tour" }>({ open: false, type: "note" });
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
-  const { data: lead, isLoading, error } = trpc.lead.getById.useQuery(
-    { leadId },
-    { enabled: !!leadId }
-  );
+  const { data: lead, isLoading, error } = trpc.lead.getById.useQuery({ leadId });
 
-  if (error) {
+  if (isLoading) {
     return (
-      <PageContainer>
-        <Card><CardContent><ErrorState title="Failed to load lead" description={error.message} /></CardContent></Card>
-      </PageContainer>
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-zinc-800 rounded w-1/3" />
+          <div className="h-40 bg-zinc-800 rounded" />
+          <div className="h-60 bg-zinc-800 rounded" />
+        </div>
+      </div>
     );
   }
 
-  if (isLoading || !lead) {
+  if (error || !lead) {
     return (
-      <PageContainer>
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+      <div className="p-6">
+        <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-300">
+          <p className="font-medium">Error loading lead</p>
+          <p className="text-sm mt-1">{error?.message || "Lead not found"}</p>
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
   const daysInPipeline = Math.floor(
-    (Date.now() - new Date(lead.created_at!).getTime()) / (1000 * 60 * 60 * 24)
+    (Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  const canConvert = lead.status === "accepted" || lead.status === "deposit_pending";
+  const canConvert =
+    lead.status === "accepted" || lead.status === "deposit_pending";
+  const isConverted = lead.status === "converted";
 
   return (
-    <PageContainer>
+    <div className="p-6 space-y-6">
       {/* Breadcrumb */}
       <div>
         <Link
           href="/admissions"
-          className="flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-100"
+          className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Pipeline
         </Link>
       </div>
 
-      {/* Header Card */}
-      <Card>
-        <CardContent>
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-xl font-semibold text-zinc-400">
-                {lead.first_name[0]}{lead.last_name[0]}
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-zinc-100">
-                  {lead.first_name} {lead.last_name}
-                </h1>
-                <div className="flex items-center gap-4 mt-2 text-sm text-zinc-400">
-                  {lead.phone && (
-                    <div className="flex items-center gap-1">
-                      <Phone className="h-4 w-4" />
-                      <span>{lead.phone}</span>
-                    </div>
-                  )}
-                  {lead.email && (
-                    <div className="flex items-center gap-1">
-                      <Mail className="h-4 w-4" />
-                      <span>{lead.email}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-2">
-                  {lead.house_name && (
-                    <Badge variant="info">
-                      <span className="flex items-center gap-1"><Home className="h-3 w-3" />{lead.house_name}</span>
-                    </Badge>
-                  )}
-                  {lead.preferred_move_in_date && (
-                    <Badge variant="success">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Move-in: {new Date(lead.preferred_move_in_date).toLocaleDateString()}
-                      </span>
-                    </Badge>
-                  )}
-                  <Badge variant="default">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {daysInPipeline} days in pipeline
-                    </span>
-                  </Badge>
-                </div>
-              </div>
+      {/* Header */}
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-xl font-semibold text-zinc-300">
+              {lead.first_name[0]}
+              {lead.last_name[0]}
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="secondary" icon={<Edit className="h-4 w-4" />} onClick={() => setShowEditModal(true)}>Edit</Button>
-              {canConvert && (
-                <Button
-                  variant="primary"
-                  icon={<ArrowRight className="h-4 w-4" />}
-                  onClick={() => setShowConvertModal(true)}
-                >
-                  Start Admission
-                </Button>
-              )}
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                {lead.first_name} {lead.last_name}
+              </h1>
+              <div className="flex items-center gap-4 mt-2 text-sm text-zinc-400">
+                {lead.phone && (
+                  <div className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    <span>{lead.phone}</span>
+                  </div>
+                )}
+                {lead.email && (
+                  <div className="flex items-center gap-1">
+                    <Mail className="h-4 w-4" />
+                    <span>{lead.email}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
+                {lead.house_name && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-950/50 text-indigo-400 rounded border border-indigo-800/50">
+                    <Home className="h-3.5 w-3.5" />
+                    {lead.house_name}
+                  </span>
+                )}
+                {lead.preferred_move_in_date && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-950/50 text-green-400 rounded border border-green-800/50">
+                    <Calendar className="h-3.5 w-3.5" />
+                    Move-in: {new Date(lead.preferred_move_in_date).toLocaleDateString()}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-800 text-zinc-400 rounded">
+                  <Clock className="h-3.5 w-3.5" />
+                  {daysInPipeline} days in pipeline
+                </span>
+              </div>
             </div>
           </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            {isConverted && lead.converted_to_resident_id && (
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700"
+              >
+                <Send className="h-4 w-4" />
+                Send App Invite
+              </button>
+            )}
+            {canConvert && (
+              <button
+                onClick={() => setShowConvertModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700"
+              >
+                <ArrowRight className="h-4 w-4" />
+                Approve and Move In
+              </button>
+            )}
+          </div>
+        </div>
 
-          {/* Status Pipeline */}
-          <div className="mt-6 pt-6 border-t border-zinc-800">
-            <StatusPipeline currentStatus={lead.status} />
-          </div>
-        </CardContent>
-      </Card>
+        {/* Status Pipeline */}
+        <div className="mt-6 pt-6 border-t border-zinc-800">
+          <StatusPipeline currentStatus={lead.status} />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {canConvert && <IntakeChecklist />}
-
-          {/* Lead Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Lead Information</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-2 gap-4">
+          {/* Converted banner */}
+          {isConverted && (
+            <div className="bg-green-950/30 border border-green-800/50 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-6 w-6 text-green-400 shrink-0" />
                 <div>
-                  <label className="text-sm text-zinc-500">Source</label>
-                  <p className="text-sm font-medium text-zinc-100">{lead.source || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm text-zinc-500">Created</label>
-                  <p className="text-sm font-medium text-zinc-100">
-                    {lead.created_at ? new Date(lead.created_at).toLocaleDateString() : "—"}
+                  <p className="font-medium text-green-300">
+                    Admitted as Resident
                   </p>
+                  {lead.converted_at && (
+                    <p className="text-sm text-green-500 mt-0.5">
+                      Converted on{" "}
+                      {new Date(lead.converted_at).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Lead Details */}
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800">
+            <div className="p-4 border-b border-zinc-800">
+              <h3 className="font-semibold text-white">Lead Information</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-zinc-500 uppercase tracking-wide">
+                    Source
+                  </label>
+                  <p className="text-sm font-medium text-zinc-200 mt-1">
+                    {lead.source || "—"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-zinc-500 uppercase tracking-wide">
+                    Created
+                  </label>
+                  <p className="text-sm font-medium text-zinc-200 mt-1">
+                    {new Date(lead.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-zinc-500 uppercase tracking-wide">
+                    Status
+                  </label>
+                  <p className="text-sm font-medium text-zinc-200 mt-1 capitalize">
+                    {lead.status.replace("_", " ")}
+                  </p>
+                </div>
+                {lead.preferred_move_in_date && (
+                  <div>
+                    <label className="text-xs text-zinc-500 uppercase tracking-wide">
+                      Preferred Move-in
+                    </label>
+                    <p className="text-sm font-medium text-zinc-200 mt-1">
+                      {new Date(lead.preferred_move_in_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+              </div>
               {lead.notes && (
-                <div className="mt-4">
-                  <label className="text-sm text-zinc-500">Notes</label>
-                  <p className="text-sm text-zinc-100 mt-1">{lead.notes}</p>
+                <div>
+                  <label className="text-xs text-zinc-500 uppercase tracking-wide">
+                    Notes
+                  </label>
+                  <p className="text-sm text-zinc-300 mt-1">{lead.notes}</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          {/* Intake Checklist for eligible leads */}
+          {(canConvert || isConverted) && (
+            <div className="bg-zinc-900 rounded-lg border border-zinc-800">
+              <div className="p-4 border-b border-zinc-800">
+                <h3 className="font-semibold text-white">Intake Checklist</h3>
+              </div>
+              <div className="p-4">
+                <div className="space-y-2">
+                  {[
+                    { id: "personal_info", label: "Personal Information", done: true },
+                    { id: "dob", label: "Date of Birth", done: isConverted },
+                    { id: "part2_consent", label: "42 CFR Part 2 Consent", done: false, required: true },
+                    { id: "house_rules", label: "House Rules Agreement", done: false, required: true },
+                    { id: "financial_agreement", label: "Financial Agreement", done: false, required: true },
+                    { id: "photo_id", label: "Photo ID Upload", done: false },
+                  ].map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 p-2 rounded-lg"
+                    >
+                      {item.done ? (
+                        <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-zinc-600 shrink-0" />
+                      )}
+                      <span
+                        className={`text-sm ${
+                          item.done ? "text-zinc-400 line-through" : "text-zinc-200"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                      {item.required && !item.done && (
+                        <span className="ml-auto text-xs text-red-400 font-medium">
+                          Required
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <div className="px-2 pb-2">
-              <button
-                className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40 rounded-lg flex items-center gap-2"
-                onClick={() => setNoteModal({ open: true, type: "phone_call" })}
-              >
+          {/* Quick Actions */}
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800">
+            <div className="p-4 border-b border-zinc-800">
+              <h3 className="font-semibold text-white">Quick Actions</h3>
+            </div>
+            <div className="p-2">
+              {canConvert && (
+                <button
+                  onClick={() => setShowConvertModal(true)}
+                  className="w-full text-left px-3 py-2.5 text-sm font-medium text-green-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Approve and Move In
+                </button>
+              )}
+              {isConverted && lead.converted_to_resident_id && (
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2"
+                >
+                  <Send className="h-4 w-4 text-zinc-400" />
+                  Send App Invite
+                </button>
+              )}
+              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
                 <Phone className="h-4 w-4 text-zinc-500" />
                 Log Phone Call
               </button>
-              <button
-                className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40 rounded-lg flex items-center gap-2"
-                onClick={() => setNoteModal({ open: true, type: "email" })}
-              >
+              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
                 <Mail className="h-4 w-4 text-zinc-500" />
-                Log Email
+                Send Email
               </button>
-              <button
-                className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40 rounded-lg flex items-center gap-2"
-                onClick={() => setNoteModal({ open: true, type: "tour" })}
-              >
-                <Calendar className="h-4 w-4 text-zinc-500" />
-                Schedule Tour
-              </button>
-              <button
-                className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40 rounded-lg flex items-center gap-2"
-                onClick={() => setNoteModal({ open: true, type: "note" })}
-              >
+              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
                 <FileText className="h-4 w-4 text-zinc-500" />
                 Add Note
               </button>
             </div>
-          </Card>
+          </div>
+
+          {/* Lead Stats */}
+          <div className="bg-zinc-900 rounded-lg border border-zinc-800">
+            <div className="p-4 border-b border-zinc-800">
+              <h3 className="font-semibold text-white">Details</h3>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-zinc-500">Pipeline Stage</span>
+                <span className="text-zinc-200 font-medium capitalize">
+                  {lead.status.replace("_", " ")}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-zinc-500">Days in Pipeline</span>
+                <span className="text-zinc-200 font-medium">{daysInPipeline}</span>
+              </div>
+              {lead.source && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-zinc-500">Source</span>
+                  <span className="text-zinc-200 font-medium">{lead.source}</span>
+                </div>
+              )}
+              {isConverted && lead.converted_at && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-zinc-500">Admitted On</span>
+                  <span className="text-zinc-200 font-medium">
+                    {new Date(lead.converted_at).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Convert Modal */}
       <ConvertToResidentModal
         isOpen={showConvertModal}
         onClose={() => setShowConvertModal(false)}
-        leadId={leadId}
         lead={lead}
       />
 
-      {showEditModal && (
-        <EditLeadModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          lead={lead}
+      {/* Invite Modal */}
+      {lead.converted_to_resident_id && (
+        <SendInviteModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          residentId={lead.converted_to_resident_id}
+          residentName={`${lead.first_name} ${lead.last_name}`}
         />
       )}
-
-      <AddNoteModal
-        isOpen={noteModal.open}
-        onClose={() => setNoteModal({ open: false, type: "note" })}
-        leadId={leadId}
-        existingNotes={lead.notes}
-        activityType={noteModal.type}
-      />
-    </PageContainer>
+    </div>
   );
 }

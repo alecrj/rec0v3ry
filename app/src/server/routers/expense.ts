@@ -1,44 +1,182 @@
 /**
  * Expense Router
  *
- * CRUD for manual expenses, expense categories, P&L queries.
+ * Manual expense entry, category management, and P&L per house.
+ *
+ * G2-15: Auto-categorization
+ * G2-16: P&L per house
+ * G2-17: Manual expense entry
  */
 
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
-import { expenses, expenseCategories } from '../db/schema/expenses';
+import { db } from '../db/client';
+import {
+  expenses,
+  expenseCategories,
+} from '../db/schema/expenses';
 import { houses } from '../db/schema/orgs';
-import { payments } from '../db/schema/payments';
-import { eq, and, desc, gte, lte, isNull, sql } from 'drizzle-orm';
+import { eq, and, isNull, desc, gte, lte, sql, asc } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
+import { DEFAULT_CATEGORIES, autoCategorizeMerchant } from '@/lib/auto-categorize';
+
+/**
+ * Ensure default expense categories exist for the org
+ */
+async function ensureDefaultCategories(orgId: string) {
+  const existing = await db
+    .select({ name: expenseCategories.name })
+    .from(expenseCategories)
+    .where(eq(expenseCategories.org_id, orgId));
+
+  const existingNames = new Set(existing.map((c) => c.name));
+  const toInsert = DEFAULT_CATEGORIES.filter((c) => !existingNames.has(c.name));
+
+  if (toInsert.length > 0) {
+    await db.insert(expenseCategories).values(
+      toInsert.map((c) => ({
+        org_id: orgId,
+        name: c.name,
+        color: c.color,
+        is_default: true,
+      }))
+    );
+  }
+}
 
 export const expenseRouter = router({
-  // Create manual expense
-  create: protectedProcedure
+  /**
+   * Get all expense categories for the org (seeding defaults if needed)
+   */
+  getCategories: protectedProcedure
+    .meta({ permission: 'expense:read', resource: 'expense' })
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+
+      // Ensure defaults exist
+      await ensureDefaultCategories(orgId);
+
+      const categories = await db
+        .select()
+        .from(expenseCategories)
+        .where(eq(expenseCategories.org_id, orgId))
+        .orderBy(asc(expenseCategories.name));
+
+      return categories;
+    }),
+
+  /**
+   * Create a custom expense category
+   */
+  createCategory: protectedProcedure
     .meta({ permission: 'expense:create', resource: 'expense' })
+    .input(z.object({
+      name: z.string().min(1).max(100),
+      color: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+
+      const [category] = await db
+        .insert(expenseCategories)
+        .values({
+          org_id: orgId,
+          name: input.name,
+          color: input.color,
+          is_default: false,
+        })
+        .returning();
+
+      return category;
+    }),
+
+  /**
+   * List expenses with filters
+   */
+  list: protectedProcedure
+    .meta({ permission: 'expense:read', resource: 'expense' })
     .input(z.object({
       houseId: z.string().uuid().optional(),
       categoryId: z.string().uuid().optional(),
-      amount: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid amount'),
-      description: z.string().min(1).max(500),
-      vendor: z.string().max(200).optional(),
-      expenseDate: z.string(), // YYYY-MM-DD
-      receiptUrl: z.string().url().optional(),
+      startDate: z.string().optional(), // YYYY-MM-DD
+      endDate: z.string().optional(), // YYYY-MM-DD
+      limit: z.number().min(1).max(200).default(50),
+      offset: z.number().min(0).default(0),
     }))
-    .mutation(async ({ ctx, input }) => {
+    .query(async ({ input, ctx }) => {
       const orgId = (ctx as unknown as { orgId: string }).orgId;
-      const userId = (ctx as unknown as { userId: string }).userId;
 
-      const [expense] = await ctx.db
+      const conditions = [
+        eq(expenses.org_id, orgId),
+        isNull(expenses.deleted_at),
+      ];
+
+      if (input.houseId) conditions.push(eq(expenses.house_id, input.houseId));
+      if (input.categoryId) conditions.push(eq(expenses.category_id, input.categoryId));
+      if (input.startDate) conditions.push(gte(expenses.expense_date, input.startDate));
+      if (input.endDate) conditions.push(lte(expenses.expense_date, input.endDate));
+
+      const rows = await db
+        .select({
+          id: expenses.id,
+          amount: expenses.amount,
+          expense_date: expenses.expense_date,
+          description: expenses.description,
+          vendor: expenses.vendor,
+          receipt_url: expenses.receipt_url,
+          source: expenses.source,
+          created_at: expenses.created_at,
+          house_id: expenses.house_id,
+          house_name: houses.name,
+          category_id: expenses.category_id,
+          category_name: expenseCategories.name,
+          category_color: expenseCategories.color,
+        })
+        .from(expenses)
+        .leftJoin(houses, eq(expenses.house_id, houses.id))
+        .leftJoin(expenseCategories, eq(expenses.category_id, expenseCategories.id))
+        .where(and(...conditions))
+        .orderBy(desc(expenses.expense_date))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      const [total] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(expenses)
+        .where(and(...conditions));
+
+      return { expenses: rows, total: total?.count ?? 0 };
+    }),
+
+  /**
+   * Create a manual expense entry (G2-17)
+   */
+  create: protectedProcedure
+    .meta({ permission: 'expense:create', resource: 'expense' })
+    .input(z.object({
+      amount: z.string().min(1), // Decimal string
+      expense_date: z.string(), // YYYY-MM-DD
+      description: z.string().optional(),
+      vendor: z.string().optional(),
+      category_id: z.string().uuid().optional(),
+      house_id: z.string().uuid().optional(),
+      receipt_url: z.string().url().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+      const userId = ctx.user!.id;
+
+      const [expense] = await db
         .insert(expenses)
         .values({
           org_id: orgId,
-          house_id: input.houseId || null,
-          category_id: input.categoryId || null,
           amount: input.amount,
-          description: input.description,
-          vendor: input.vendor || null,
-          expense_date: input.expenseDate,
-          receipt_url: input.receiptUrl || null,
+          expense_date: input.expense_date,
+          description: input.description ?? '',
+          vendor: input.vendor,
+          category_id: input.category_id,
+          house_id: input.house_id,
+          receipt_url: input.receipt_url,
           source: 'manual',
           created_by: userId,
         })
@@ -47,243 +185,255 @@ export const expenseRouter = router({
       return expense;
     }),
 
-  // List expenses (filterable)
-  list: protectedProcedure
-    .meta({ permission: 'expense:read', resource: 'expense' })
-    .input(z.object({
-      houseId: z.string().uuid().optional(),
-      categoryId: z.string().uuid().optional(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
-    }).optional())
-    .query(async ({ ctx, input }) => {
-      const orgId = (ctx as unknown as { orgId: string }).orgId;
-
-      const conditions = [eq(expenses.org_id, orgId), isNull(expenses.deleted_at)];
-      if (input?.houseId) conditions.push(eq(expenses.house_id, input.houseId));
-      if (input?.categoryId) conditions.push(eq(expenses.category_id, input.categoryId));
-      if (input?.startDate) conditions.push(gte(expenses.expense_date, input.startDate));
-      if (input?.endDate) conditions.push(lte(expenses.expense_date, input.endDate));
-
-      return ctx.db.query.expenses.findMany({
-        where: and(...conditions),
-        with: {
-          house: { columns: { id: true, name: true } },
-          category: { columns: { id: true, name: true, color: true } },
-        },
-        orderBy: [desc(expenses.expense_date)],
-        limit: 200,
-      });
-    }),
-
-  // Update expense
+  /**
+   * Update an expense (change category, house, etc.)
+   */
   update: protectedProcedure
     .meta({ permission: 'expense:update', resource: 'expense' })
     .input(z.object({
-      id: z.string().uuid(),
-      houseId: z.string().uuid().optional(),
-      categoryId: z.string().uuid().optional(),
-      amount: z.string().regex(/^\d+(\.\d{1,2})?$/).optional(),
-      description: z.string().min(1).max(500).optional(),
-      vendor: z.string().max(200).optional(),
-      expenseDate: z.string().optional(),
+      expenseId: z.string().uuid(),
+      amount: z.string().optional(),
+      expense_date: z.string().optional(),
+      description: z.string().nullable().optional(),
+      vendor: z.string().nullable().optional(),
+      category_id: z.string().uuid().nullable().optional(),
+      house_id: z.string().uuid().nullable().optional(),
+      receipt_url: z.string().url().nullable().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input, ctx }) => {
       const orgId = (ctx as unknown as { orgId: string }).orgId;
-      const { id, ...updates } = input;
+      const { expenseId, ...updates } = input;
 
-      const values: Record<string, unknown> = {};
-      if (updates.houseId !== undefined) values.house_id = updates.houseId;
-      if (updates.categoryId !== undefined) values.category_id = updates.categoryId;
-      if (updates.amount !== undefined) values.amount = updates.amount;
-      if (updates.description !== undefined) values.description = updates.description;
-      if (updates.vendor !== undefined) values.vendor = updates.vendor;
-      if (updates.expenseDate !== undefined) values.expense_date = updates.expenseDate;
+      const updateData: Record<string, unknown> = {};
+      if (updates.amount !== undefined) updateData.amount = updates.amount;
+      if (updates.expense_date !== undefined) updateData.expense_date = updates.expense_date;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.vendor !== undefined) updateData.vendor = updates.vendor;
+      if (updates.category_id !== undefined) updateData.category_id = updates.category_id;
+      if (updates.house_id !== undefined) updateData.house_id = updates.house_id;
+      if (updates.receipt_url !== undefined) updateData.receipt_url = updates.receipt_url;
 
-      const [updated] = await ctx.db
+      const [expense] = await db
         .update(expenses)
-        .set(values)
-        .where(and(eq(expenses.id, id), eq(expenses.org_id, orgId)))
+        .set(updateData)
+        .where(
+          and(
+            eq(expenses.id, expenseId),
+            eq(expenses.org_id, orgId),
+            isNull(expenses.deleted_at)
+          )
+        )
         .returning();
 
-      return updated;
+      if (!expense) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Expense not found' });
+      }
+
+      return expense;
     }),
 
-  // Delete expense (soft)
+  /**
+   * Delete an expense (soft delete)
+   */
   delete: protectedProcedure
     .meta({ permission: 'expense:delete', resource: 'expense' })
-    .input(z.object({ id: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
+    .input(z.object({
+      expenseId: z.string().uuid(),
+    }))
+    .mutation(async ({ input, ctx }) => {
       const orgId = (ctx as unknown as { orgId: string }).orgId;
 
-      await ctx.db
+      await db
         .update(expenses)
         .set({ deleted_at: new Date() })
-        .where(and(eq(expenses.id, input.id), eq(expenses.org_id, orgId)));
+        .where(
+          and(
+            eq(expenses.id, input.expenseId),
+            eq(expenses.org_id, orgId)
+          )
+        );
 
       return { success: true };
     }),
 
-  // List expense categories (auto-seeds defaults if none exist)
-  getCategories: protectedProcedure
+  /**
+   * Suggest a category for a merchant/vendor name (G2-15)
+   */
+  suggestCategory: protectedProcedure
     .meta({ permission: 'expense:read', resource: 'expense' })
-    .query(async ({ ctx }) => {
-      const orgId = (ctx as unknown as { orgId: string }).orgId;
-
-      const existing = await ctx.db.query.expenseCategories.findMany({
-        where: eq(expenseCategories.org_id, orgId),
-        orderBy: [expenseCategories.sort_order, expenseCategories.name],
-      });
-
-      if (existing.length > 0) return existing;
-
-      // Seed defaults
-      const defaults = [
-        { name: 'Rent/Mortgage', icon: 'home', color: '#6366f1', sort_order: '1' },
-        { name: 'Utilities', icon: 'zap', color: '#f59e0b', sort_order: '2' },
-        { name: 'Repairs & Maintenance', icon: 'wrench', color: '#ef4444', sort_order: '3' },
-        { name: 'Supplies', icon: 'package', color: '#8b5cf6', sort_order: '4' },
-        { name: 'Food', icon: 'utensils', color: '#22c55e', sort_order: '5' },
-        { name: 'Insurance', icon: 'shield', color: '#3b82f6', sort_order: '6' },
-        { name: 'Payroll/Staff', icon: 'users', color: '#ec4899', sort_order: '7' },
-        { name: 'Marketing', icon: 'megaphone', color: '#14b8a6', sort_order: '8' },
-        { name: 'Legal/Professional', icon: 'scale', color: '#64748b', sort_order: '9' },
-        { name: 'Other', icon: 'circle', color: '#71717a', sort_order: '10' },
-      ];
-
-      const seeded = await ctx.db
-        .insert(expenseCategories)
-        .values(defaults.map((d) => ({ ...d, org_id: orgId, is_default: true })))
-        .returning();
-
-      return seeded;
-    }),
-
-  // Get P&L for date range
-  getPandL: protectedProcedure
-    .meta({ permission: 'report:read', resource: 'report' })
     .input(z.object({
-      houseId: z.string().uuid().optional(),
-      startDate: z.string(),
-      endDate: z.string(),
+      merchant_name: z.string(),
     }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input, ctx }) => {
       const orgId = (ctx as unknown as { orgId: string }).orgId;
 
-      // Revenue: payments received in period
-      const revenueConditions = [
-        eq(payments.org_id, orgId),
-        isNull(payments.deleted_at),
-        eq(payments.status, 'succeeded'),
-        gte(payments.payment_date, new Date(input.startDate)),
-        lte(payments.payment_date, new Date(input.endDate)),
-      ];
+      // Try pattern matching
+      const match = autoCategorizeMerchant(input.merchant_name);
+      if (match) {
+        const [category] = await db
+          .select({ id: expenseCategories.id, name: expenseCategories.name })
+          .from(expenseCategories)
+          .where(
+            and(
+              eq(expenseCategories.org_id, orgId),
+              eq(expenseCategories.name, match.categoryName)
+            )
+          )
+          .limit(1);
 
-      const allPayments = await ctx.db.query.payments.findMany({
-        where: and(...revenueConditions),
-      });
-      const totalRevenue = allPayments.reduce((s, p) => s + parseFloat(p.amount), 0);
-
-      // Expenses in period
-      const expenseConditions = [
-        eq(expenses.org_id, orgId),
-        isNull(expenses.deleted_at),
-        gte(expenses.expense_date, input.startDate),
-        lte(expenses.expense_date, input.endDate),
-      ];
-      if (input.houseId) expenseConditions.push(eq(expenses.house_id, input.houseId));
-
-      const allExpenses = await ctx.db.query.expenses.findMany({
-        where: and(...expenseConditions),
-        with: {
-          category: { columns: { id: true, name: true, color: true } },
-          house: { columns: { id: true, name: true } },
-        },
-      });
-      const totalExpenses = allExpenses.reduce((s, e) => s + parseFloat(e.amount), 0);
-
-      // Category breakdown
-      const categoryMap = new Map<string, { name: string; color: string | null; total: number }>();
-      for (const e of allExpenses) {
-        const catName = e.category?.name || 'Uncategorized';
-        const catColor = e.category?.color || null;
-        const existing = categoryMap.get(catName);
-        if (existing) {
-          existing.total += parseFloat(e.amount);
-        } else {
-          categoryMap.set(catName, { name: catName, color: catColor, total: parseFloat(e.amount) });
+        if (category) {
+          return { category_id: category.id, category_name: category.name, confidence: match.confidence };
         }
       }
 
-      // House breakdown
-      const houseMap = new Map<string, { name: string; revenue: number; expenses: number }>();
-
-      // Get houses
-      const orgHouses = await ctx.db.query.houses.findMany({
-        where: and(eq(houses.org_id, orgId), isNull(houses.deleted_at)),
-      });
-
-      for (const h of orgHouses) {
-        const houseExpenseTotal = allExpenses
-          .filter((e) => e.house_id === h.id)
-          .reduce((s, e) => s + parseFloat(e.amount), 0);
-
-        houseMap.set(h.id, {
-          name: h.name,
-          revenue: 0, // payments don't always have house_id — would need invoice → house mapping
-          expenses: houseExpenseTotal,
-        });
-      }
-
-      return {
-        revenue: Math.round(totalRevenue * 100) / 100,
-        expenses: Math.round(totalExpenses * 100) / 100,
-        profit: Math.round((totalRevenue - totalExpenses) * 100) / 100,
-        categoryBreakdown: Array.from(categoryMap.values())
-          .map((c) => ({ ...c, total: Math.round(c.total * 100) / 100 }))
-          .sort((a, b) => b.total - a.total),
-        houseBreakdown: Array.from(houseMap.values())
-          .map((h) => ({
-            ...h,
-            revenue: Math.round(h.revenue * 100) / 100,
-            expenses: Math.round(h.expenses * 100) / 100,
-            profit: Math.round((h.revenue - h.expenses) * 100) / 100,
-          })),
-      };
+      return null;
     }),
 
-  // Monthly summary for trends
-  getMonthlySummary: protectedProcedure
-    .meta({ permission: 'report:read', resource: 'report' })
+  /**
+   * P&L per house (G2-16)
+   * Revenue (from payments for residents in each house) - Expenses = Profit
+   */
+  getPandL: protectedProcedure
+    .meta({ permission: 'expense:read', resource: 'expense' })
     .input(z.object({
-      months: z.number().min(1).max(24).default(6),
+      startDate: z.string(), // YYYY-MM-DD
+      endDate: z.string(), // YYYY-MM-DD
       houseId: z.string().uuid().optional(),
     }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ input, ctx }) => {
       const orgId = (ctx as unknown as { orgId: string }).orgId;
-      const now = new Date();
-      const monthsAgo = new Date(now.getFullYear(), now.getMonth() - input.months, 1);
 
-      const expenseConditions = [
-        eq(expenses.org_id, orgId),
-        isNull(expenses.deleted_at),
-        gte(expenses.expense_date, monthsAgo.toISOString().split('T')[0]),
-      ];
-      if (input.houseId) expenseConditions.push(eq(expenses.house_id, input.houseId));
+      // Get all houses for the org
+      const allHouses = await db
+        .select({ id: houses.id, name: houses.name })
+        .from(houses)
+        .where(and(eq(houses.org_id, orgId), isNull(houses.deleted_at)));
 
-      const allExpenses = await ctx.db.query.expenses.findMany({
-        where: and(...expenseConditions),
-      });
+      const houseList = input.houseId
+        ? allHouses.filter((h) => h.id === input.houseId)
+        : allHouses;
 
-      // Group by month
-      const monthMap = new Map<string, number>();
-      for (const e of allExpenses) {
-        const month = e.expense_date.substring(0, 7); // YYYY-MM
-        monthMap.set(month, (monthMap.get(month) || 0) + parseFloat(e.amount));
+      const houseIds = houseList.map((h) => h.id);
+      if (houseIds.length === 0) {
+        return { overall: { revenue: '0', expenses: '0', profit: '0' }, houses: [] };
       }
 
-      return Array.from(monthMap.entries())
-        .map(([month, total]) => ({ month, total: Math.round(total * 100) / 100 }))
-        .sort((a, b) => a.month.localeCompare(b.month));
+      // Build a safe parameterized house_id list for SQL
+      const houseIdList = houseIds.map((id) => `'${id}'`).join(',');
+
+      // Revenue per house: sum of succeeded payments for residents with active admissions at each house
+      const revenueRows = await db.execute<{ house_id: string; revenue: string }>(sql`
+        SELECT
+          a.house_id,
+          COALESCE(SUM(p.amount), 0)::text AS revenue
+        FROM payments p
+        INNER JOIN invoices i ON p.invoice_id = i.id
+        INNER JOIN admissions a ON i.admission_id = a.id
+        WHERE p.org_id = ${orgId}
+          AND p.status = 'succeeded'
+          AND p.deleted_at IS NULL
+          AND p.payment_date >= ${input.startDate}::date
+          AND p.payment_date <= ${input.endDate}::date
+          AND a.house_id = ANY(ARRAY[${sql.raw(houseIdList)}]::uuid[])
+        GROUP BY a.house_id
+      `);
+
+      const revenueByHouse = new Map<string, number>(
+        (revenueRows.rows as Array<{ house_id: string; revenue: string }>).map((r) => [
+          r.house_id,
+          parseFloat(r.revenue),
+        ])
+      );
+
+      // Expenses per house
+      const expenseRows = await db
+        .select({
+          house_id: expenses.house_id,
+          total: sql<string>`COALESCE(SUM(${expenses.amount}), 0)::text`,
+        })
+        .from(expenses)
+        .where(
+          and(
+            eq(expenses.org_id, orgId),
+            isNull(expenses.deleted_at),
+            gte(expenses.expense_date, input.startDate),
+            lte(expenses.expense_date, input.endDate),
+            sql`${expenses.house_id} = ANY(ARRAY[${sql.raw(houseIdList)}]::uuid[])`
+          )
+        )
+        .groupBy(expenses.house_id);
+
+      const expensesByHouse = new Map<string, number>(
+        expenseRows
+          .filter((r) => r.house_id !== null)
+          .map((r) => [r.house_id as string, parseFloat(r.total)])
+      );
+
+      // Expenses by category per house
+      const categoryRows = await db
+        .select({
+          house_id: expenses.house_id,
+          category_name: expenseCategories.name,
+          category_color: expenseCategories.color,
+          total: sql<string>`COALESCE(SUM(${expenses.amount}), 0)::text`,
+        })
+        .from(expenses)
+        .leftJoin(expenseCategories, eq(expenses.category_id, expenseCategories.id))
+        .where(
+          and(
+            eq(expenses.org_id, orgId),
+            isNull(expenses.deleted_at),
+            gte(expenses.expense_date, input.startDate),
+            lte(expenses.expense_date, input.endDate),
+            sql`${expenses.house_id} = ANY(ARRAY[${sql.raw(houseIdList)}]::uuid[])`
+          )
+        )
+        .groupBy(expenses.house_id, expenseCategories.name, expenseCategories.color);
+
+      // Group category breakdown by house
+      const categoryByHouse = new Map<
+        string,
+        Array<{ category: string; color: string | null; total: number }>
+      >();
+      for (const row of categoryRows) {
+        if (!row.house_id) continue;
+        const list = categoryByHouse.get(row.house_id) ?? [];
+        list.push({
+          category: row.category_name ?? 'Uncategorized',
+          color: row.category_color,
+          total: parseFloat(row.total),
+        });
+        categoryByHouse.set(row.house_id, list);
+      }
+
+      // Build per-house results
+      const houseResults = houseList.map((house) => {
+        const revenue = revenueByHouse.get(house.id) ?? 0;
+        const expenseTotal = expensesByHouse.get(house.id) ?? 0;
+        const profit = revenue - expenseTotal;
+
+        return {
+          house_id: house.id,
+          house_name: house.name,
+          revenue: revenue.toFixed(2),
+          expenses: expenseTotal.toFixed(2),
+          profit: profit.toFixed(2),
+          categories: categoryByHouse.get(house.id) ?? [],
+        };
+      });
+
+      // Overall totals
+      const totalRevenue = houseResults.reduce((s, h) => s + parseFloat(h.revenue), 0);
+      const totalExpenses = houseResults.reduce((s, h) => s + parseFloat(h.expenses), 0);
+      const totalProfit = totalRevenue - totalExpenses;
+
+      return {
+        overall: {
+          revenue: totalRevenue.toFixed(2),
+          expenses: totalExpenses.toFixed(2),
+          profit: totalProfit.toFixed(2),
+        },
+        houses: houseResults,
+      };
     }),
 });

@@ -34,7 +34,7 @@ export default function ConnectionsPage() {
 
   const syncMutation = trpc.plaid.syncTransactions.useMutation({
     onSuccess: (data) => {
-      toast("success", `Synced ${data.newTransactions} new transaction${data.newTransactions !== 1 ? "s" : ""}`);
+      toast("success", `Synced ${data.imported} new transaction${data.imported !== 1 ? "s" : ""}`);
       utils.plaid.getConnections.invalidate();
     },
     onError: (err) => toast("error", "Sync failed", err.message),
@@ -99,7 +99,7 @@ export default function ConnectionsPage() {
                     variant="secondary"
                     size="sm"
                     icon={<RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? "animate-spin" : ""}`} />}
-                    onClick={() => syncMutation.mutate({ plaidItemId: conn.id })}
+                    onClick={() => syncMutation.mutate({ connectionId: conn.id })}
                     disabled={syncMutation.isPending}
                   >
                     Sync
@@ -109,7 +109,7 @@ export default function ConnectionsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => removeMutation.mutate({ plaidItemId: conn.id })}
+                        onClick={() => removeMutation.mutate({ connectionId: conn.id })}
                         disabled={removeMutation.isPending}
                       >
                         Confirm

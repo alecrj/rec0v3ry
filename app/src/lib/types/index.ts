@@ -66,6 +66,8 @@ export type ResourceType =
   | 'disclosure'
   | 'audit_log'
   | 'user'
+  | 'expense'
+  | 'plaid_connection'
   | 'report';
 
 /**
