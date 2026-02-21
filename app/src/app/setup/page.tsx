@@ -242,6 +242,7 @@ export default function SetupPage() {
                       onChange={(e) => update({ houseName: e.target.value })}
                       className={inputClass}
                       placeholder="e.g., Sunrise Men's House"
+                      autoComplete="off"
                       autoFocus
                     />
                   </div>
@@ -253,6 +254,7 @@ export default function SetupPage() {
                       onChange={(e) => update({ address: e.target.value })}
                       className={inputClass}
                       placeholder="123 Recovery Lane"
+                      autoComplete="street-address"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -263,6 +265,7 @@ export default function SetupPage() {
                         value={data.city}
                         onChange={(e) => update({ city: e.target.value })}
                         className={inputClass}
+                        autoComplete="address-level2"
                       />
                     </div>
                     <div>
@@ -274,6 +277,7 @@ export default function SetupPage() {
                         className={inputClass}
                         maxLength={2}
                         placeholder="CA"
+                        autoComplete="address-level1"
                       />
                     </div>
                     <div>
@@ -284,6 +288,7 @@ export default function SetupPage() {
                         onChange={(e) => update({ zip: e.target.value })}
                         className={inputClass}
                         placeholder="90001"
+                        autoComplete="postal-code"
                       />
                     </div>
                   </div>
@@ -305,7 +310,7 @@ export default function SetupPage() {
                     <div>
                       <label className="block text-xs font-medium text-zinc-400 mb-1">
                         <DollarSign className="inline w-3 h-3 mr-1" />
-                        Monthly Rent *
+                        Rate Per Bed / Month *
                       </label>
                       <input
                         type="text"

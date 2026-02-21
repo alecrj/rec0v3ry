@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RecoveryOS — Mobile UI/UX Playground</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #111; color: #e4e4e7; display: flex; height: 100vh; overflow: hidden; }
+
+  /* Controls panel */
+  .controls { width: 340px; min-width: 340px; background: #18181b; border-right: 1px solid #27272a; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+  .controls h1 { font-size: 18px; font-weight: 700; color: #f4f4f5; margin-bottom: 4px; }
+  .controls .subtitle { font-size: 12px; color: #71717a; margin-bottom: 8px; }
+  .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #71717a; margin-bottom: 8px; font-weight: 600; }
+  .control-group { display: flex; flex-direction: column; gap: 6px; }
+  .control-row { display: flex; gap: 6px; }
+  .control-row > * { flex: 1; }
+
+  /* Buttons / toggles */
+  .opt-btn {
+    padding: 8px 12px; border-radius: 8px; border: 1px solid #3f3f46; background: #27272a;
+    color: #a1a1aa; font-size: 12px; cursor: pointer; transition: all 0.15s; text-align: center; font-weight: 500;
+  }
+  .opt-btn:hover { border-color: #52525b; color: #d4d4d8; }
+  .opt-btn.active { border-color: var(--accent, #6366f1); background: color-mix(in srgb, var(--accent, #6366f1) 15%, #27272a); color: #f4f4f5; }
+
+  .view-toggle { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid #3f3f46; }
+  .view-toggle button { flex: 1; padding: 10px; border: none; background: #27272a; color: #71717a; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.15s; }
+  .view-toggle button.active { background: var(--accent, #6366f1); color: white; }
+
+  /* Preset chips */
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .preset-chip {
+    padding: 5px 10px; border-radius: 20px; border: 1px solid #3f3f46; background: transparent;
+    color: #a1a1aa; font-size: 11px; cursor: pointer; transition: all 0.15s;
+  }
+  .preset-chip:hover { border-color: var(--accent, #6366f1); color: #d4d4d8; }
+  .preset-chip.active { border-color: var(--accent, #6366f1); background: color-mix(in srgb, var(--accent, #6366f1) 20%, transparent); color: #f4f4f5; }
+
+  /* Preview area */
+  .preview-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .preview-container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 24px; gap: 32px; overflow-y: auto; }
+
+  /* Phone frame */
+  .phone {
+    width: 375px; height: 812px; border-radius: 44px; overflow: hidden; position: relative;
+    border: 3px solid #3f3f46; flex-shrink: 0; display: flex; flex-direction: column;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 160px; height: 34px; background: #000; border-radius: 0 0 20px 20px; z-index: 10;
+  }
+  .phone-screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .phone-status-bar {
+    height: 54px; display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 28px 8px; font-size: 12px; font-weight: 600; color: #f4f4f5; flex-shrink: 0;
+  }
+  .phone-content { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Bottom tab bar */
+  .tab-bar {
+    height: 82px; display: flex; align-items: flex-start; padding: 8px 8px 0; flex-shrink: 0;
+    border-top: 1px solid #27272a;
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0;
+    color: #71717a; font-size: 10px; font-weight: 500;
+  }
+  .tab-item.active { color: var(--accent, #6366f1); }
+  .tab-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+  /* FAB */
+  .fab {
+    position: absolute; bottom: 90px; right: 20px; width: 56px; height: 56px;
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 28px; color: white; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 5;
+  }
+
+  /* Cards */
+  .m-card { border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .m-card.flat { background: #18181b; border: none; }
+  .m-card.glass { background: rgba(39,39,42,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }
+  .m-card.outlined { background: transparent; border: 1px solid #3f3f46; box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #6366f1) 10%, transparent); }
+
+  /* Stats */
+  .stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #71717a; margin-top: 2px; }
+  .stat-sm .stat-value { font-size: 20px; }
+
+  /* Mood emojis */
+  .mood-row { display: flex; gap: 8px; justify-content: space-between; margin: 12px 0; }
+  .mood-btn {
+    flex: 1; aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center;
+    justify-content: center; font-size: 28px; border: 2px solid #3f3f46; cursor: default;
+  }
+  .mood-btn.selected { border-color: var(--accent, #6366f1); background: color-mix(in srgb, var(--accent, #6366f1) 15%, #18181b); transform: scale(1.08); }
+
+  /* Action items */
+  .action-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1e1e22; }
+  .action-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .action-text { flex: 1; font-size: 13px; color: #d4d4d8; }
+  .action-amount { font-size: 13px; font-weight: 600; font-family: 'SF Mono', monospace; }
+  .action-btn-sm { padding: 4px 10px; border-radius: 6px; border: none; font-size: 11px; color: white; cursor: default; font-weight: 600; }
+
+  /* Compact list */
+  .list-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #1e1e22; }
+  .list-row-left { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; }
+
+  /* Quick actions */
+  .quick-actions { display: flex; gap: 8px; margin: 12px 0; }
+  .qa-btn {
+    flex: 1; padding: 10px 4px; border-radius: 12px; border: 1px solid #27272a;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: #a1a1aa;
+  }
+  .qa-icon { font-size: 18px; }
+
+  /* Chore item */
+  .chore-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #1e1e22; }
+  .chore-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #3f3f46; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .chore-check.done { border-color: #22c55e; background: #22c55e20; color: #22c55e; }
+
+  /* Message bubble */
+  .msg-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .msg-avatar { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; }
+  .msg-bubble { padding: 8px 12px; border-radius: 12px; font-size: 13px; color: #d4d4d8; max-width: 240px; }
+  .msg-time { font-size: 10px; color: #52525b; margin-top: 2px; }
+
+  /* Section header */
+  .sec-header { font-size: 15px; font-weight: 700; color: #f4f4f5; margin: 16px 0 8px; }
+  .sec-header:first-child { margin-top: 0; }
+
+  /* Badge */
+  .m-badge { display: inline-flex; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+
+  /* Prompt output */
+  .prompt-area {
+    border-top: 1px solid #27272a; padding: 16px 24px; background: #18181b;
+    display: flex; align-items: flex-start; gap: 12px; flex-shrink: 0;
+  }
+  .prompt-text { flex: 1; font-size: 13px; color: #a1a1aa; line-height: 1.5; max-height: 80px; overflow-y: auto; }
+  .copy-btn {
+    padding: 8px 16px; border-radius: 8px; border: 1px solid #3f3f46; background: #27272a;
+    color: #d4d4d8; font-size: 12px; cursor: pointer; white-space: nowrap; font-weight: 600;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .copy-btn:hover { border-color: var(--accent, #6366f1); color: #f4f4f5; }
+
+  /* Typography modes */
+  .typo-compact .sec-header { font-size: 14px; margin: 12px 0 6px; }
+  .typo-compact .stat-value { font-size: 24px; }
+  .typo-compact .m-card { padding: 12px; margin-bottom: 8px; }
+  .typo-compact .action-item { padding: 8px 0; }
+  .typo-spacious .sec-header { font-size: 17px; margin: 20px 0 12px; }
+  .typo-spacious .stat-value { font-size: 32px; }
+  .typo-spacious .m-card { padding: 20px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <div>
+    <h1>RecoveryOS Mobile</h1>
+    <div class="subtitle">Explore the perfect mobile experience</div>
+  </div>
+
+  <!-- Presets -->
+  <div class="control-group">
+    <div class="section-title">Presets</div>
+    <div class="presets">
+      <button class="preset-chip active" onclick="applyPreset('modern')">Modern</button>
+      <button class="preset-chip" onclick="applyPreset('minimal')">Minimal</button>
+      <button class="preset-chip" onclick="applyPreset('bold')">Bold</button>
+      <button class="preset-chip" onclick="applyPreset('glass')">Glass</button>
+      <button class="preset-chip" onclick="applyPreset('pro')">Pro</button>
+    </div>
+  </div>
+
+  <!-- View toggle -->
+  <div class="control-group">
+    <div class="section-title">View</div>
+    <div class="view-toggle">
+      <button class="active" onclick="setView('operator')">Operator</button>
+      <button onclick="setView('resident')">Resident</button>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="control-group">
+    <div class="section-title">Navigation</div>
+    <div class="control-row">
+      <button class="opt-btn active" data-group="nav" onclick="setOpt('nav','tabs')">Tab Bar</button>
+      <button class="opt-btn" data-group="nav" onclick="setOpt('nav','tabs-fab')">Tabs + FAB</button>
+      <button class="opt-btn" data-group="nav" onclick="setOpt('nav','drawer')">Drawer</button>
+    </div>
+  </div>
+
+  <!-- Dashboard layout (operator) -->
+  <div class="control-group" id="ctrl-dash">
+    <div class="section-title">Operator Dashboard</div>
+    <div class="control-row">
+      <button class="opt-btn active" data-group="dash" onclick="setOpt('dash','cards')">Cards</button>
+      <button class="opt-btn" data-group="dash" onclick="setOpt('dash','list')">List</button>
+      <button class="opt-btn" data-group="dash" onclick="setOpt('dash','compact')">Compact</button>
+    </div>
+  </div>
+
+  <!-- Resident home (resident) -->
+  <div class="control-group" id="ctrl-home" style="display:none;">
+    <div class="section-title">Resident Home</div>
+    <div class="control-row">
+      <button class="opt-btn active" data-group="home" onclick="setOpt('home','mood')">Mood First</button>
+      <button class="opt-btn" data-group="home" onclick="setOpt('home','balance')">Balance First</button>
+      <button class="opt-btn" data-group="home" onclick="setOpt('home','feed')">Activity Feed</button>
+    </div>
+  </div>
+
+  <!-- Card style -->
+  <div class="control-group">
+    <div class="section-title">Card Style</div>
+    <div class="control-row">
+      <button class="opt-btn active" data-group="card" onclick="setOpt('card','flat')">Flat</button>
+      <button class="opt-btn" data-group="card" onclick="setOpt('card','glass')">Glass</button>
+      <button class="opt-btn" data-group="card" onclick="setOpt('card','outlined')">Outlined</button>
+    </div>
+  </div>
+
+  <!-- Accent color -->
+  <div class="control-group">
+    <div class="section-title">Accent Color</div>
+    <div class="control-row">
+      <button class="opt-btn active" data-group="accent" onclick="setOpt('accent','indigo')" style="position:relative;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6366f1;margin-right:6px;vertical-align:middle;"></span>Indigo</button>
+      <button class="opt-btn" data-group="accent" onclick="setOpt('accent','emerald')"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:6px;vertical-align:middle;"></span>Emerald</button>
+    </div>
+    <div class="control-row">
+      <button class="opt-btn" data-group="accent" onclick="setOpt('accent','blue')"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3b82f6;margin-right:6px;vertical-align:middle;"></span>Blue</button>
+      <button class="opt-btn" data-group="accent" onclick="setOpt('accent','purple')"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#a855f7;margin-right:6px;vertical-align:middle;"></span>Purple</button>
+    </div>
+  </div>
+
+  <!-- Typography -->
+  <div class="control-group">
+    <div class="section-title">Typography Density</div>
+    <div class="control-row">
+      <button class="opt-btn" data-group="typo" onclick="setOpt('typo','compact')">Compact</button>
+      <button class="opt-btn active" data-group="typo" onclick="setOpt('typo','default')">Default</button>
+      <button class="opt-btn" data-group="typo" onclick="setOpt('typo','spacious')">Spacious</button>
+    </div>
+  </div>
+</div>
+
+<div class="preview-area">
+  <div class="preview-container">
+    <div class="phone" id="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen" id="screen"></div>
+    </div>
+  </div>
+  <div class="prompt-area">
+    <div class="prompt-text" id="prompt-text"></div>
+    <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">Copy Spec</button>
+  </div>
+</div>
+
+<script>
+const ACCENTS = {
+  indigo: { main: '#6366f1', hover: '#818cf8', bg: 'rgba(99,102,241,0.12)', text: '#a5b4fc' },
+  emerald: { main: '#10b981', hover: '#34d399', bg: 'rgba(16,185,129,0.12)', text: '#6ee7b7' },
+  blue: { main: '#3b82f6', hover: '#60a5fa', bg: 'rgba(59,130,246,0.12)', text: '#93c5fd' },
+  purple: { main: '#a855f7', hover: '#c084fc', bg: 'rgba(168,85,247,0.12)', text: '#d8b4fe' },
+};
+
+const PRESETS = {
+  modern: { nav: 'tabs-fab', dash: 'cards', home: 'mood', card: 'flat', accent: 'indigo', typo: 'default' },
+  minimal: { nav: 'tabs', dash: 'list', home: 'balance', card: 'flat', accent: 'blue', typo: 'compact' },
+  bold: { nav: 'tabs-fab', dash: 'cards', home: 'mood', card: 'outlined', accent: 'purple', typo: 'spacious' },
+  glass: { nav: 'tabs', dash: 'cards', home: 'mood', card: 'glass', accent: 'emerald', typo: 'default' },
+  pro: { nav: 'tabs-fab', dash: 'compact', home: 'balance', card: 'flat', accent: 'indigo', typo: 'compact' },
+};
+
+let state = { view: 'operator', nav: 'tabs-fab', dash: 'cards', home: 'mood', card: 'flat', accent: 'indigo', typo: 'default', preset: 'modern' };
+
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll('.view-toggle button').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === v));
+  document.getElementById('ctrl-dash').style.display = v === 'operator' ? '' : 'none';
+  document.getElementById('ctrl-home').style.display = v === 'resident' ? '' : 'none';
+  updateAll();
+}
+
+function setOpt(group, val) {
+  state[group] = val;
+  state.preset = '';
+  document.querySelectorAll(`.preset-chip`).forEach(c => c.classList.remove('active'));
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.toggle('active', false));
+  event.currentTarget.classList.add('active');
+  updateAll();
+}
+
+function applyPreset(name) {
+  const p = PRESETS[name];
+  Object.assign(state, p, { preset: name });
+  // Update UI buttons
+  for (const [group, val] of Object.entries(p)) {
+    document.querySelectorAll(`[data-group="${group}"]`).forEach(b => {
+      b.classList.toggle('active', b.onclick?.toString().includes(`'${val}'`));
+    });
+  }
+  document.querySelectorAll('.preset-chip').forEach(c => c.classList.toggle('active', c.textContent.toLowerCase() === name));
+  updateAll();
+}
+
+function updateAll() {
+  const a = ACCENTS[state.accent];
+  document.documentElement.style.setProperty('--accent', a.main);
+
+  const screen = document.getElementById('screen');
+  const bg = '#09090b';
+  screen.style.background = bg;
+
+  const cardCls = state.card;
+  const typoClass = state.typo === 'compact' ? 'typo-compact' : state.typo === 'spacious' ? 'typo-spacious' : '';
+
+  let html = '';
+
+  // Status bar
+  html += `<div class="phone-status-bar"><span>9:41</span><span>⚡📶</span></div>`;
+
+  if (state.view === 'operator') {
+    html += renderOperator(a, cardCls, typoClass);
+  } else {
+    html += renderResident(a, cardCls, typoClass);
+  }
+
+  // Tab bar / nav
+  html += renderNav(a);
+
+  screen.innerHTML = `<div class="${typoClass}" style="display:flex;flex-direction:column;height:100%;">
+    <div style="flex:1;overflow-y:auto;">${html.split('<!--NAV-->')[0]}</div>
+    ${renderNav(a)}
+  </div>`;
+
+  updatePrompt();
+}
+
+function renderOperator(a, card, typo) {
+  let h = `<div class="phone-content">`;
+
+  // Header
+  h += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div><div style="font-size:13px;color:#71717a;">Good morning,</div><div style="font-size:22px;font-weight:700;color:#f4f4f5;">Sarah</div></div>
+    <div style="width:40px;height:40px;border-radius:12px;background:${a.bg};display:flex;align-items:center;justify-content:center;font-size:16px;">🔔</div>
+  </div>`;
+
+  if (state.dash === 'cards') {
+    // Money cards row
+    h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div class="m-card ${card}"><div class="stat-label">Revenue MTD</div><div class="stat-value" style="color:#22c55e;">$4,200</div></div>
+      <div class="m-card ${card}"><div class="stat-label">Outstanding</div><div class="stat-value" style="color:#ef4444;">$2,100</div></div>
+    </div>`;
+    // Beds card
+    h += `<div class="m-card ${card}" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div class="stat-label">Beds Filled</div><div style="font-size:20px;font-weight:700;color:#f4f4f5;font-family:monospace;">18 / 22</div></div>
+        <div style="text-align:right;"><div class="stat-label">Lost Revenue</div><div style="font-size:16px;font-weight:600;color:#ef4444;font-family:monospace;">-$2,800/mo</div></div>
+      </div>
+      <div style="height:6px;background:#27272a;border-radius:3px;margin-top:10px;overflow:hidden;">
+        <div style="width:82%;height:100%;background:${a.main};border-radius:3px;"></div>
+      </div>
+    </div>`;
+    // Leads
+    h += `<div class="m-card ${card}" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:13px;font-weight:600;color:#f4f4f5;">Leads Pipeline</div>
+        <div style="font-size:11px;color:${a.text};">Share Link →</div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#f4f4f5;font-family:monospace;">5</div><div style="font-size:10px;color:#71717a;">New</div></div>
+        <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#f4f4f5;font-family:monospace;">3</div><div style="font-size:10px;color:#71717a;">Screening</div></div>
+        <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:#f4f4f5;font-family:monospace;">2</div><div style="font-size:10px;color:#71717a;">Ready</div></div>
+      </div>
+    </div>`;
+  } else if (state.dash === 'list') {
+    // Compact list style
+    h += `<div class="m-card ${card}">`;
+    h += `<div class="list-row"><div><div style="font-size:11px;color:#71717a;">Revenue MTD</div></div><div style="font-size:18px;font-weight:700;color:#22c55e;font-family:monospace;">$4,200</div></div>`;
+    h += `<div class="list-row"><div><div style="font-size:11px;color:#71717a;">Outstanding</div></div><div style="font-size:18px;font-weight:700;color:#ef4444;font-family:monospace;">$2,100</div></div>`;
+    h += `<div class="list-row"><div><div style="font-size:11px;color:#71717a;">Beds Filled</div></div><div style="font-size:18px;font-weight:700;color:#f4f4f5;font-family:monospace;">18/22</div></div>`;
+    h += `<div class="list-row"><div><div style="font-size:11px;color:#71717a;">New Leads</div></div><div style="font-size:18px;font-weight:700;color:${a.text};font-family:monospace;">5</div></div>`;
+    h += `<div class="list-row" style="border:none;"><div><div style="font-size:11px;color:#71717a;">Profit MTD</div></div><div style="font-size:18px;font-weight:700;color:#22c55e;font-family:monospace;">$1,980</div></div>`;
+    h += `</div>`;
+  } else {
+    // Compact stats + actions
+    h += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">
+      <div style="text-align:center;padding:8px 0;"><div style="font-size:18px;font-weight:700;color:#22c55e;font-family:monospace;">$4.2k</div><div style="font-size:9px;color:#71717a;text-transform:uppercase;">Revenue</div></div>
+      <div style="text-align:center;padding:8px 0;"><div style="font-size:18px;font-weight:700;color:#ef4444;font-family:monospace;">$2.1k</div><div style="font-size:9px;color:#71717a;text-transform:uppercase;">Owed</div></div>
+      <div style="text-align:center;padding:8px 0;"><div style="font-size:18px;font-weight:700;color:#f4f4f5;font-family:monospace;">82%</div><div style="font-size:9px;color:#71717a;text-transform:uppercase;">Beds</div></div>
+      <div style="text-align:center;padding:8px 0;"><div style="font-size:18px;font-weight:700;color:${a.text};font-family:monospace;">5</div><div style="font-size:9px;color:#71717a;text-transform:uppercase;">Leads</div></div>
+    </div>`;
+  }
+
+  // Quick actions
+  h += `<div class="quick-actions">
+    <div class="qa-btn"><div class="qa-icon">💰</div>Record Pay</div>
+    <div class="qa-btn"><div class="qa-icon">👤</div>Add Resident</div>
+    <div class="qa-btn"><div class="qa-icon">📢</div>Announce</div>
+    <div class="qa-btn"><div class="qa-icon">📝</div>Expense</div>
+  </div>`;
+
+  // House satisfaction
+  h += `<div class="sec-header">House Satisfaction</div>`;
+  h += `<div class="m-card ${card}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:13px;color:#d4d4d8;">Hope House</div>
+      <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:16px;">😄</span><span style="font-size:14px;font-weight:600;color:#22c55e;font-family:monospace;">4.2</span></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:13px;color:#d4d4d8;">Grace House</div>
+      <div style="display:flex;align-items:center;gap:4px;"><span style="font-size:16px;">😕</span><span style="font-size:14px;font-weight:600;color:#f59e0b;font-family:monospace;">3.1</span></div>
+    </div>
+  </div>`;
+
+  // Action items
+  h += `<div class="sec-header">Action Items</div>`;
+  h += `<div class="action-item">
+    <div class="action-dot" style="background:#ef4444;"></div>
+    <div class="action-text">3 residents late on rent</div>
+    <div class="action-amount" style="color:#ef4444;">$2,100</div>
+  </div>`;
+  h += `<div class="action-item">
+    <div class="action-dot" style="background:#f59e0b;"></div>
+    <div class="action-text">4 beds empty (10+ days)</div>
+    <div class="action-amount" style="color:#f59e0b;">-$2,800</div>
+  </div>`;
+  h += `<div class="action-item">
+    <div class="action-dot" style="background:${a.main};"></div>
+    <div class="action-text">New applicant: James R.</div>
+    <button class="action-btn-sm" style="background:${a.main};">Review</button>
+  </div>`;
+  h += `<div class="action-item" style="border:none;">
+    <div class="action-dot" style="background:#71717a;"></div>
+    <div class="action-text">2 maintenance requests</div>
+    <button class="action-btn-sm" style="background:#3f3f46;">View</button>
+  </div>`;
+
+  h += `</div>`;
+  return h;
+}
+
+function renderResident(a, card, typo) {
+  let h = `<div class="phone-content">`;
+
+  // Header
+  h += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div><div style="font-size:13px;color:#71717a;">Welcome back,</div><div style="font-size:22px;font-weight:700;color:#f4f4f5;">Marcus</div></div>
+    <div style="font-size:11px;color:#71717a;">Day 47 · Hope House</div>
+  </div>`;
+
+  if (state.home === 'mood') {
+    // Mood check-in first
+    h += `<div class="m-card ${card}">
+      <div style="font-size:15px;font-weight:600;color:#f4f4f5;margin-bottom:4px;">How are you feeling today?</div>
+      <div style="font-size:12px;color:#71717a;margin-bottom:8px;">Take a moment to check in with yourself.</div>
+      <div class="mood-row">
+        <div class="mood-btn">😢</div>
+        <div class="mood-btn">😕</div>
+        <div class="mood-btn">😐</div>
+        <div class="mood-btn selected">🙂</div>
+        <div class="mood-btn">😄</div>
+      </div>
+      <button style="width:100%;padding:10px;border-radius:10px;border:none;background:${a.main};color:white;font-weight:600;font-size:14px;cursor:default;">Submit Check-in</button>
+    </div>`;
+    // Balance
+    h += `<div class="m-card ${card}">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div class="stat-label">Balance Due</div><div class="stat-value" style="color:#f4f4f5;">$700</div></div>
+        <button style="padding:10px 20px;border-radius:10px;border:none;background:${a.main};color:white;font-weight:600;font-size:14px;cursor:default;">Pay Now</button>
+      </div>
+      <div style="font-size:11px;color:#71717a;margin-top:6px;">Due Mar 1, 2026</div>
+    </div>`;
+  } else if (state.home === 'balance') {
+    // Balance first
+    h += `<div class="m-card ${card}" style="text-align:center;padding:24px 16px;">
+      <div class="stat-label">Amount Due</div>
+      <div style="font-size:40px;font-weight:700;color:#f4f4f5;font-family:monospace;margin:4px 0;">$700</div>
+      <div style="font-size:12px;color:#71717a;margin-bottom:14px;">Due March 1, 2026</div>
+      <button style="width:100%;padding:12px;border-radius:12px;border:none;background:${a.main};color:white;font-weight:600;font-size:16px;cursor:default;">Pay Now</button>
+    </div>`;
+    // Mini mood
+    h += `<div class="m-card ${card}">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:#d4d4d8;">Daily check-in</span>
+        <div style="display:flex;gap:6px;">${['😢','😕','😐','🙂','😄'].map((e,i) => `<span style="font-size:20px;opacity:${i===3?1:0.4};cursor:default;">${e}</span>`).join('')}</div>
+      </div>
+    </div>`;
+  } else {
+    // Activity feed style
+    h += `<div class="m-card ${card}" style="display:flex;justify-content:space-between;align-items:center;">
+      <div><div class="stat-label">Balance</div><div style="font-size:22px;font-weight:700;color:#f4f4f5;font-family:monospace;">$700</div></div>
+      <button style="padding:8px 16px;border-radius:8px;border:none;background:${a.main};color:white;font-weight:600;font-size:13px;cursor:default;">Pay</button>
+    </div>`;
+  }
+
+  // Today's schedule
+  h += `<div class="sec-header">Today</div>`;
+  h += `<div class="chore-item">
+    <div class="chore-check">　</div>
+    <div style="flex:1;"><div style="font-size:13px;color:#d4d4d8;">Clean kitchen</div><div style="font-size:10px;color:#71717a;">Before 10:00 AM</div></div>
+  </div>`;
+  h += `<div class="chore-item">
+    <div class="chore-check done">✓</div>
+    <div style="flex:1;"><div style="font-size:13px;color:#71717a;text-decoration:line-through;">Make bed</div><div style="font-size:10px;color:#52525b;">Done at 7:30 AM</div></div>
+  </div>`;
+  h += `<div class="chore-item" style="border:none;">
+    <div style="width:20px;height:20px;border-radius:6px;background:${a.bg};display:flex;align-items:center;justify-content:center;font-size:10px;color:${a.text};">📋</div>
+    <div style="flex:1;"><div style="font-size:13px;color:#d4d4d8;">House Meeting</div><div style="font-size:10px;color:#71717a;">7:00 PM · Living Room</div></div>
+  </div>`;
+
+  // Messages
+  h += `<div class="sec-header">Messages</div>`;
+  h += `<div class="msg-row">
+    <div class="msg-avatar" style="background:${a.main};">JD</div>
+    <div><div class="msg-bubble" style="background:#18181b;">Hey Marcus, reminder to clean the kitchen before the meeting tonight 👍</div><div class="msg-time">Jake (Manager) · 2h ago</div></div>
+  </div>`;
+  h += `<div class="msg-row">
+    <div class="msg-avatar" style="background:#3f3f46;">📢</div>
+    <div><div class="msg-bubble" style="background:#18181b;">House BBQ this Saturday at 5pm! Everyone's welcome to invite family.</div><div class="msg-time">Announcement · 1d ago</div></div>
+  </div>`;
+
+  if (state.home === 'feed') {
+    h += `<div class="sec-header">This Week</div>`;
+    h += `<div class="m-card ${card}" style="font-size:12px;color:#a1a1aa;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Mon</span><span style="font-size:16px;">😄</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Tue</span><span style="font-size:16px;">🙂</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span>Wed</span><span style="font-size:16px;">😐</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>Thu</span><span style="font-size:16px;">🙂</span></div>
+    </div>`;
+  }
+
+  h += `</div>`;
+  return h;
+}
+
+function renderNav(a) {
+  const operatorTabs = [
+    { icon: '🏠', label: 'Home', active: true },
+    { icon: '👥', label: 'Houses' },
+    { icon: '💰', label: 'Money' },
+    { icon: '💬', label: 'Messages' },
+    { icon: '⚙️', label: 'More' },
+  ];
+  const residentTabs = [
+    { icon: '🏠', label: 'Home', active: true },
+    { icon: '💳', label: 'Pay' },
+    { icon: '📋', label: 'Schedule' },
+    { icon: '💬', label: 'Messages' },
+    { icon: '👤', label: 'Profile' },
+  ];
+  const tabs = state.view === 'operator' ? operatorTabs : residentTabs;
+
+  if (state.nav === 'drawer') {
+    return `<div class="tab-bar" style="height:44px;justify-content:center;padding:12px;">
+      <div style="width:40px;height:4px;border-radius:2px;background:#3f3f46;"></div>
+    </div>`;
+  }
+
+  let nav = `<div class="tab-bar" style="background:#09090b;">`;
+  const showFab = state.nav === 'tabs-fab';
+  const fabTabs = showFab ? tabs.filter((_, i) => i !== 2) : tabs;
+
+  for (const t of fabTabs) {
+    nav += `<div class="tab-item ${t.active ? 'active' : ''}">
+      <div class="tab-icon">${t.icon}</div>
+      <span>${t.label}</span>
+    </div>`;
+  }
+  nav += `</div>`;
+
+  if (showFab) {
+    const fabIcon = state.view === 'operator' ? '＋' : '💳';
+    nav += `<div class="fab" style="background:${a.main};">${fabIcon}</div>`;
+  }
+
+  return nav;
+}
+
+function updatePrompt() {
+  const a = state.accent;
+  const parts = [`RecoveryOS React Native mobile app with Obsidian dark theme (zinc #09090B background, ${a} accent).`];
+  parts.push(`One app, two experiences — role-based (Clerk auth).`);
+  parts.push(`Navigation: ${state.nav === 'tabs' ? 'bottom tab bar (5 tabs)' : state.nav === 'tabs-fab' ? 'bottom tab bar (4 tabs) + floating action button for primary action' : 'drawer navigation with swipe gesture'}.`);
+  parts.push(`Operator dashboard: ${state.dash === 'cards' ? 'card-based layout with money stats, beds, leads, satisfaction, quick actions' : state.dash === 'list' ? 'clean list layout with stats in rows, space-efficient' : 'compact stat grid (4 across) with action list below'}.`);
+  parts.push(`Resident home: ${state.home === 'mood' ? 'mood check-in prominent at top (5 emoji scale), then balance + pay button, then schedule and messages' : state.home === 'balance' ? 'balance and Pay Now button prominent at top (centered, large), mini mood row, then schedule' : 'balance summary at top, activity feed style with schedule, mood history, and messages interleaved'}.`);
+  parts.push(`Card style: ${state.card === 'flat' ? 'flat dark cards (#18181B background, no border)' : state.card === 'glass' ? 'glassmorphic cards (translucent background, backdrop blur, subtle white border)' : 'outlined cards (transparent bg, zinc border, subtle accent glow)'}.`);
+  parts.push(`Typography: ${state.typo === 'compact' ? 'compact density (tighter spacing, smaller headings, more info visible)' : state.typo === 'spacious' ? 'spacious density (larger headings, generous padding, breathing room)' : 'default density (balanced readability and information density)'}.`);
+  if (state.preset) parts.push(`Based on "${state.preset}" preset.`);
+
+  document.getElementById('prompt-text').textContent = parts.join(' ');
+}
+
+function copyPrompt() {
+  const text = document.getElementById('prompt-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Spec', 1500);
+  });
+}
+
+// Init
+updateAll();
+</script>
+</body>
+</html>
