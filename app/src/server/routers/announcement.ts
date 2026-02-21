@@ -24,24 +24,24 @@ export const announcementRouter = router({
    */
   list: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       houseId: z.string().uuid().optional(),
       includeExpired: z.boolean().default(false),
       includeDrafts: z.boolean().default(false),
       pinnedOnly: z.boolean().default(false),
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),
-    }))
+    }).optional())
     .query(async ({ input, ctx }) => {
       const userId = ctx.user!.id;
+      const orgId = (ctx as any).orgId as string;
 
       const conditions = [
-        eq(announcements.org_id, input.orgId),
+        eq(announcements.org_id, orgId),
         isNull(announcements.deleted_at),
       ];
 
       // House filter
-      if (input.houseId) {
+      if (input?.houseId) {
         conditions.push(
           or(
             eq(announcements.house_id, input.houseId),
@@ -51,14 +51,14 @@ export const announcementRouter = router({
       }
 
       // Published only (unless includeDrafts)
-      if (!input.includeDrafts) {
+      if (!input?.includeDrafts) {
         conditions.push(eq(announcements.is_draft, false));
         conditions.push(sql`${announcements.published_at} IS NOT NULL`);
         conditions.push(lte(announcements.published_at, new Date()));
       }
 
       // Not expired (unless includeExpired)
-      if (!input.includeExpired) {
+      if (!input?.includeExpired) {
         conditions.push(
           or(
             isNull(announcements.expires_at),
@@ -68,7 +68,7 @@ export const announcementRouter = router({
       }
 
       // Pinned only filter
-      if (input.pinnedOnly) {
+      if (input?.pinnedOnly) {
         conditions.push(eq(announcements.is_pinned, true));
       }
 
@@ -92,8 +92,8 @@ export const announcementRouter = router({
         .leftJoin(houses, eq(announcements.house_id, houses.id))
         .where(and(...conditions))
         .orderBy(desc(announcements.is_pinned), desc(announcements.published_at))
-        .limit(input.limit)
-        .offset(input.offset);
+        .limit(input?.limit ?? 50)
+        .offset(input?.offset ?? 0);
 
       // Get read status for each announcement
       const announcementsWithReadStatus = await Promise.all(
@@ -433,15 +433,15 @@ export const announcementRouter = router({
    */
   getUnreadCount: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       houseId: z.string().uuid().optional(),
-    }))
+    }).optional())
     .query(async ({ input, ctx }) => {
       const userId = ctx.user!.id;
+      const orgId = (ctx as any).orgId as string;
 
       // Get all published, non-expired announcements
       const conditions = [
-        eq(announcements.org_id, input.orgId),
+        eq(announcements.org_id, orgId),
         eq(announcements.is_draft, false),
         isNull(announcements.deleted_at),
         sql`${announcements.published_at} IS NOT NULL`,
@@ -452,7 +452,7 @@ export const announcementRouter = router({
         )!,
       ];
 
-      if (input.houseId) {
+      if (input?.houseId) {
         conditions.push(
           or(
             eq(announcements.house_id, input.houseId),
@@ -525,16 +525,16 @@ export const announcementRouter = router({
    */
   getStats: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       houseId: z.string().uuid().optional(),
-    }))
-    .query(async ({ input }) => {
+    }).optional())
+    .query(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
       const conditions = [
-        eq(announcements.org_id, input.orgId),
+        eq(announcements.org_id, orgId),
         isNull(announcements.deleted_at),
       ];
 
-      if (input.houseId) {
+      if (input?.houseId) {
         conditions.push(
           or(
             eq(announcements.house_id, input.houseId),

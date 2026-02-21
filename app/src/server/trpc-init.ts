@@ -15,21 +15,64 @@ import { currentUser } from '@clerk/nextjs/server';
 import { db } from './db/client';
 
 /**
+ * User context available in all procedures
+ */
+export interface UserContext {
+  /** Database user ID (UUID) - use this for created_by, updated_by, etc. */
+  id: string;
+  /** Clerk user ID - use for Clerk API calls only */
+  clerkId: string;
+  /** User email */
+  email: string;
+  /** First name */
+  firstName: string;
+  /** Last name */
+  lastName: string;
+  /** Organization ID */
+  orgId: string | undefined;
+  /** User role in the organization */
+  role: string | undefined;
+  /** Scope type (organization, property, house, resident) */
+  scopeType: string | undefined;
+  /** Scope ID */
+  scopeId: string | undefined;
+}
+
+/**
  * Context created for each request
  */
 export async function createContext(opts: FetchCreateContextFnOptions) {
-  const user = await currentUser();
+  const clerkUser = await currentUser();
+
+  let user: UserContext | null = null;
+
+  if (clerkUser) {
+    // Extract metadata set by setup-user API
+    const metadata = clerkUser.publicMetadata as {
+      dbUserId?: string;
+      orgId?: string;
+      role?: string;
+      scopeType?: string;
+      scopeId?: string;
+    };
+
+    user = {
+      // Use DB user ID if available, fallback to Clerk ID (for backward compat)
+      id: metadata.dbUserId || clerkUser.id,
+      clerkId: clerkUser.id,
+      email: clerkUser.emailAddresses[0]?.emailAddress || '',
+      firstName: clerkUser.firstName || '',
+      lastName: clerkUser.lastName || '',
+      orgId: metadata.orgId,
+      role: metadata.role,
+      scopeType: metadata.scopeType,
+      scopeId: metadata.scopeId,
+    };
+  }
 
   return {
     db,
-    user: user ? {
-      id: user.id,
-      email: user.emailAddresses[0]?.emailAddress || '',
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      orgId: user.publicMetadata?.orgId as string | undefined,
-      role: user.publicMetadata?.role as string | undefined,
-    } : null,
+    user,
     req: opts.req,
     resHeaders: opts.resHeaders,
   };

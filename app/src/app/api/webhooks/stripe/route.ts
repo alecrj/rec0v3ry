@@ -20,7 +20,9 @@ import { db } from '@/server/db/client';
 import { organizations } from '@/server/db/schema/orgs';
 import { payments, invoices } from '@/server/db/schema/payments';
 import { refunds } from '@/server/db/schema/payment-extended';
+import { residents } from '@/server/db/schema/residents';
 import { eq, and } from 'drizzle-orm';
+import { sendPaymentReceiptEmail } from '@/lib/email';
 
 // Track processed events for idempotency
 const processedEvents = new Set<string>();
@@ -189,6 +191,28 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     .returning();
 
   console.log(`[Stripe Webhook] Created payment record: ${payment.id}`);
+
+  // Send receipt email (fire-and-forget)
+  if (residentId) {
+    const resident = await db.query.residents.findFirst({
+      where: eq(residents.id, residentId),
+      columns: { first_name: true, last_name: true, email: true },
+    });
+    const org = await db.query.organizations.findFirst({
+      where: eq(organizations.id, orgId),
+      columns: { name: true },
+    });
+    if (resident?.email && org) {
+      sendPaymentReceiptEmail({
+        to: resident.email,
+        recipientName: `${resident.first_name} ${resident.last_name}`,
+        amount: (paymentIntent.amount / 100).toFixed(2),
+        paymentDate: new Date().toLocaleDateString(),
+        invoiceNumber: invoiceId ? undefined : undefined,
+        orgName: org.name,
+      }).catch((err) => console.error('[Stripe Webhook] Receipt email failed:', err));
+    }
+  }
 
   // Create ledger entries: DR Cash-Stripe (1100), CR Accounts Receivable (1000)
   const transactionId = await createLedgerEntryPair({

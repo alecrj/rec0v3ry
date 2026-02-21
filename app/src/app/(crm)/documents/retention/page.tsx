@@ -6,271 +6,410 @@ import {
   AlertTriangle,
   Shield,
   Clock,
-  CheckCircle,
   FileText,
-  Trash2,
+  Plus,
   Info,
+  X,
+  Pencil,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Button,
+  Badge,
+  EmptyState,
+  SkeletonTable,
+  useToast,
+} from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-  variant?: "default" | "success" | "warning" | "danger";
+const DOC_TYPES = [
+  "intake_form", "resident_agreement", "house_rules", "consent_form",
+  "release_of_info", "financial_agreement", "treatment_plan",
+  "discharge_summary", "incident_report", "other",
+] as const;
+
+const typeLabels: Record<string, string> = {
+  intake_form: "Intake Form",
+  resident_agreement: "Resident Agreement",
+  house_rules: "House Rules",
+  consent_form: "Consent Form",
+  release_of_info: "Release of Info",
+  financial_agreement: "Financial Agreement",
+  treatment_plan: "Treatment Plan",
+  discharge_summary: "Discharge Summary",
+  incident_report: "Incident Report",
+  other: "Other",
+};
+
+const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+
+const RETENTION_PRESETS = [
+  { label: "3 years (operational)", value: "1095" },
+  { label: "6 years (medical/Part 2)", value: "2190" },
+  { label: "7 years (financial/IRS)", value: "2555" },
+  { label: "10 years", value: "3650" },
+  { label: "Indefinite", value: "indefinite" },
+];
+
+function retentionLabel(days: string): string {
+  if (days === "indefinite") return "Indefinite";
+  const d = parseInt(days, 10);
+  if (isNaN(d)) return days;
+  const years = Math.round(d / 365);
+  return years >= 1 ? `${years} year${years > 1 ? "s" : ""}` : `${d} days`;
 }
 
-function StatCard({ title, value, subtitle, icon: Icon, variant = "default" }: StatCardProps) {
-  const variantStyles = {
-    default: "bg-blue-50 text-blue-600",
-    success: "bg-green-50 text-green-600",
-    warning: "bg-yellow-50 text-yellow-600",
-    danger: "bg-red-50 text-red-600",
-  };
+// ── Create/Edit Policy Modal ───────────────────────────────
+function PolicyFormModal({
+  isOpen,
+  onClose,
+  policy,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  policy?: {
+    id: string;
+    name: string;
+    document_type: string | null;
+    retention_period_days: string;
+    description: string | null;
+    is_active: boolean;
+  } | null;
+}) {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const isEdit = !!policy;
+
+  const [name, setName] = useState(policy?.name ?? "");
+  const [documentType, setDocumentType] = useState(policy?.document_type ?? "");
+  const [retentionDays, setRetentionDays] = useState(policy?.retention_period_days ?? "2190");
+  const [description, setDescription] = useState(policy?.description ?? "");
+
+  const createMutation = trpc.document.retention.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Retention policy created");
+      utils.document.retention.list.invalidate();
+      onClose();
+    },
+    onError: (err) => toast("error", "Failed to create policy", err.message),
+  });
+
+  const updateMutation = trpc.document.retention.update.useMutation({
+    onSuccess: () => {
+      toast("success", "Policy updated");
+      utils.document.retention.list.invalidate();
+      onClose();
+    },
+    onError: (err) => toast("error", "Failed to update policy", err.message),
+  });
+
+  if (!isOpen) return null;
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-600">{title}</p>
-          <p className="text-3xl font-bold text-slate-900 mt-2">{value}</p>
-          <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-zinc-100">
+              {isEdit ? "Edit Policy" : "New Retention Policy"}
+            </h2>
+            <p className="text-sm text-zinc-500 mt-1">
+              {isEdit ? "Update retention policy details" : "Define document retention requirements"}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <div className={`p-3 rounded-lg ${variantStyles[variant]}`}>
-          <Icon className="h-6 w-6" />
-        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (isEdit && policy) {
+              updateMutation.mutate({
+                id: policy.id,
+                name,
+                retentionPeriodDays: retentionDays,
+                description: description || undefined,
+              });
+            } else {
+              createMutation.mutate({
+                name,
+                documentType: (documentType || undefined) as typeof DOC_TYPES[number] | undefined,
+                retentionPeriodDays: retentionDays,
+                description: description || undefined,
+              });
+            }
+          }}
+          className="p-6 space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Policy Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. Part 2 Consent Records"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Document Type</label>
+              <select
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">All Types</option>
+                {DOC_TYPES.map((t) => (
+                  <option key={t} value={t}>{typeLabels[t]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Retention Period</label>
+              <select
+                value={retentionDays}
+                onChange={(e) => setRetentionDays(e.target.value)}
+                className={inputClass}
+              >
+                {RETENTION_PRESETS.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description</label>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              placeholder="Regulatory basis for this retention period..."
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!name || createMutation.isPending || updateMutation.isPending}
+            >
+              {(createMutation.isPending || updateMutation.isPending)
+                ? "Saving..."
+                : (isEdit ? "Save Changes" : "Create Policy")}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
 }
 
+// ── Main Page ──────────────────────────────────────────────
 export default function RetentionDashboardPage() {
-  const policies = [
-    {
-      id: "1",
-      name: "Part 2 Protected Records",
-      documentType: "consent_form",
-      retentionYears: 6,
-      regulatoryBasis: "42 CFR Part 2",
-      documentCount: 52,
-      nextReview: "2026-06-15",
-      isCompliant: true,
-    },
-    {
-      id: "2",
-      name: "Medical Records",
-      documentType: "treatment_plan",
-      retentionYears: 6,
-      regulatoryBasis: "HIPAA",
-      documentCount: 31,
-      nextReview: "2026-06-15",
-      isCompliant: true,
-    },
-    {
-      id: "3",
-      name: "Financial Records",
-      documentType: "financial_agreement",
-      retentionYears: 7,
-      regulatoryBasis: "IRS / State",
-      documentCount: 48,
-      nextReview: "2026-03-01",
-      isCompliant: true,
-    },
-    {
-      id: "4",
-      name: "Operational Records",
-      documentType: "house_rules",
-      retentionYears: 3,
-      regulatoryBasis: "Internal Policy",
-      documentCount: 15,
-      nextReview: "2026-04-01",
-      isCompliant: true,
-    },
-    {
-      id: "5",
-      name: "Incident Reports",
-      documentType: "incident_report",
-      retentionYears: 6,
-      regulatoryBasis: "HIPAA / State",
-      documentCount: 8,
-      nextReview: "2026-06-15",
-      isCompliant: false,
-    },
-  ];
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useState<any>(null);
 
-  const expiringDocuments = [
-    {
-      id: "1",
-      title: "Consent Form - Former Resident A",
-      type: "consent_form",
-      expiresAt: "2026-03-15",
-      policy: "Part 2 Protected Records",
-      action: "review",
-    },
-    {
-      id: "2",
-      title: "Financial Agreement - Former Resident B",
-      type: "financial_agreement",
-      expiresAt: "2026-04-01",
-      policy: "Financial Records",
-      action: "review",
-    },
-    {
-      id: "3",
-      title: "House Rules v1 (Superseded)",
-      type: "house_rules",
-      expiresAt: "2026-02-28",
-      policy: "Operational Records",
-      action: "delete",
-    },
-  ];
+  const { data: policies, isLoading: policiesLoading } = trpc.document.retention.list.useQuery({
+    activeOnly: false,
+  });
+
+  const { data: expiringDocs, isLoading: expiringLoading } = trpc.document.retention.getExpiring.useQuery({
+    daysAhead: 90,
+  });
+
+  const isLoading = policiesLoading || expiringLoading;
+
+  const allPolicies = policies ?? [];
+  const activePolicies = allPolicies.filter((p) => p.is_active);
+  const expiring = expiringDocs ?? [];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Retention Dashboard</h1>
-          <p className="text-slate-600 mt-1">Document retention policies and compliance</p>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Retention Dashboard"
+        description="Document retention policies and compliance"
+        actions={
+          <Button
+            variant="primary"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setShowCreateModal(true)}
+          >
+            New Policy
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatCardGrid columns={4}>
         <StatCard
-          title="Total Documents"
-          value="154"
+          title="Total Policies"
+          value={isLoading ? "\u2014" : String(allPolicies.length)}
           subtitle="Under retention management"
-          icon={FileText}
-          variant="default"
+          icon={<FileText className="h-5 w-5" />}
+          loading={isLoading}
         />
         <StatCard
-          title="Compliant Policies"
-          value="4/5"
-          subtitle="Meeting retention requirements"
-          icon={Shield}
+          title="Active Policies"
+          value={isLoading ? "\u2014" : `${activePolicies.length}/${allPolicies.length}`}
+          subtitle="Currently active"
           variant="success"
+          icon={<Shield className="h-5 w-5" />}
+          loading={isLoading}
         />
         <StatCard
           title="Expiring Soon"
-          value="3"
-          subtitle="Within next 60 days"
-          icon={Clock}
+          value={isLoading ? "\u2014" : String(expiring.length)}
+          subtitle="Documents within 90 days"
           variant="warning"
+          icon={<Clock className="h-5 w-5" />}
+          loading={isLoading}
         />
         <StatCard
-          title="Review Required"
-          value="1"
-          subtitle="Policy needs attention"
-          icon={AlertTriangle}
-          variant="danger"
+          title="Inactive Policies"
+          value={isLoading ? "\u2014" : String(allPolicies.length - activePolicies.length)}
+          subtitle="Paused or retired"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          loading={isLoading}
         />
-      </div>
+      </StatCardGrid>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      {/* Info banner */}
+      <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <Info className="h-5 w-5 text-indigo-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-blue-900">Regulatory Minimums</p>
-            <p className="text-sm text-blue-800 mt-1">
+            <p className="text-sm font-medium text-indigo-100">Regulatory Minimums</p>
+            <p className="text-sm text-indigo-200 mt-1">
               42 CFR Part 2: 6 years &bull; HIPAA Medical: 6 years &bull; Financial/IRS: 7 years &bull; Operational: 3 years
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Retention Policies</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Policy Name</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Document Type</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Retention Period</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Basis</th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">Documents</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Next Review</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {policies.map((policy) => (
-                <tr key={policy.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <Archive className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-900">{policy.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{policy.documentType.replace(/_/g, " ")}</td>
-                  <td className="py-3 px-4 text-sm font-medium text-slate-900">{policy.retentionYears} years</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded">
-                      {policy.regulatoryBasis}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-right text-slate-900">{policy.documentCount}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">
-                    {new Date(policy.nextReview).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4">
-                    {policy.isCompliant ? (
-                      <span className="flex items-center gap-1 text-xs font-medium text-green-700">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        Compliant
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs font-medium text-red-700">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        Review Required
-                      </span>
-                    )}
-                  </td>
+      {/* Retention Policies Table */}
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-100 mb-4">Retention Policies</h2>
+        {policiesLoading ? (
+          <SkeletonTable rows={5} columns={6} />
+        ) : allPolicies.length === 0 ? (
+          <EmptyState
+            iconType="inbox"
+            title="No retention policies"
+            description="Create your first retention policy to manage document lifecycles."
+            action={{ label: "New Policy", onClick: () => setShowCreateModal(true) }}
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Policy Name</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Document Type</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Retention Period</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Description</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/50">
+                {allPolicies.map((policy) => (
+                  <tr key={policy.id} className="hover:bg-zinc-800/40 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <Archive className="h-4 w-4 text-zinc-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-zinc-100">{policy.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-zinc-400">
+                      {policy.document_type ? (typeLabels[policy.document_type] ?? policy.document_type) : "All types"}
+                    </td>
+                    <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                      {retentionLabel(policy.retention_period_days)}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-zinc-400 max-w-xs truncate">
+                      {policy.description ?? "\u2014"}
+                    </td>
+                    <td className="py-3 px-4">
+                      {policy.is_active ? (
+                        <Badge variant="success">Active</Badge>
+                      ) : (
+                        <Badge variant="default">Inactive</Badge>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        className="p-1.5 text-zinc-500 hover:text-indigo-400 rounded transition-colors"
+                        title="Edit"
+                        onClick={() => setEditingPolicy(policy)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Documents Expiring Soon</h2>
-          <p className="text-sm text-slate-600 mt-1">Documents approaching end of retention period</p>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {expiringDocuments.map((doc) => (
-            <div key={doc.id} className="p-4 flex items-center justify-between hover:bg-slate-50">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Clock className="h-4 w-4 text-yellow-600" />
+      {/* Expiring Documents */}
+      <div>
+        <h2 className="text-lg font-semibold text-zinc-100 mb-1">Documents Expiring Soon</h2>
+        <p className="text-sm text-zinc-400 mb-4">Documents approaching end of retention period (next 90 days)</p>
+        {expiringLoading ? (
+          <SkeletonTable rows={3} columns={4} />
+        ) : expiring.length === 0 ? (
+          <EmptyState
+            iconType="inbox"
+            title="No expiring documents"
+            description="No documents are approaching their retention expiry within 90 days."
+          />
+        ) : (
+          <div className="space-y-3">
+            {expiring.map((doc) => (
+              <div key={doc.id} className="border border-zinc-800 rounded-lg p-4 flex items-center justify-between hover:bg-zinc-800/30 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-amber-500/15 rounded-lg">
+                    <Clock className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-100">{doc.title}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {typeLabels[doc.document_type] ?? doc.document_type}
+                      {doc.expires_at && (
+                        <> &bull; Expires {new Date(doc.expires_at).toLocaleDateString()}</>
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">{doc.title}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    Expires {new Date(doc.expiresAt).toLocaleDateString()} &bull; {doc.policy}
-                  </p>
-                </div>
+                <Badge variant="warning">Expiring</Badge>
               </div>
-              <div className="flex items-center gap-2">
-                {doc.action === "delete" ? (
-                  <button className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 flex items-center gap-1">
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Schedule Deletion
-                  </button>
-                ) : (
-                  <button className="px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50">
-                    Review
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+
+      <PolicyFormModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      <PolicyFormModal
+        key={editingPolicy?.id}
+        isOpen={!!editingPolicy}
+        onClose={() => setEditingPolicy(null)}
+        policy={editingPolicy}
+      />
+    </PageContainer>
   );
 }

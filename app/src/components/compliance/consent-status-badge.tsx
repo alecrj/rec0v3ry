@@ -1,24 +1,28 @@
 import { cn } from "@/lib/utils";
 
-type ConsentStatus = "active" | "expired" | "revoked";
+export type ConsentStatus = "active" | "expired" | "revoked" | "pending";
 
 interface ConsentStatusBadgeProps {
   status: ConsentStatus;
   className?: string;
 }
 
-const statusConfig = {
+const statusConfig: Record<ConsentStatus, { label: string; className: string }> = {
   active: {
     label: "Active",
-    className: "bg-green-100 text-green-700 border-green-200",
+    className: "bg-green-500/15 text-green-300 border-green-500/20",
   },
   expired: {
     label: "Expired",
-    className: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    className: "bg-yellow-500/15 text-yellow-300 border-yellow-500/20",
   },
   revoked: {
     label: "Revoked",
-    className: "bg-red-100 text-red-700 border-red-200",
+    className: "bg-red-500/15 text-red-300 border-red-500/20",
+  },
+  pending: {
+    label: "Pending",
+    className: "bg-indigo-500/15 text-indigo-300 border-indigo-500/20",
   },
 };
 

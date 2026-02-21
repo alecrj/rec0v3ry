@@ -1,20 +1,28 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { Bell } from "lucide-react";
+import { Bell, ChevronRight } from "lucide-react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
-function getBreadcrumbs(pathname: string): string[] {
+function getBreadcrumbs(pathname: string): { label: string; href: string }[] {
   const segments = pathname.split("/").filter(Boolean);
-  const breadcrumbs: string[] = [];
+  const breadcrumbs: { label: string; href: string }[] = [];
 
+  let currentPath = "";
   for (let i = 0; i < segments.length; i++) {
     const segment = segments[i];
+    currentPath += "/" + segment;
+
     const formatted = segment
       .split("-")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
-    breadcrumbs.push(formatted);
+
+    breadcrumbs.push({
+      label: formatted,
+      href: currentPath,
+    });
   }
 
   return breadcrumbs;
@@ -25,42 +33,44 @@ export function CrmHeader() {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
-        <nav className="flex items-center gap-2 text-sm">
-          {breadcrumbs.length > 0 ? (
-            <>
-              {breadcrumbs.map((crumb, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  {index > 0 && <span className="text-slate-400">/</span>}
-                  <span
-                    className={
-                      index === breadcrumbs.length - 1
-                        ? "font-semibold text-slate-900"
-                        : "text-slate-600"
-                    }
-                  >
-                    {crumb}
-                  </span>
-                </div>
-              ))}
-            </>
-          ) : (
-            <span className="font-semibold text-slate-900">Dashboard</span>
-          )}
-        </nav>
-      </div>
+    <header className="h-14 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1 text-sm">
+        {breadcrumbs.length > 0 ? (
+          breadcrumbs.map((crumb, index) => (
+            <div key={index} className="flex items-center">
+              {index > 0 && <ChevronRight className="h-4 w-4 text-zinc-600 mx-1" />}
+              {index === breadcrumbs.length - 1 ? (
+                <span className="font-semibold text-zinc-100">{crumb.label}</span>
+              ) : (
+                <Link
+                  href={crumb.href}
+                  className="text-zinc-500 hover:text-zinc-400 transition-colors"
+                >
+                  {crumb.label}
+                </Link>
+              )}
+            </div>
+          ))
+        ) : (
+          <span className="font-semibold text-zinc-100">Dashboard</span>
+        )}
+      </nav>
 
-      <div className="flex items-center gap-4">
-        <button className="relative p-2 rounded-lg hover:bg-slate-100 transition-colors">
-          <Bell className="h-5 w-5 text-slate-600" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <button className="relative p-2 rounded-md hover:bg-zinc-800 transition-colors group">
+          <Bell className="h-5 w-5 text-zinc-500 group-hover:text-zinc-400 transition-colors" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-zinc-900" />
         </button>
+
+        <div className="h-6 w-px bg-zinc-800 mx-1" />
 
         <UserButton
           appearance={{
             elements: {
-              avatarBox: "w-9 h-9",
+              avatarBox: "w-8 h-8 ring-2 ring-zinc-800",
+              userButtonTrigger: "rounded-md hover:bg-zinc-800 p-0.5 transition-colors",
             },
           }}
         />

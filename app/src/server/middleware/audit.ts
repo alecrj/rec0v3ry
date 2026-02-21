@@ -50,14 +50,14 @@ function generateAuditHash(
 async function getLastAuditHash(db: any, orgId: string): Promise<string> {
   try {
     const lastEntry = await db.query.auditLogs.findFirst({
-      where: (auditLogs: any, { eq }: any) => eq(auditLogs.orgId, orgId),
-      orderBy: (auditLogs: any, { desc }: any) => [desc(auditLogs.timestamp)],
+      where: (auditLogs: any, { eq }: any) => eq(auditLogs.org_id, orgId),
+      orderBy: (auditLogs: any, { desc }: any) => [desc(auditLogs.created_at)],
       columns: {
-        hash: true,
+        current_log_hash: true,
       },
     });
 
-    return lastEntry?.hash || ''; // Empty string for first entry
+    return lastEntry?.current_log_hash || '';
   } catch (error) {
     console.error('Failed to get last audit hash:', error);
     return '';
@@ -124,56 +124,51 @@ function getIpAddress(req: Request): string {
  * Writes audit log entry after handler completes
  */
 export const auditMiddleware = middleware(async ({ ctx, meta, input, next, path }) => {
-  const startTime = Date.now();
-
   try {
     // Execute the handler
     const result = await next({ ctx });
 
-    // After successful execution, log the action
-    // orgId is added to context by tenantMiddleware
+    // After successful execution, fire audit logging fully async.
+    // Never block the response — audit failures must not affect mutations.
     if (ctx.user && (ctx as any).orgId) {
-      const orgId = (ctx as any).orgId as string;
+      const auditCtx = {
+        orgId: (ctx as any).orgId as string,
+        userId: ctx.user.id,
+        email: ctx.user.email,
+        role: ctx.user.role || 'unknown',
+        ipAddress: getIpAddress(ctx.req),
+        userAgent: ctx.req.headers.get('user-agent') || 'unknown',
+        consentId: (ctx as any).consentId || null,
+      };
       const { resourceType, resourceId } = extractResourceInfo(meta, input);
       const sensitivity = determineSensitivity(resourceType, meta);
 
-      // Determine action type from path
       let action: AuditAction;
       if (path.includes('.create')) action = 'resident_created';
       else if (path.includes('.update')) action = 'resident_updated';
       else if (path.includes('.delete')) action = 'resident_deleted';
       else if (path.includes('.list') || path.includes('.get')) action = 'resident_viewed';
-      else action = 'resident_viewed'; // Default
+      else action = 'resident_viewed';
 
-      // Get IP and user agent
-      const ipAddress = getIpAddress(ctx.req);
-      const userAgent = ctx.req.headers.get('user-agent') || 'unknown';
-
-      // Get previous hash for chain
-      const previousHash = await getLastAuditHash(ctx.db, orgId);
-
-      // Generate current entry data
-      const entry = {
-        timestamp: new Date(),
-        userId: ctx.user.id,
-        action,
-        resourceId,
-        oldValue: (input as any)?._oldValue, // Set by handler if update
-        newValue: (input as any)?._newValue, // Set by handler if update
-      };
-
-      // Generate hash
-      const hash = generateAuditHash(entry, previousHash, orgId);
-
-      // Write audit log asynchronously (don't block response)
-      // In production, this would go through Inngest
+      // Fire-and-forget: all async work in setImmediate
       setImmediate(async () => {
         try {
+          const previousHash = await getLastAuditHash(ctx.db, auditCtx.orgId);
+          const entry = {
+            timestamp: new Date(),
+            userId: auditCtx.userId,
+            action,
+            resourceId,
+            oldValue: (input as any)?._oldValue,
+            newValue: (input as any)?._newValue,
+          };
+          const hash = generateAuditHash(entry, previousHash, auditCtx.orgId);
+
           await ctx.db.insert(auditLogs).values({
-            org_id: orgId,
-            actor_user_id: ctx.user!.id,
+            org_id: auditCtx.orgId,
+            actor_user_id: auditCtx.userId,
             actor_type: 'user',
-            actor_ip_address: ipAddress,
+            actor_ip_address: auditCtx.ipAddress,
             action,
             resource_type: resourceType,
             resource_id: resourceId || null,
@@ -182,21 +177,19 @@ export const auditMiddleware = middleware(async ({ ctx, meta, input, next, path 
             old_values: entry.oldValue || null,
             new_values: entry.newValue || null,
             metadata: {
-              userRole: ctx.user!.role || 'unknown',
-              userEmail: ctx.user!.email,
-              userAgent,
-              sessionId: ctx.user!.id, // Use Clerk session ID in production
+              userRole: auditCtx.role,
+              userEmail: auditCtx.email,
+              userAgent: auditCtx.userAgent,
+              sessionId: auditCtx.userId,
               requestId: crypto.randomUUID(),
-              consentId: (ctx as any).consentId || null,
+              consentId: auditCtx.consentId,
               success: true,
             },
             current_log_hash: hash,
             previous_log_hash: previousHash,
           });
-        } catch (error) {
-          console.error('Failed to write audit log:', error);
-          // In production, this would trigger an alert
-          // For now, write to local buffer as fallback
+        } catch (err) {
+          console.error('[Audit] Failed to write audit log:', err);
         }
       });
     }

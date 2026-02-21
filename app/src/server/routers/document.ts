@@ -12,6 +12,7 @@ import { documents, documentTemplates, signatures, retentionPolicies } from '../
 import { documentVersions } from '../db/schema/documents-extended';
 import { eq, and, isNull, desc, gte, lte, sql, like, or, asc } from 'drizzle-orm';
 import { NotFoundError, InvalidInputError } from '@/lib/errors';
+import { generateUploadUrl, generateDownloadUrl } from '@/lib/s3';
 
 // ============================================================
 // RETENTION MINIMUM DAYS (regulatory requirements)
@@ -627,12 +628,15 @@ export const documentRouter = router({
         : `${orgId}/documents/${input.category}`;
       const storageKey = `${keyPrefix}/${uuid}_${safeName}`;
 
-      // TODO: Replace with actual S3 pre-signed URL generation via src/lib/s3.ts
-      // For now return the storage key; the S3 integration will provide the actual URL
+      const { uploadUrl } = await generateUploadUrl({
+        key: storageKey,
+        contentType: input.contentType,
+      });
+
       return {
-        uploadUrl: `/api/upload/${storageKey}`,
+        uploadUrl,
         storageKey,
-        expiresIn: 900, // 15 minutes
+        expiresIn: 900,
       };
     }),
 
@@ -658,12 +662,13 @@ export const documentRouter = router({
         throw new InvalidInputError('Document has no associated file');
       }
 
-      // TODO: For Part 2/clinical documents, verify consent before generating URL
-      // if (doc.sensitivity_level === 'part2_protected') { ... }
+      const { downloadUrl } = await generateDownloadUrl({
+        key: doc.file_url,
+        filename: doc.title,
+      });
 
-      // TODO: Replace with actual S3 pre-signed download URL via src/lib/s3.ts
       return {
-        downloadUrl: doc.file_url,
+        downloadUrl,
         expiresIn: 900,
       };
     }),

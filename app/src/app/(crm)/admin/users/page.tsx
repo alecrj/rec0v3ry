@@ -3,296 +3,304 @@
 import { useState } from "react";
 import Link from "next/link";
 import { UserPlus, Search } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  EmptyState,
+  NoResultsState,
+  ErrorState,
+  SkeletonTable,
+  useToast,
+} from "@/components/ui";
 
-type UserRole = "org_owner" | "org_admin" | "property_manager" | "house_manager" | "staff" | "resident";
-type UserStatus = "active" | "inactive";
+export const dynamic = "force-dynamic";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  scope: string;
-  status: UserStatus;
-  lastLogin: string | null;
-}
+type UserRole = "super_admin" | "org_owner" | "property_manager" | "house_manager" | "case_manager" | "staff" | "resident" | "family" | "referral_source";
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    email: "sarah.j@recoveryos.com",
-    role: "org_owner",
-    scope: "Global",
-    status: "active",
-    lastLogin: "2026-02-12T14:32:00Z",
-  },
-  {
-    id: "2",
-    name: "Mike Davis",
-    email: "mike.d@recoveryos.com",
-    role: "org_admin",
-    scope: "Global",
-    status: "active",
-    lastLogin: "2026-02-12T13:15:00Z",
-  },
-  {
-    id: "3",
-    name: "Jennifer Smith",
-    email: "jennifer.s@recoveryos.com",
-    role: "property_manager",
-    scope: "Serenity Properties",
-    status: "active",
-    lastLogin: "2026-02-12T09:22:00Z",
-  },
-  {
-    id: "4",
-    name: "Robert Taylor",
-    email: "robert.t@recoveryos.com",
-    role: "house_manager",
-    scope: "Main House - Downtown",
-    status: "active",
-    lastLogin: "2026-02-11T16:45:00Z",
-  },
-  {
-    id: "5",
-    name: "Lisa Martinez",
-    email: "lisa.m@recoveryos.com",
-    role: "staff",
-    scope: "Main House - Downtown",
-    status: "active",
-    lastLogin: "2026-02-12T08:30:00Z",
-  },
-  {
-    id: "6",
-    name: "David Chen",
-    email: "david.c@recoveryos.com",
-    role: "house_manager",
-    scope: "Riverside House",
-    status: "active",
-    lastLogin: "2026-02-10T14:20:00Z",
-  },
-  {
-    id: "7",
-    name: "Emily Wilson",
-    email: "emily.w@recoveryos.com",
-    role: "staff",
-    scope: "Riverside House",
-    status: "active",
-    lastLogin: "2026-02-12T12:05:00Z",
-  },
-  {
-    id: "8",
-    name: "Tom Anderson",
-    email: "tom.a@recoveryos.com",
-    role: "staff",
-    scope: "Main House - Downtown",
-    status: "inactive",
-    lastLogin: "2026-01-15T10:30:00Z",
-  },
-];
+const roleConfig: Record<UserRole, { variant: "error" | "warning" | "info" | "success" | "default"; label: string }> = {
+  super_admin: { variant: "error", label: "Super Admin" },
+  org_owner: { variant: "info", label: "Owner" },
+  property_manager: { variant: "success", label: "Property Manager" },
+  house_manager: { variant: "success", label: "House Manager" },
+  case_manager: { variant: "info", label: "Case Manager" },
+  staff: { variant: "default", label: "Staff" },
+  resident: { variant: "warning", label: "Resident" },
+  family: { variant: "default", label: "Family" },
+  referral_source: { variant: "default", label: "Referral Source" },
+};
 
 export default function UsersPage() {
-  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingUser, setEditingUser] = useState<{ id: string; role: string } | null>(null);
+  const [editRole, setEditRole] = useState("");
 
-  const getRoleBadge = (role: UserRole) => {
-    const styles = {
-      org_owner: "bg-purple-100 text-purple-700 border-purple-200",
-      org_admin: "bg-blue-100 text-blue-700 border-blue-200",
-      property_manager: "bg-green-100 text-green-700 border-green-200",
-      house_manager: "bg-teal-100 text-teal-700 border-teal-200",
-      staff: "bg-slate-100 text-slate-700 border-slate-200",
-      resident: "bg-orange-100 text-orange-700 border-orange-200",
-    };
-
-    const labels = {
-      org_owner: "Owner",
-      org_admin: "Admin",
-      property_manager: "Property Manager",
-      house_manager: "House Manager",
-      staff: "Staff",
-      resident: "Resident",
-    };
-
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium border ${styles[role]}`}>
-        {labels[role]}
-      </span>
-    );
-  };
-
-  const getStatusBadge = (status: UserStatus) => {
-    return (
-      <span
-        className={`px-2 py-1 rounded text-xs font-medium ${
-          status === "active"
-            ? "bg-green-100 text-green-700"
-            : "bg-slate-100 text-slate-700"
-        }`}
-      >
-        {status === "active" ? "Active" : "Inactive"}
-      </span>
-    );
-  };
-
-  const filteredUsers = mockUsers.filter((user) => {
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
-    const matchesSearch =
-      searchTerm === "" ||
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesRole && matchesSearch;
+  const deactivateUser = trpc.user.deactivate.useMutation({
+    onSuccess: () => {
+      toast("success", "User deactivated");
+      utils.user.list.invalidate();
+    },
+    onError: (err) => toast("error", "Failed to deactivate", err.message),
   });
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-          <p className="text-slate-600 mt-1">Manage users, roles, and permissions</p>
-        </div>
-        <Link
-          href="/admin/users/invite"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-        >
-          <UserPlus className="h-4 w-4" />
-          Invite User
-        </Link>
-      </div>
+  const reactivateUser = trpc.user.reactivate.useMutation({
+    onSuccess: () => {
+      toast("success", "User activated");
+      utils.user.list.invalidate();
+    },
+    onError: (err) => toast("error", "Failed to activate", err.message),
+  });
 
-      <div className="flex items-center gap-2 border-b border-slate-200">
+  const updateRole = trpc.user.updateRole.useMutation({
+    onSuccess: () => {
+      toast("success", "Role updated");
+      utils.user.list.invalidate();
+      setEditingUser(null);
+    },
+    onError: (err) => toast("error", "Failed to update role", err.message),
+  });
+
+  const { data, isLoading, error } = trpc.user.list.useQuery({
+    role: selectedRole === "all" ? undefined : selectedRole,
+    limit: 50,
+  });
+
+  const filteredUsers = (data?.items || []).filter((user) => {
+    if (!searchTerm) return true;
+    const query = searchTerm.toLowerCase();
+    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+    return fullName.includes(query) || user.email.toLowerCase().includes(query);
+  });
+
+  const roleCounts = (data?.items || []).reduce((acc, user) => {
+    acc[user.role] = (acc[user.role] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="User Management"
+        description="Manage users, roles, and permissions"
+        actions={
+          <Link href="/admin/users/invite">
+            <Button variant="primary" icon={<UserPlus className="h-4 w-4" />}>
+              Invite User
+            </Button>
+          </Link>
+        }
+      />
+
+      {error && (
+        <Card><CardContent><ErrorState title="Error loading users" description={error.message} /></CardContent></Card>
+      )}
+
+      {/* Role Filter Tabs */}
+      <div className="flex items-center gap-2 border-b border-zinc-800 overflow-x-auto">
         <button
           onClick={() => setSelectedRole("all")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             selectedRole === "all"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-600 hover:text-slate-900"
+              ? "border-indigo-500 text-indigo-400"
+              : "border-transparent text-zinc-400 hover:text-zinc-100"
           }`}
         >
-          All ({mockUsers.length})
+          All ({data?.items.length || 0})
         </button>
-        <button
-          onClick={() => setSelectedRole("org_owner")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            selectedRole === "org_owner"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          Owners ({mockUsers.filter((u) => u.role === "org_owner").length})
-        </button>
-        <button
-          onClick={() => setSelectedRole("org_admin")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            selectedRole === "org_admin"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          Admins ({mockUsers.filter((u) => u.role === "org_admin").length})
-        </button>
-        <button
-          onClick={() => setSelectedRole("property_manager")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            selectedRole === "property_manager"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          Managers ({mockUsers.filter((u) => u.role === "property_manager").length})
-        </button>
-        <button
-          onClick={() => setSelectedRole("staff")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            selectedRole === "staff"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          Staff ({mockUsers.filter((u) => u.role === "staff").length})
-        </button>
+        {(["org_owner", "property_manager", "house_manager", "case_manager", "staff"] as UserRole[]).map((role) => {
+          const count = roleCounts[role] || 0;
+          if (count === 0 && selectedRole !== role) return null;
+          return (
+            <button
+              key={role}
+              onClick={() => setSelectedRole(role)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                selectedRole === role
+                  ? "border-indigo-500 text-indigo-400"
+                  : "border-transparent text-zinc-400 hover:text-zinc-100"
+              }`}
+            >
+              {roleConfig[role]?.label || role} ({count})
+            </button>
+          );
+        })}
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-4 border-b border-slate-200">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      <Card className="overflow-hidden">
+        <div className="px-4 pt-4 pb-0">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <input
               type="text"
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Name
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Email
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Role
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Scope
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Last Login
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="py-3 px-4 text-sm font-medium text-slate-900">
-                    {user.name}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{user.email}</td>
-                  <td className="py-3 px-4">{getRoleBadge(user.role)}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{user.scope}</td>
-                  <td className="py-3 px-4">{getStatusBadge(user.status)}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">
-                    {user.lastLogin
-                      ? new Date(user.lastLogin).toLocaleDateString()
-                      : "Never"}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        Edit
-                      </button>
-                      <span className="text-slate-300">|</span>
-                      <button
-                        className={`text-sm font-medium ${
-                          user.status === "active"
-                            ? "text-red-600 hover:text-red-700"
-                            : "text-green-600 hover:text-green-700"
-                        }`}
-                      >
-                        {user.status === "active" ? "Deactivate" : "Activate"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="px-4 pb-4"><SkeletonTable rows={6} columns={7} /></div>
+          ) : filteredUsers.length === 0 ? (
+            <CardContent>
+              {searchTerm ? (
+                <NoResultsState searchTerm={searchTerm} onClear={() => setSearchTerm("")} />
+              ) : (
+                <EmptyState iconType="users" title="No users found" description="Invite team members to get started." />
+              )}
+            </CardContent>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Name</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Email</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Role</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Scope</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Last Login</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => {
+                      const rc = roleConfig[user.role as UserRole] || { variant: "default" as const, label: user.role };
+                      return (
+                        <tr key={user.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                                <span className="text-sm font-medium text-zinc-400">
+                                  {user.first_name?.charAt(0) || "?"}{user.last_name?.charAt(0) || ""}
+                                </span>
+                              </div>
+                              <span className="text-sm font-medium text-zinc-100">
+                                {user.first_name} {user.last_name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-zinc-400">{user.email}</td>
+                          <td className="py-3 px-4">
+                            <Badge variant={rc.variant}>{rc.label}</Badge>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-zinc-400">
+                            {user.scopeType ? (
+                              <span className="capitalize">{user.scopeType}</span>
+                            ) : (
+                              <span className="text-zinc-500">Global</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant={user.is_active ? "success" : "default"} dot>
+                              {user.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-zinc-400">
+                            {user.last_login_at
+                              ? new Date(user.last_login_at).toLocaleDateString()
+                              : "Never"}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-indigo-400"
+                                onClick={() => {
+                                  setEditingUser({ id: user.id, role: user.role });
+                                  setEditRole(user.role);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={user.is_active ? "text-red-400" : "text-green-400"}
+                                disabled={deactivateUser.isPending || reactivateUser.isPending}
+                                onClick={() => {
+                                  if (user.is_active) {
+                                    if (confirm(`Deactivate ${user.first_name} ${user.last_name}?`)) {
+                                      deactivateUser.mutate({ id: user.id });
+                                    }
+                                  } else {
+                                    reactivateUser.mutate({ id: user.id });
+                                  }
+                                }}
+                              >
+                                {user.is_active ? "Deactivate" : "Activate"}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+                <p className="text-sm text-zinc-500">
+                  Showing {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </>
+          )}
         </div>
-      </div>
-    </div>
+      </Card>
+      {/* Edit Role Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingUser(null)} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Edit User Role</h2>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!editRole) return;
+                updateRole.mutate({
+                  userId: editingUser.id,
+                  role: editRole as any,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">New Role</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value)}
+                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="org_owner">Organization Owner</option>
+                  <option value="property_manager">Property Manager</option>
+                  <option value="house_manager">House Manager</option>
+                  <option value="case_manager">Case Manager</option>
+                  <option value="staff">Staff</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={() => setEditingUser(null)}>Cancel</Button>
+                <Button type="submit" variant="primary" disabled={updateRole.isPending}>
+                  {updateRole.isPending ? "Saving..." : "Update Role"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </PageContainer>
   );
 }

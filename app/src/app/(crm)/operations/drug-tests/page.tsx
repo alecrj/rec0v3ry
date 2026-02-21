@@ -1,389 +1,316 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import {
   TestTube,
   Plus,
   Calendar,
-  Clock,
   User,
-  Home,
-  Filter,
   CheckCircle,
-  XCircle,
+  Clock,
   AlertTriangle,
-  Shuffle,
   Shield,
+  Loader2,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Badge,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  SkeletonTable,
+  useToast,
+} from "@/components/ui";
+import type { Column } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-type TestType = "urine" | "breathalyzer" | "oral_swab" | "blood" | "hair_follicle";
-type TestResult = "negative" | "positive" | "dilute" | "invalid" | "refused" | "pending";
+const testTypeLabels: Record<string, string> = {
+  urine: "Urine",
+  breathalyzer: "Breathalyzer",
+  oral_swab: "Oral Swab",
+  blood: "Blood",
+  hair_follicle: "Hair Follicle",
+};
 
-interface DrugTest {
+type TestRow = {
   id: string;
-  residentName: string;
-  houseName: string;
-  testType: TestType;
-  testDate: string;
-  result: TestResult;
-  isRandom: boolean;
-  administeredBy: string;
-  labName: string | null;
-}
+  resident_first_name: string;
+  resident_last_name: string;
+  test_type: string;
+  test_date: string | Date;
+  is_random: boolean | null;
+  [key: string]: unknown;
+};
 
 export default function DrugTestsPage() {
-  const [selectedHouse, setSelectedHouse] = useState<string>("all");
-  const [selectedResult, setSelectedResult] = useState<string>("all");
-  const [selectedTestType, setSelectedTestType] = useState<string>("all");
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [testForm, setTestForm] = useState({
+    residentId: "",
+    testType: "urine",
+    testDate: new Date().toISOString().split("T")[0],
+    isRandom: false,
+  });
 
-  const houses = [
-    { id: "h1", name: "Serenity House" },
-    { id: "h2", name: "Hope Manor" },
-    { id: "h3", name: "Recovery Haven" },
-  ];
+  const { data: userData } = trpc.user.getCurrentUser.useQuery(undefined, { retry: false });
+  const orgId = userData?.org_id;
 
-  const tests: DrugTest[] = [
-    {
-      id: "1",
-      residentName: "Sarah Martinez",
-      houseName: "Serenity House",
-      testType: "urine",
-      testDate: "2026-02-17",
-      result: "negative",
-      isRandom: true,
-      administeredBy: "John Manager",
-      labName: null,
+  const { data: residentList } = trpc.resident.list.useQuery(
+    {},
+    { enabled: !!orgId }
+  );
+
+  const createTest = trpc.drugTest.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Drug test recorded");
+      utils.drugTest.list.invalidate();
+      utils.drugTest.getStats.invalidate();
+      setTestForm({ residentId: "", testType: "urine", testDate: new Date().toISOString().split("T")[0], isRandom: false });
+      setShowCreateModal(false);
     },
-    {
-      id: "2",
-      residentName: "Michael Chen",
-      houseName: "Serenity House",
-      testType: "breathalyzer",
-      testDate: "2026-02-17",
-      result: "negative",
-      isRandom: false,
-      administeredBy: "Jane Admin",
-      labName: null,
-    },
-    {
-      id: "3",
-      residentName: "Jennifer Parker",
-      houseName: "Hope Manor",
-      testType: "urine",
-      testDate: "2026-02-16",
-      result: "pending",
-      isRandom: true,
-      administeredBy: "John Manager",
-      labName: "Quest Diagnostics",
-    },
-    {
-      id: "4",
-      residentName: "David Wilson",
-      houseName: "Hope Manor",
-      testType: "urine",
-      testDate: "2026-02-15",
-      result: "positive",
-      isRandom: false,
-      administeredBy: "Jane Admin",
-      labName: "LabCorp",
-    },
-    {
-      id: "5",
-      residentName: "Emily Thompson",
-      houseName: "Recovery Haven",
-      testType: "oral_swab",
-      testDate: "2026-02-14",
-      result: "dilute",
-      isRandom: true,
-      administeredBy: "John Manager",
-      labName: null,
-    },
-    {
-      id: "6",
-      residentName: "Robert Garcia",
-      houseName: "Recovery Haven",
-      testType: "urine",
-      testDate: "2026-02-13",
-      result: "refused",
-      isRandom: false,
-      administeredBy: "Jane Admin",
-      labName: null,
-    },
-  ];
+    onError: (err) => toast("error", err.message),
+  });
 
-  const stats = {
-    total: tests.length,
-    negative: tests.filter((t) => t.result === "negative").length,
-    positive: tests.filter((t) => t.result === "positive").length,
-    pending: tests.filter((t) => t.result === "pending").length,
-    other: tests.filter((t) => ["dilute", "invalid", "refused"].includes(t.result)).length,
-  };
+  const { data: tests, isLoading, error } = trpc.drugTest.list.useQuery(
+    { orgId: orgId!, limit: 100 },
+    { enabled: !!orgId }
+  );
 
-  const complianceRate = Math.round((stats.negative / (stats.total - stats.pending)) * 100) || 100;
+  const { data: stats } = trpc.drugTest.getStats.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
 
-  const getResultBadge = (result: TestResult) => {
-    const styles: Record<TestResult, string> = {
-      negative: "bg-green-100 text-green-700",
-      positive: "bg-red-100 text-red-700",
-      dilute: "bg-yellow-100 text-yellow-700",
-      invalid: "bg-slate-100 text-slate-700",
-      refused: "bg-red-100 text-red-700",
-      pending: "bg-blue-100 text-blue-700",
-    };
-    const labels: Record<TestResult, string> = {
-      negative: "Negative",
-      positive: "Positive",
-      dilute: "Dilute",
-      invalid: "Invalid",
-      refused: "Refused",
-      pending: "Pending",
-    };
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[result]}`}>
-        {labels[result]}
-      </span>
-    );
-  };
-
-  const getTestTypeBadge = (type: TestType) => {
-    const styles: Record<TestType, string> = {
-      urine: "bg-blue-100 text-blue-700",
-      breathalyzer: "bg-purple-100 text-purple-700",
-      oral_swab: "bg-indigo-100 text-indigo-700",
-      blood: "bg-red-100 text-red-700",
-      hair_follicle: "bg-orange-100 text-orange-700",
-    };
-    const labels: Record<TestType, string> = {
-      urine: "Urine",
-      breathalyzer: "Breathalyzer",
-      oral_swab: "Oral Swab",
-      blood: "Blood",
-      hair_follicle: "Hair Follicle",
-    };
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[type]}`}>
-        {labels[type]}
-      </span>
-    );
-  };
-
-  const filteredTests = tests.filter((t) => {
-    if (selectedHouse !== "all" && t.houseName !== selectedHouse) return false;
-    if (selectedResult !== "all" && t.result !== selectedResult) return false;
-    if (selectedTestType !== "all" && t.testType !== selectedTestType) return false;
+  const statsLoading = !stats && !!orgId;
+  const allTests = (tests ?? []) as TestRow[];
+  const filteredTests = allTests.filter((t) => {
+    if (selectedType !== "all" && t.test_type !== selectedType) return false;
     return true;
   });
 
+  const columns: Column<TestRow>[] = [
+    {
+      key: "resident_first_name",
+      header: "Resident",
+      sortable: true,
+      render: (_val, row) => (
+        <div className="flex items-center gap-2">
+          <User className="h-3.5 w-3.5 text-zinc-500" />
+          <span className="text-sm font-medium text-zinc-100">
+            {row.resident_first_name} {row.resident_last_name}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "test_type",
+      header: "Type",
+      render: (_val, row) => (
+        <Badge variant="info">{testTypeLabels[row.test_type] ?? row.test_type}</Badge>
+      ),
+    },
+    {
+      key: "test_date",
+      header: "Date",
+      sortable: true,
+      render: (_val, row) => (
+        <span className="text-sm text-zinc-400">
+          {new Date(row.test_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+      ),
+    },
+    {
+      key: "is_random",
+      header: "Random",
+      render: (_val, row) => (
+        row.is_random
+          ? <Badge variant="warning">Random</Badge>
+          : <Badge variant="default">Scheduled</Badge>
+      ),
+    },
+  ];
+
+  if (error) {
+    return (
+      <PageContainer>
+        <Card><CardContent><ErrorState title="Failed to load drug tests" description={error.message} /></CardContent></Card>
+      </PageContainer>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Drug Test Management</h1>
-          <p className="text-slate-600 mt-1">Record and track drug test results</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-            <Shuffle className="h-4 w-4" />
-            Schedule Random
-          </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Record Test
-          </button>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Drug Testing"
+        description="Track drug tests and results (Part 2 protected)"
+        actions={
+          <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setShowCreateModal(true)}>
+            New Test
+          </Button>
+        }
+      />
 
-      {/* Part 2 Notice */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-amber-900">42 CFR Part 2 Protected Data</h3>
-            <p className="text-sm text-amber-700 mt-1">
-              Drug test results are protected under federal regulations. Access requires active consent
-              and all views are logged for compliance auditing.
-            </p>
-          </div>
-        </div>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard
+          title="Total Tests"
+          value={statsLoading ? "—" : String(stats?.total ?? allTests.length)}
+          icon={<TestTube className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Negative"
+          value={statsLoading ? "—" : String(stats?.negative ?? 0)}
+          variant="success"
+          icon={<CheckCircle className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Positive"
+          value={statsLoading ? "—" : String(stats?.positive ?? 0)}
+          variant="error"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Pending"
+          value={statsLoading ? "—" : String(stats?.pending ?? 0)}
+          variant="warning"
+          icon={<Clock className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+      </StatCardGrid>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TestTube className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Total Tests</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-            </div>
+      {/* Filter */}
+      <Card>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            >
+              <option value="all">All Types</option>
+              <option value="urine">Urine</option>
+              <option value="breathalyzer">Breathalyzer</option>
+              <option value="oral_swab">Oral Swab</option>
+              <option value="blood">Blood</option>
+              <option value="hair_follicle">Hair Follicle</option>
+            </select>
           </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Negative</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.negative}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <XCircle className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Positive</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.positive}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Clock className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Pending</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.pending}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Compliance</p>
-              <p className="text-2xl font-bold text-slate-900">{complianceRate}%</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-700">Filters:</span>
-          </div>
-          <select
-            value={selectedHouse}
-            onChange={(e) => setSelectedHouse(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Houses</option>
-            {houses.map((h) => (
-              <option key={h.id} value={h.name}>
-                {h.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedResult}
-            onChange={(e) => setSelectedResult(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Results</option>
-            <option value="negative">Negative</option>
-            <option value="positive">Positive</option>
-            <option value="pending">Pending</option>
-            <option value="dilute">Dilute</option>
-            <option value="refused">Refused</option>
-          </select>
-          <select
-            value={selectedTestType}
-            onChange={(e) => setSelectedTestType(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Types</option>
-            <option value="urine">Urine</option>
-            <option value="breathalyzer">Breathalyzer</option>
-            <option value="oral_swab">Oral Swab</option>
-            <option value="blood">Blood</option>
-            <option value="hair_follicle">Hair Follicle</option>
-          </select>
-          <div className="flex items-center gap-2 ml-auto">
-            <Calendar className="h-4 w-4 text-slate-500" />
-            <span className="text-sm text-slate-600">Last 30 days</span>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Tests Table */}
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Test History</h2>
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Test Log</CardTitle>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <Shield className="h-3.5 w-3.5 text-amber-400" />
+              <p className="text-xs text-zinc-500">Results are 42 CFR Part 2 protected — consent required to view</p>
+            </div>
+          </div>
+        </CardHeader>
+        {isLoading ? (
+          <CardContent className="pt-0"><SkeletonTable rows={6} columns={4} /></CardContent>
+        ) : filteredTests.length === 0 ? (
+          <CardContent className="pt-0">
+            <EmptyState
+              iconType="inbox"
+              title="No drug tests found"
+              description="Record a new test to get started."
+            />
+          </CardContent>
+        ) : (
+          <DataTable
+            data={filteredTests}
+            columns={columns}
+            loading={isLoading}
+            getRowId={(row) => row.id}
+            className="border-0 rounded-none"
+            rowActions={() => (
+              <Button variant="ghost" size="sm" className="text-indigo-400">View Results</Button>
+            )}
+          />
+        )}
+      </Card>
+      {/* Create Test Modal */}
+      {showCreateModal && orgId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Record Drug Test</h2>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <Shield className="h-3.5 w-3.5 text-amber-400" />
+                <p className="text-xs text-zinc-500">42 CFR Part 2 protected record</p>
+              </div>
+            </div>
+            <form
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                createTest.mutate({
+                  orgId,
+                  residentId: testForm.residentId,
+                  testType: testForm.testType as "urine" | "breathalyzer" | "oral_swab" | "blood" | "hair_follicle",
+                  testDate: testForm.testDate,
+                  isRandom: testForm.isRandom,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident <span className="text-red-400">*</span></label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={testForm.residentId} onChange={(e) => setTestForm({ ...testForm, residentId: e.target.value })}>
+                  <option value="">Select resident...</option>
+                  {(residentList?.items ?? []).map((r) => (
+                    <option key={r.id} value={r.id}>{r.first_name} {r.last_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Test Type <span className="text-red-400">*</span></label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={testForm.testType} onChange={(e) => setTestForm({ ...testForm, testType: e.target.value })}>
+                    <option value="urine">Urine</option>
+                    <option value="breathalyzer">Breathalyzer</option>
+                    <option value="oral_swab">Oral Swab</option>
+                    <option value="blood">Blood</option>
+                    <option value="hair_follicle">Hair Follicle</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date <span className="text-red-400">*</span></label>
+                  <input type="date" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={testForm.testDate} onChange={(e) => setTestForm({ ...testForm, testDate: e.target.value })} />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" checked={testForm.isRandom} onChange={(e) => setTestForm({ ...testForm, isRandom: e.target.checked })} />
+                <span className="text-sm text-zinc-300">Random test</span>
+              </label>
+              <div className="pt-2 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary" disabled={createTest.isPending}>
+                  {createTest.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Recording...</> : "Record Test"}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Resident</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">House</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Test Type</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Result</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Random</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Admin By</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTests.map((test) => (
-                <tr key={test.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-900">{test.residentName}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <Home className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm text-slate-600">{test.houseName}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">{getTestTypeBadge(test.testType)}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">
-                    {new Date(test.testDate).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4">{getResultBadge(test.result)}</td>
-                  <td className="py-3 px-4">
-                    {test.isRandom ? (
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-700">
-                        Random
-                      </span>
-                    ) : (
-                      <span className="text-sm text-slate-400">Scheduled</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{test.administeredBy}</td>
-                  <td className="py-3 px-4">
-                    {test.result === "pending" ? (
-                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        Enter Result
-                      </button>
-                    ) : (
-                      <button className="text-sm text-slate-600 hover:text-slate-700 font-medium">
-                        View Details
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+      )}
+    </PageContainer>
   );
 }

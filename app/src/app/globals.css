@@ -1,42 +1,211 @@
 @import "tailwindcss";
 
+/* =============================================================================
+   RecoveryOS Design System — "Obsidian"
+   Dark zinc. Indigo accent. Geist font. No cards. No boxes. Content IS the UI.
+   ============================================================================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  /* Surface */
+  --bg: #09090B;
+  --surface-1: #18181B;
+  --surface-2: #27272A;
+  --surface-3: #3F3F46;
+
+  /* Borders */
+  --border: #27272A;
+  --border-strong: #3F3F46;
+
+  /* Text */
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+  --text-disabled: #52525B;
+
+  /* Accent — Indigo */
+  --accent: #6366F1;
+  --accent-hover: #818CF8;
+  --accent-muted: rgba(99, 102, 241, 0.10);
+  --accent-strong: rgba(99, 102, 241, 0.20);
+
+  /* Status */
+  --success: #22C55E;
+  --success-muted: rgba(34, 197, 94, 0.12);
+  --warning: #EAB308;
+  --warning-muted: rgba(234, 179, 8, 0.12);
+  --error: #EF4444;
+  --error-muted: rgba(239, 68, 68, 0.12);
+  --info: #6366F1;
+  --info-muted: rgba(99, 102, 241, 0.12);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 100ms;
+  --duration-normal: 150ms;
+  --duration-slow: 250ms;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 60px;
+  --page-padding: 24px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --color-background: var(--bg);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Map to Tailwind — zinc dark palette */
+  --color-zinc-950: #09090B;
+  --color-zinc-900: #18181B;
+  --color-zinc-800: #27272A;
+  --color-zinc-700: #3F3F46;
+  --color-zinc-600: #52525B;
+  --color-zinc-500: #71717A;
+  --color-zinc-400: #A1A1AA;
+  --color-zinc-300: #D4D4D8;
+  --color-zinc-200: #E4E4E7;
+  --color-zinc-100: #F4F4F5;
+  --color-zinc-50: #FAFAFA;
+
+  --color-indigo-50: rgba(99, 102, 241, 0.06);
+  --color-indigo-100: rgba(99, 102, 241, 0.10);
+  --color-indigo-200: rgba(99, 102, 241, 0.15);
+  --color-indigo-300: rgba(99, 102, 241, 0.25);
+  --color-indigo-400: #818CF8;
+  --color-indigo-500: #6366F1;
+  --color-indigo-600: #4F46E5;
+  --color-indigo-700: #4338CA;
+
+  --color-green-400: #4ADE80;
+  --color-green-500: #22C55E;
+  --color-green-600: #16A34A;
+
+  --color-yellow-400: #FACC15;
+  --color-yellow-500: #EAB308;
+  --color-yellow-600: #CA8A04;
+
+  --color-red-400: #F87171;
+  --color-red-500: #EF4444;
+  --color-red-600: #DC2626;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Safe area insets for iOS PWA */
+/* iOS PWA safe area */
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Scrollbar — dark */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #52525B; }
+
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(63, 63, 70, 0.5); border-radius: 2px; }
+
+/* Focus — indigo ring */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in { animation: fadeIn 150ms var(--ease-out); }
+.animate-fade-in-up { animation: fadeInUp 150ms var(--ease-out); }
+.animate-slide-in-right { animation: slideInRight 200ms var(--ease-out); }
+.animate-slide-in-up { animation: slideInUp 200ms var(--ease-out); }
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #18181B 25%, #27272A 50%, #18181B 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Nav active indicator */
+.nav-active-indicator {
+  position: relative;
+}
+.nav-active-indicator::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+/* Tooltip (sidebar collapsed) */
+.tooltip { position: relative; }
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 100ms var(--ease-out);
+  z-index: 50;
+}
+.tooltip:hover::after { opacity: 1; visibility: visible; }
+
+/* Status dots */
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot-active { background: var(--success); }
+.status-dot-pending { background: var(--warning); }
+.status-dot-inactive { background: var(--text-tertiary); }
+.status-dot-error { background: var(--error); }

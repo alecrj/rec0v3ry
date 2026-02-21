@@ -6,50 +6,294 @@ import {
   PenTool,
   CheckCircle,
   Clock,
-  XCircle,
   Send,
   Eye,
-  ArrowUpRight,
-  Filter,
+  X,
+  ExternalLink,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Button,
+  Badge,
+  EmptyState,
+  SkeletonTable,
+  useToast,
+} from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-  variant?: "default" | "success" | "warning" | "danger";
-}
+const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
-function StatCard({ title, value, subtitle, icon: Icon, variant = "default" }: StatCardProps) {
-  const variantStyles = {
-    default: "bg-blue-50 text-blue-600",
-    success: "bg-green-50 text-green-600",
-    warning: "bg-yellow-50 text-yellow-600",
-    danger: "bg-red-50 text-red-600",
-  };
+const statusMap: Record<string, "pending_signature" | "signed" | "voided" | undefined> = {
+  all: undefined,
+  pending: "pending_signature",
+  signed: "signed",
+  voided: "voided",
+};
+
+// ── Send for Signature Modal ───────────────────────────────
+function SendForSignatureModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const [documentId, setDocumentId] = useState("");
+  const [signerEmail, setSignerEmail] = useState("");
+  const [signerName, setSignerName] = useState("");
+
+  const { data: draftDocs } = trpc.document.list.useQuery(
+    { status: "draft", limit: 100 },
+    { enabled: isOpen }
+  );
+
+  const createEnvelope = trpc.esign.createEnvelope.useMutation({
+    onSuccess: () => {
+      toast("success", "Sent for signature", "The signing request has been created.");
+      utils.document.list.invalidate();
+      utils.esign.listPending.invalidate();
+      resetAndClose();
+    },
+    onError: (err) => toast("error", "Failed to send", err.message),
+  });
+
+  function resetAndClose() {
+    setDocumentId("");
+    setSignerEmail("");
+    setSignerName("");
+    onClose();
+  }
+
+  if (!isOpen) return null;
+
+  const documents = draftDocs?.items ?? [];
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-600">{title}</p>
-          <p className="text-3xl font-bold text-slate-900 mt-2">{value}</p>
-          <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-zinc-100">Send for Signature</h2>
+            <p className="text-sm text-zinc-500 mt-1">Send a draft document for e-signature</p>
+          </div>
+          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <div className={`p-3 rounded-lg ${variantStyles[variant]}`}>
-          <Icon className="h-6 w-6" />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            createEnvelope.mutate({
+              documentIds: [documentId],
+              signers: [{ email: signerEmail, name: signerName }],
+            });
+          }}
+          className="p-6 space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Document <span className="text-red-400">*</span>
+            </label>
+            <select
+              required
+              value={documentId}
+              onChange={(e) => setDocumentId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Select a draft document...</option>
+              {documents.map((doc) => (
+                <option key={doc.id} value={doc.id}>{doc.title}</option>
+              ))}
+            </select>
+            {documents.length === 0 && (
+              <p className="text-xs text-zinc-500 mt-1">No draft documents available. Create a document first.</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Signer Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              required
+              value={signerName}
+              onChange={(e) => setSignerName(e.target.value)}
+              className={inputClass}
+              placeholder="Full name of the signer"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Signer Email <span className="text-red-400">*</span>
+            </label>
+            <input
+              required
+              type="email"
+              value={signerEmail}
+              onChange={(e) => setSignerEmail(e.target.value)}
+              className={inputClass}
+              placeholder="signer@example.com"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={resetAndClose}>Cancel</Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!documentId || !signerEmail || !signerName || createEnvelope.isPending}
+            >
+              {createEnvelope.isPending ? "Sending..." : "Send for Signature"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── View Document Modal ────────────────────────────────────
+function ViewDocModal({
+  isOpen,
+  onClose,
+  doc,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  doc: { id: string; title: string; status: string; created_at: string; resident?: { first_name: string; last_name: string } | null } | null;
+}) {
+  const { toast } = useToast();
+
+  const [signerEmail, setSignerEmail] = useState("");
+  const [signerName, setSignerName] = useState("");
+
+  const getSigningUrl = trpc.esign.getSigningUrl.useMutation({
+    onSuccess: (data) => {
+      if (data.signingUrl) {
+        window.open(data.signingUrl, "_blank");
+      } else {
+        toast("info", "No signing URL available");
+      }
+    },
+    onError: (err) => toast("error", "Failed to get signing URL", err.message),
+  });
+
+  const getStatus = trpc.esign.getStatus.useQuery(
+    { documentId: doc?.id ?? "" },
+    { enabled: isOpen && !!doc }
+  );
+
+  if (!isOpen || !doc) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-100">Signature Details</h2>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Document</label>
+            <p className="text-sm text-zinc-100 mt-1">{doc.title}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</label>
+              <p className="text-sm text-zinc-100 mt-1 capitalize">{doc.status.replace("_", " ")}</p>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Resident</label>
+              <p className="text-sm text-zinc-100 mt-1">
+                {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "Organization"}
+              </p>
+            </div>
+          </div>
+          {getStatus.data && (
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Envelope Status</label>
+              <p className="text-sm text-zinc-100 mt-1 capitalize">{getStatus.data.status}</p>
+            </div>
+          )}
+          {doc.status === "pending_signature" && (
+            <div className="space-y-3 border-t border-zinc-800 pt-4">
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Generate Signing Link</p>
+              <input
+                value={signerName}
+                onChange={(e) => setSignerName(e.target.value)}
+                className={inputClass}
+                placeholder="Signer name"
+              />
+              <input
+                value={signerEmail}
+                onChange={(e) => setSignerEmail(e.target.value)}
+                className={inputClass}
+                placeholder="Signer email"
+              />
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-2">
+            {doc.status === "pending_signature" && (
+              <Button
+                variant="secondary"
+                icon={<ExternalLink className="h-4 w-4" />}
+                onClick={() => getSigningUrl.mutate({ documentId: doc.id, signerEmail, signerName })}
+                disabled={getSigningUrl.isPending || !signerEmail || !signerName}
+              >
+                Open Signing
+              </Button>
+            )}
+            <Button variant="secondary" onClick={onClose}>Close</Button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// ── Main Page ──────────────────────────────────────────────
 export default function SignatureTrackerPage() {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<any>(null);
+
+  const { data, isLoading } = trpc.document.list.useQuery({
+    status: statusMap[activeTab],
+    search: searchTerm || undefined,
+    limit: 50,
+  });
+
+  const voidEnvelope = trpc.esign.voidEnvelope.useMutation({
+    onSuccess: () => {
+      toast("success", "Document voided");
+      utils.document.list.invalidate();
+    },
+    onError: (err) => toast("error", "Failed to void", err.message),
+  });
+
+  const documents = data?.items ?? [];
+
+  const signatureDocs = documents.filter((d) =>
+    ["pending_signature", "signed", "voided"].includes(d.status)
+  );
+
+  const pendingCount = signatureDocs.filter((d) => d.status === "pending_signature").length;
+  const signedCount = signatureDocs.filter((d) => d.status === "signed").length;
 
   const tabs = [
     { id: "all", label: "All" },
@@ -58,230 +302,146 @@ export default function SignatureTrackerPage() {
     { id: "voided", label: "Voided" },
   ];
 
-  const envelopes = [
-    {
-      id: "1",
-      document: "Resident Agreement - Sarah Martinez",
-      signers: [
-        { name: "Sarah Martinez", status: "signed", signedAt: "2026-01-20" },
-        { name: "Mike Johnson (Manager)", status: "signed", signedAt: "2026-01-21" },
-      ],
-      status: "completed",
-      createdAt: "2026-01-19",
-      method: "electronic",
-    },
-    {
-      id: "2",
-      document: "Intake Form - Michael Chen",
-      signers: [
-        { name: "Michael Chen", status: "pending", signedAt: null },
-        { name: "Dr. Lisa Park", status: "pending", signedAt: null },
-      ],
-      status: "pending",
-      createdAt: "2026-02-10",
-      method: "electronic",
-    },
-    {
-      id: "3",
-      document: "Release of Info - Jennifer Parker",
-      signers: [
-        { name: "Jennifer Parker", status: "signed", signedAt: "2026-02-09" },
-        { name: "Records Dept", status: "pending", signedAt: null },
-      ],
-      status: "pending",
-      createdAt: "2026-02-08",
-      method: "electronic",
-    },
-    {
-      id: "4",
-      document: "Financial Agreement - Robert Thompson",
-      signers: [
-        { name: "Robert Thompson", status: "pending", signedAt: null },
-      ],
-      status: "pending",
-      createdAt: "2026-02-08",
-      method: "electronic",
-    },
-    {
-      id: "5",
-      document: "House Rules Ack - Lisa Anderson",
-      signers: [
-        { name: "Lisa Anderson", status: "signed", signedAt: "2025-06-15" },
-      ],
-      status: "voided",
-      createdAt: "2025-06-14",
-      method: "click_to_sign",
-    },
-  ];
-
-  const getEnvelopeStatus = (status: string) => {
-    const config: Record<string, { className: string; label: string; icon: React.ComponentType<{ className?: string }> }> = {
-      completed: { className: "bg-green-100 text-green-700", label: "Completed", icon: CheckCircle },
-      pending: { className: "bg-yellow-100 text-yellow-700", label: "Pending", icon: Clock },
-      voided: { className: "bg-slate-100 text-slate-500", label: "Voided", icon: XCircle },
+  const getStatusBadge = (status: string) => {
+    const config: Record<string, { variant: "success" | "warning" | "default"; label: string }> = {
+      signed: { variant: "success", label: "Signed" },
+      pending_signature: { variant: "warning", label: "Pending" },
+      voided: { variant: "default", label: "Voided" },
     };
-    return config[status] || config.pending;
+    return config[status] ?? { variant: "default" as const, label: status };
   };
 
-  const filteredEnvelopes = envelopes.filter((env) => {
-    const matchesTab =
-      activeTab === "all" ||
-      (activeTab === "pending" && env.status === "pending") ||
-      (activeTab === "signed" && env.status === "completed") ||
-      (activeTab === "voided" && env.status === "voided");
-    const matchesSearch = env.document.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
-
-  const pendingCount = envelopes.filter((e) => e.status === "pending").length;
-  const completedCount = envelopes.filter((e) => e.status === "completed").length;
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Signature Tracker</h1>
-          <p className="text-slate-600 mt-1">Track e-signature status across all documents</p>
-        </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-          <Send className="h-4 w-4" />
-          Send for Signature
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Signature Tracker"
+        actions={
+          <Button
+            variant="primary"
+            icon={<Send className="h-4 w-4" />}
+            onClick={() => setShowSendModal(true)}
+          >
+            Send for Signature
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <StatCardGrid columns={3}>
         <StatCard
           title="Pending Signatures"
-          value={String(pendingCount)}
+          value={isLoading ? "\u2014" : String(pendingCount)}
           subtitle="Awaiting signatures"
-          icon={Clock}
           variant="warning"
+          icon={<Clock className="h-5 w-5" />}
+          loading={isLoading}
         />
         <StatCard
           title="Completed"
-          value={String(completedCount)}
+          value={isLoading ? "\u2014" : String(signedCount)}
           subtitle="Fully signed"
-          icon={CheckCircle}
           variant="success"
+          icon={<CheckCircle className="h-5 w-5" />}
+          loading={isLoading}
         />
         <StatCard
-          title="Total Envelopes"
-          value={String(envelopes.length)}
-          subtitle="All time"
-          icon={PenTool}
-          variant="default"
+          title="Total Documents"
+          value={isLoading ? "\u2014" : String(signatureDocs.length)}
+          subtitle="With signature tracking"
+          icon={<PenTool className="h-5 w-5" />}
+          loading={isLoading}
         />
+      </StatCardGrid>
+
+      {/* Search + Tabs */}
+      <div className="space-y-0">
+        <div className="pb-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search documents..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 border-b border-zinc-800 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "border-indigo-500 text-indigo-400"
+                  : "border-transparent text-zinc-400 hover:text-zinc-100"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-4 border-b border-slate-200">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search documents..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-b border-slate-200">
-          <div className="flex overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {filteredEnvelopes.length > 0 ? (
-          <div className="divide-y divide-slate-100">
-            {filteredEnvelopes.map((envelope) => {
-              const statusConfig = getEnvelopeStatus(envelope.status);
-              const StatusIcon = statusConfig.icon;
-              return (
-                <div key={envelope.id} className="p-4 hover:bg-slate-50">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-sm font-medium text-slate-900">{envelope.document}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Sent {new Date(envelope.createdAt).toLocaleDateString()} &bull; {envelope.method === "electronic" ? "DocuSign" : "Click-to-Sign"}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${statusConfig.className}`}>
-                        <StatusIcon className="h-3 w-3" />
-                        {statusConfig.label}
-                      </span>
-                      <button className="p-1 text-slate-400 hover:text-blue-600">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </div>
+      {/* Document list */}
+      {isLoading ? (
+        <SkeletonTable rows={5} columns={5} />
+      ) : signatureDocs.length === 0 ? (
+        <EmptyState
+          iconType="inbox"
+          title="No documents found"
+          description={searchTerm ? "Try adjusting your search" : "Send a document for signature to get started."}
+          action={!searchTerm ? { label: "Send for Signature", onClick: () => setShowSendModal(true) } : undefined}
+        />
+      ) : (
+        <div className="space-y-3">
+          {signatureDocs.map((doc) => {
+            const badge = getStatusBadge(doc.status);
+            return (
+              <div key={doc.id} className="border border-zinc-800 rounded-lg p-4 hover:bg-zinc-800/30 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-zinc-100">{doc.title}</h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "Organization"} &bull;{" "}
+                      Created {new Date(doc.created_at).toLocaleDateString()}
+                    </p>
                   </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    {envelope.signers.map((signer, idx) => (
-                      <div
-                        key={idx}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
-                          signer.status === "signed"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-slate-50 text-slate-600"
-                        }`}
-                      >
-                        {signer.status === "signed" ? (
-                          <CheckCircle className="h-3.5 w-3.5" />
-                        ) : (
-                          <Clock className="h-3.5 w-3.5" />
-                        )}
-                        <span>{signer.name}</span>
-                        {signer.signedAt && (
-                          <span className="text-xs opacity-70">
-                            {new Date(signer.signedAt).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                    <button
+                      className="p-1 text-zinc-500 hover:text-indigo-400"
+                      title="View Details"
+                      onClick={() => setViewingDoc(doc)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                   </div>
-
-                  {envelope.status === "pending" && (
-                    <div className="mt-3 flex gap-2">
-                      <button className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                        Resend Reminder
-                      </button>
-                      <span className="text-slate-300">|</span>
-                      <button className="text-xs text-red-600 hover:text-red-700 font-medium">
-                        Void Envelope
-                      </button>
-                    </div>
-                  )}
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="p-12 text-center">
-            <PenTool className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm font-medium text-slate-900">No envelopes found</p>
-            <p className="text-sm text-slate-600 mt-1">
-              {searchTerm ? "Try adjusting your search" : "Send a document for signature to get started"}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+
+                {doc.status === "pending_signature" && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      className="text-xs text-red-400 hover:text-red-300 font-medium"
+                      onClick={() => {
+                        if (window.confirm("Void this document?")) {
+                          voidEnvelope.mutate({ documentId: doc.id, reason: "Voided by admin" });
+                        }
+                      }}
+                    >
+                      Void Document
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <SendForSignatureModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} />
+      <ViewDocModal isOpen={!!viewingDoc} onClose={() => setViewingDoc(null)} doc={viewingDoc} />
+    </PageContainer>
   );
 }

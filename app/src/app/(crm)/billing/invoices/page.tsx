@@ -2,198 +2,222 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
   Download,
-  Send,
+  FileText,
+  CheckCircle2,
+  Clock,
   XCircle,
-  Calendar,
+  AlertCircle,
   ArrowUpRight,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  DataTable,
+  EmptyState,
+  NoResultsState,
+} from "@/components/ui";
+import type { Column } from "@/components/ui";
+
+export const dynamic = "force-dynamic";
+
+function formatCurrency(amount: string | number) {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
+function InvoiceStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { variant: "success" | "warning" | "error" | "default" | "info"; label: string }> = {
+    draft: { variant: "default", label: "Draft" },
+    sent: { variant: "info", label: "Pending" },
+    pending: { variant: "info", label: "Pending" },
+    paid: { variant: "success", label: "Paid" },
+    partially_paid: { variant: "warning", label: "Partial" },
+    overdue: { variant: "error", label: "Overdue" },
+    void: { variant: "default", label: "Void" },
+  };
+  const { variant, label } = config[status] ?? { variant: "default" as const, label: status };
+  return <Badge variant={variant} dot>{label}</Badge>;
+}
+
+type InvoiceRow = {
+  id: string;
+  invoice_number: string | null;
+  status: string;
+  issue_date: string;
+  due_date: string;
+  total: string | null;
+  amount_paid: string | null;
+  resident: { first_name: string; last_name: string } | null;
+  [key: string]: unknown;
+};
 
 export default function InvoicesPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const tabs = [
-    { id: "all", label: "All" },
-    { id: "draft", label: "Draft" },
-    { id: "pending", label: "Pending" },
-    { id: "paid", label: "Paid" },
-    { id: "overdue", label: "Overdue" },
-    { id: "void", label: "Void" },
-  ];
-
-  const invoices = [
-    {
-      id: "1",
-      number: "INV-2026-0234",
-      resident: "Sarah Martinez",
-      issueDate: "2026-02-01",
-      dueDate: "2026-02-15",
-      amount: 850,
-      paid: 850,
-      balance: 0,
-      status: "paid",
-    },
-    {
-      id: "2",
-      number: "INV-2026-0233",
-      resident: "Michael Chen",
-      issueDate: "2026-02-01",
-      dueDate: "2026-02-15",
-      amount: 900,
-      paid: 0,
-      balance: 900,
-      status: "pending",
-    },
-    {
-      id: "3",
-      number: "INV-2026-0232",
-      resident: "Jennifer Parker",
-      issueDate: "2026-02-01",
-      dueDate: "2026-02-10",
-      amount: 850,
-      paid: 0,
-      balance: 850,
-      status: "overdue",
-    },
-    {
-      id: "4",
-      number: "INV-2026-0231",
-      resident: "Robert Thompson",
-      issueDate: "2026-02-01",
-      dueDate: "2026-02-15",
-      amount: 1050,
-      paid: 500,
-      balance: 550,
-      status: "partially_paid",
-    },
-    {
-      id: "5",
-      number: "INV-2026-0230",
-      resident: "Lisa Anderson",
-      issueDate: "2026-02-01",
-      dueDate: "2026-02-15",
-      amount: 850,
-      paid: 0,
-      balance: 850,
-      status: "pending",
-    },
-    {
-      id: "6",
-      number: "INV-2026-0229",
-      resident: "David Wilson",
-      issueDate: "2026-01-28",
-      dueDate: "2026-02-05",
-      amount: 900,
-      paid: 0,
-      balance: 900,
-      status: "overdue",
-    },
-    {
-      id: "7",
-      number: "INV-2026-0228",
-      resident: "Emily Rodriguez",
-      issueDate: "2026-02-01",
-      dueDate: "2026-02-15",
-      amount: 850,
-      paid: 0,
-      balance: 0,
-      status: "void",
-    },
-    {
-      id: "8",
-      number: "INV-2026-0227",
-      resident: "James Taylor",
-      issueDate: "2026-01-25",
-      dueDate: "2026-02-08",
-      amount: 950,
-      paid: 0,
-      balance: 950,
-      status: "draft",
-    },
-  ];
-
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      draft: "bg-slate-100 text-slate-700",
-      pending: "bg-blue-100 text-blue-700",
-      paid: "bg-green-100 text-green-700",
-      partially_paid: "bg-yellow-100 text-yellow-700",
-      overdue: "bg-red-100 text-red-700",
-      void: "bg-slate-100 text-slate-500 line-through",
-    };
-    const labels = {
-      draft: "Draft",
-      pending: "Pending",
-      paid: "Paid",
-      partially_paid: "Partially Paid",
-      overdue: "Overdue",
-      void: "Void",
-    };
-    return {
-      className: styles[status as keyof typeof styles] || styles.pending,
-      label: labels[status as keyof typeof labels] || status,
-    };
-  };
-
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesTab = activeTab === "all" || invoice.status === activeTab;
-    const matchesSearch = invoice.resident.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.number.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTab && matchesSearch;
+  const { data, isLoading } = trpc.invoice.list.useQuery({
+    status: activeTab === "all" ? undefined : (activeTab as "draft" | "pending" | "paid" | "partially_paid" | "overdue" | "void" | "written_off"),
+    limit: 100,
   });
 
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
-          <p className="text-slate-600 mt-1">Manage resident invoices and billing</p>
-        </div>
-        <Link
-          href="/payments/invoices/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Create Invoice
-        </Link>
-      </div>
+  const tabs = [
+    { id: "all", label: "All", icon: FileText },
+    { id: "draft", label: "Draft", icon: FileText },
+    { id: "sent", label: "Pending", icon: Clock },
+    { id: "paid", label: "Paid", icon: CheckCircle2 },
+    { id: "overdue", label: "Overdue", icon: AlertCircle },
+    { id: "void", label: "Void", icon: XCircle },
+  ];
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-4 border-b border-slate-200">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search by resident name or invoice number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Date Range
-            </button>
+  const allInvoices = (data?.items ?? []) as InvoiceRow[];
+
+  const filteredInvoices = allInvoices.filter((invoice) => {
+    if (!searchTerm) return true;
+    const name = invoice.resident
+      ? `${invoice.resident.first_name} ${invoice.resident.last_name}`.toLowerCase()
+      : "";
+    const number = (invoice.invoice_number ?? "").toLowerCase();
+    return name.includes(searchTerm.toLowerCase()) || number.includes(searchTerm.toLowerCase());
+  });
+
+  const columns: Column<InvoiceRow>[] = [
+    {
+      key: "invoice_number",
+      header: "Invoice",
+      sortable: true,
+      render: (_val, row) => (
+        <Link
+          href={`/billing/invoices/${row.id}`}
+          className="text-sm font-mono font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {row.invoice_number ?? "—"}
+        </Link>
+      ),
+    },
+    {
+      key: "resident",
+      header: "Resident",
+      render: (_val, row) => (
+        <p className="text-sm font-medium text-zinc-100">
+          {row.resident ? `${row.resident.first_name} ${row.resident.last_name}` : "—"}
+        </p>
+      ),
+    },
+    {
+      key: "issue_date",
+      header: "Issued",
+      sortable: true,
+      render: (_val, row) => (
+        <span className="text-sm text-zinc-400">
+          {row.issue_date
+            ? new Date(row.issue_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "due_date",
+      header: "Due",
+      sortable: true,
+      render: (_val, row) => (
+        <span className="text-sm text-zinc-400">
+          {row.due_date
+            ? new Date(row.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "total",
+      header: "Total",
+      align: "right",
+      sortable: true,
+      render: (_val, row) => (
+        <span className="text-sm font-semibold text-zinc-100">
+          {formatCurrency(parseFloat(row.total ?? "0"))}
+        </span>
+      ),
+    },
+    {
+      key: "amount_paid",
+      header: "Paid",
+      align: "right",
+      render: (_val, row) => (
+        <span className="text-sm text-zinc-400">
+          {formatCurrency(parseFloat(row.amount_paid ?? "0"))}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (_val, row) => <InvoiceStatusBadge status={row.status} />,
+    },
+  ];
+
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Invoices"
+        description="Manage resident invoices and billing"
+        actions={
+          <div className="flex gap-3">
+            <Button variant="secondary" icon={<Download className="h-4 w-4" />}>
+              Export
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => router.push("/billing/invoices/new")}
+            >
+              Create Invoice
+            </Button>
+          </div>
+        }
+      />
+
+      {/* Tabs + Search */}
+      <Card className="overflow-hidden">
+        <div className="px-4 pt-4 pb-0">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search by name or invoice number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+            />
           </div>
         </div>
 
-        <div className="border-b border-slate-200">
-          <div className="flex overflow-x-auto">
+        <div className="border-b border-zinc-800 mt-4">
+          <div className="flex overflow-x-auto px-4">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-600 hover:text-slate-900"
+                    ? "border-indigo-500 text-indigo-400"
+                    : "border-transparent text-zinc-500 hover:text-zinc-300"
                 }`}
               >
                 {tab.label}
@@ -202,127 +226,49 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        {filteredInvoices.length > 0 ? (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      <input type="checkbox" className="rounded border-slate-300" />
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Invoice #
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Resident
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Issue Date
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Due Date
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">
-                      Amount
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">
-                      Paid
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-slate-700">
-                      Balance
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredInvoices.map((invoice) => {
-                    const badge = getStatusBadge(invoice.status);
-                    return (
-                      <tr key={invoice.id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-3 px-4">
-                          <input type="checkbox" className="rounded border-slate-300" />
-                        </td>
-                        <td className="py-3 px-4">
-                          <Link
-                            href={`/payments/invoices/${invoice.id}`}
-                            className="text-sm font-mono text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            {invoice.number}
-                          </Link>
-                        </td>
-                        <td className="py-3 px-4 text-sm font-medium text-slate-900">
-                          {invoice.resident}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {new Date(invoice.issueDate).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {new Date(invoice.dueDate).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-right font-semibold text-slate-900">
-                          ${invoice.amount.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-right text-slate-600">
-                          ${invoice.paid.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-right font-semibold text-slate-900">
-                          ${invoice.balance.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${badge.className}`}>
-                            {badge.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-                            View
-                            <ArrowUpRight className="h-3 w-3" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="p-4 border-t border-slate-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-                  <Send className="h-4 w-4" />
-                  Send Selected
-                </button>
-                <button className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  Void Selected
-                </button>
-                <button className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Export
-                </button>
-              </div>
-              <p className="text-sm text-slate-600">
-                Showing {filteredInvoices.length} of {invoices.length} invoices
-              </p>
-            </div>
-          </>
+        {filteredInvoices.length === 0 && !isLoading ? (
+          <CardContent>
+            {searchTerm ? (
+              <NoResultsState searchTerm={searchTerm} onClear={() => setSearchTerm("")} />
+            ) : (
+              <EmptyState
+                iconType="document"
+                title="No invoices found"
+                description="Create your first invoice to start tracking payments."
+                action={{
+                  label: "Create Invoice",
+                  onClick: () => router.push("/billing/invoices/new"),
+                }}
+              />
+            )}
+          </CardContent>
         ) : (
-          <div className="p-12 text-center">
-            <p className="text-sm font-medium text-slate-900">No invoices found</p>
-            <p className="text-sm text-slate-600 mt-1">
-              {searchTerm
-                ? "Try adjusting your search criteria"
-                : "Create your first invoice to get started"}
+          <DataTable
+            data={filteredInvoices}
+            columns={columns}
+            loading={isLoading}
+            onRowClick={(row) => router.push(`/billing/invoices/${row.id}`)}
+            getRowId={(row) => row.id}
+            className="border-0 rounded-none"
+            rowActions={(row) => (
+              <Link
+                href={`/billing/invoices/${row.id}`}
+                className="text-indigo-400 hover:text-indigo-300"
+              >
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            )}
+          />
+        )}
+
+        {filteredInvoices.length > 0 && (
+          <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+            <p className="text-sm text-zinc-500">
+              Showing {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? "s" : ""}
             </p>
           </div>
         )}
-      </div>
-    </div>
+      </Card>
+    </PageContainer>
   );
 }

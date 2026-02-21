@@ -111,10 +111,9 @@ export const propertyRouter = router({
    * List all properties with stats
    */
   list: protectedProcedure
-    .input(z.object({
-      orgId: z.string().uuid(),
-    }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       const result = await db
         .select({
           id: properties.id,
@@ -141,7 +140,7 @@ export const propertyRouter = router({
         )
         .where(
           and(
-            eq(properties.org_id, input.orgId),
+            eq(properties.org_id, orgId),
             isNull(properties.deleted_at)
           )
         )
@@ -156,22 +155,31 @@ export const propertyRouter = router({
    */
   create: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       name: z.string().min(1).max(255),
       address_line1: z.string().min(1),
       address_line2: z.string().optional(),
       city: z.string().min(1),
-      state: z.string().min(2).max(2),
-      zip: z.string().min(5).max(10),
+      state: z.string().min(2).max(10),
+      zip: z.string().min(3).max(10),
       phone: z.string().optional(),
       email: z.string().email().optional(),
       settings: z.record(z.string(), z.unknown()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      console.log('[property.create] Starting:', {
+        name: input.name,
+        orgId,
+        userId: ctx.user?.id,
+        state: input.state,
+        zip: input.zip,
+      });
+
       const [property] = await db
         .insert(properties)
         .values({
-          org_id: input.orgId,
+          org_id: orgId,
           name: input.name,
           address_line1: input.address_line1,
           address_line2: input.address_line2,
@@ -185,6 +193,7 @@ export const propertyRouter = router({
         })
         .returning();
 
+      console.log('[property.create] Success:', property.id);
       return property;
     }),
 
@@ -285,6 +294,7 @@ export const propertyRouter = router({
           property_id: houses.property_id,
           name: houses.name,
           capacity: houses.capacity,
+          bathrooms: houses.bathrooms,
           gender_restriction: houses.gender_restriction,
           address_line1: houses.address_line1,
           address_line2: houses.address_line2,
@@ -434,15 +444,107 @@ export const propertyRouter = router({
     }),
 
   /**
+   * List houses for a property with stats
+   */
+  listHouses: protectedProcedure
+    .input(z.object({
+      propertyId: z.string().uuid(),
+    }))
+    .query(async ({ input }) => {
+      const houseList = await db
+        .select({
+          id: houses.id,
+          name: houses.name,
+          capacity: houses.capacity,
+          bathrooms: houses.bathrooms,
+          gender_restriction: houses.gender_restriction,
+          address_line1: houses.address_line1,
+          city: houses.city,
+          state: houses.state,
+          zip: houses.zip,
+          created_at: houses.created_at,
+        })
+        .from(houses)
+        .where(
+          and(
+            eq(houses.property_id, input.propertyId),
+            isNull(houses.deleted_at)
+          )
+        )
+        .orderBy(houses.name);
+
+      // Get stats for each house
+      const houseIds = houseList.map(h => h.id);
+      if (houseIds.length === 0) return [];
+
+      // Get room and bed counts for each house
+      const houseStats = await Promise.all(
+        houseList.map(async (house) => {
+          const stats = await db
+            .select({
+              room_count: sql<number>`count(distinct ${rooms.id})::int`,
+              bed_count: sql<number>`count(${beds.id})::int`,
+              available_beds: sql<number>`count(case when ${beds.status} = 'available' then 1 end)::int`,
+              occupied_beds: sql<number>`count(case when ${beds.status} = 'occupied' then 1 end)::int`,
+            })
+            .from(rooms)
+            .leftJoin(beds, and(eq(beds.room_id, rooms.id), isNull(beds.deleted_at)))
+            .where(
+              and(
+                eq(rooms.house_id, house.id),
+                isNull(rooms.deleted_at)
+              )
+            );
+
+          return {
+            ...house,
+            room_count: stats[0]?.room_count ?? 0,
+            bed_count: stats[0]?.bed_count ?? 0,
+            available_beds: stats[0]?.available_beds ?? 0,
+            occupied_beds: stats[0]?.occupied_beds ?? 0,
+          };
+        })
+      );
+
+      return houseStats;
+    }),
+
+  /**
+   * List all houses across all properties in this org (for dropdowns)
+   */
+  listAllHouses: protectedProcedure
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      const houseList = await db
+        .select({
+          id: houses.id,
+          name: houses.name,
+          property_name: properties.name,
+          gender_restriction: houses.gender_restriction,
+        })
+        .from(houses)
+        .innerJoin(properties, eq(houses.property_id, properties.id))
+        .where(
+          and(
+            eq(houses.org_id, orgId),
+            isNull(houses.deleted_at)
+          )
+        )
+        .orderBy(properties.name, houses.name);
+
+      return houseList;
+    }),
+
+  /**
    * Create house with optional rooms and beds
    */
   createHouseWithRooms: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       propertyId: z.string().uuid(),
       name: z.string().min(1),
-      capacity: z.number().int().positive(),
       gender_restriction: z.enum(['male', 'female', 'coed']).optional(),
+      bathrooms: z.number().int().min(0).optional(),
       address_line1: z.string().optional(),
       city: z.string().optional(),
       state: z.string().optional(),
@@ -453,17 +555,32 @@ export const propertyRouter = router({
         beds: z.array(z.object({
           name: z.string(),
         })),
-      })).optional(),
+      })),
     }))
     .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      // Compute capacity from total beds
+      const totalBeds = input.rooms.reduce((sum, r) => sum + r.beds.length, 0);
+
+      console.log('[createHouseWithRooms] Starting:', {
+        propertyId: input.propertyId,
+        name: input.name,
+        orgId,
+        userId: ctx.user?.id,
+        roomCount: input.rooms.length,
+        totalBeds,
+      });
+
       // Create house
       const [house] = await db
         .insert(houses)
         .values({
-          org_id: input.orgId,
+          org_id: orgId,
           property_id: input.propertyId,
           name: input.name,
-          capacity: input.capacity,
+          capacity: totalBeds,
+          bathrooms: input.bathrooms,
           gender_restriction: input.gender_restriction,
           address_line1: input.address_line1,
           city: input.city,
@@ -473,37 +590,38 @@ export const propertyRouter = router({
         })
         .returning();
 
-      // Create rooms and beds if provided
-      if (input.rooms && input.rooms.length > 0) {
-        for (const roomInput of input.rooms) {
-          const [room] = await db
-            .insert(rooms)
-            .values({
-              org_id: input.orgId,
-              house_id: house.id,
-              name: roomInput.name,
-              floor: roomInput.floor,
-              capacity: roomInput.beds.length,
-              created_by: ctx.user!.id,
-            })
-            .returning();
+      console.log('[createHouseWithRooms] House created:', house.id);
 
-          if (roomInput.beds.length > 0) {
-            await db
-              .insert(beds)
-              .values(
-                roomInput.beds.map((bed) => ({
-                  org_id: input.orgId,
-                  room_id: room.id,
-                  name: bed.name,
-                  status: 'available' as const,
-                  created_by: ctx.user!.id,
-                }))
-              );
-          }
+      // Create rooms and beds
+      for (const roomInput of input.rooms) {
+        const [room] = await db
+          .insert(rooms)
+          .values({
+            org_id: orgId,
+            house_id: house.id,
+            name: roomInput.name,
+            floor: roomInput.floor,
+            capacity: roomInput.beds.length,
+            created_by: ctx.user!.id,
+          })
+          .returning();
+
+        if (roomInput.beds.length > 0) {
+          await db
+            .insert(beds)
+            .values(
+              roomInput.beds.map((bed) => ({
+                org_id: orgId,
+                room_id: room.id,
+                name: bed.name,
+                status: 'available' as const,
+                created_by: ctx.user!.id,
+              }))
+            );
         }
       }
 
+      console.log('[createHouseWithRooms] Complete:', house.id, input.rooms.length, 'rooms');
       return house;
     }),
 
@@ -568,17 +686,18 @@ export const propertyRouter = router({
    */
   createRoom: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       houseId: z.string().uuid(),
       name: z.string().min(1),
       floor: z.number().int().optional(),
       capacity: z.number().int().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       const [room] = await db
         .insert(rooms)
         .values({
-          org_id: input.orgId,
+          org_id: orgId,
           house_id: input.houseId,
           name: input.name,
           floor: input.floor,
@@ -626,17 +745,18 @@ export const propertyRouter = router({
    */
   createBed: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       roomId: z.string().uuid(),
       name: z.string().min(1),
       status: z.enum(['available', 'occupied', 'reserved', 'maintenance', 'out_of_service']).default('available'),
       notes: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       const [bed] = await db
         .insert(beds)
         .values({
-          org_id: input.orgId,
+          org_id: orgId,
           room_id: input.roomId,
           name: input.name,
           status: input.status,

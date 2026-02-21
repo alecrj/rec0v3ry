@@ -23,14 +23,14 @@ export const conversationRouter = router({
    */
   list: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       conversationType: z.enum(['direct', 'group', 'announcement']).optional(),
       includeArchived: z.boolean().default(false),
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),
-    }))
+    }).optional())
     .query(async ({ input, ctx }) => {
       const userId = ctx.user!.id;
+      const orgId = (ctx as any).orgId as string;
 
       // Get conversations where user is a member
       const memberConversationIds = await db
@@ -38,7 +38,7 @@ export const conversationRouter = router({
         .from(conversationMembers)
         .where(
           and(
-            eq(conversationMembers.org_id, input.orgId),
+            eq(conversationMembers.org_id, orgId),
             eq(conversationMembers.user_id, userId),
             isNull(conversationMembers.left_at)
           )
@@ -52,13 +52,13 @@ export const conversationRouter = router({
 
       const conditions = [
         inArray(conversations.id, conversationIds),
-        eq(conversations.org_id, input.orgId),
+        eq(conversations.org_id, orgId),
       ];
 
-      if (input.conversationType) {
+      if (input?.conversationType) {
         conditions.push(eq(conversations.conversation_type, input.conversationType));
       }
-      if (!input.includeArchived) {
+      if (!input?.includeArchived) {
         conditions.push(eq(conversations.is_archived, false));
       }
 
@@ -78,8 +78,8 @@ export const conversationRouter = router({
         .leftJoin(houses, eq(conversations.house_id, houses.id))
         .where(and(...conditions))
         .orderBy(desc(conversations.updated_at))
-        .limit(input.limit)
-        .offset(input.offset);
+        .limit(input?.limit ?? 50)
+        .offset(input?.offset ?? 0);
 
       // Get last message and unread count for each conversation
       const conversationsWithMeta = await Promise.all(

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -10,415 +11,508 @@ import {
   DollarSign,
   CheckCircle,
   Clock,
-  Mail,
-  FileText,
+  AlertCircle,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Badge,
+  SkeletonTable,
+  ErrorState,
+  useToast,
+} from "@/components/ui";
+import { SkeletonCard } from "@/components/ui";
+
+export const dynamic = "force-dynamic";
+
+function formatCurrency(amount: string | number) {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
+}
+
+function InvoiceStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { variant: "success" | "warning" | "error" | "default" | "info"; label: string }> = {
+    draft: { variant: "default", label: "Draft" },
+    pending: { variant: "info", label: "Pending" },
+    paid: { variant: "success", label: "Paid" },
+    partially_paid: { variant: "warning", label: "Partially Paid" },
+    overdue: { variant: "error", label: "Overdue" },
+    void: { variant: "default", label: "Void" },
+    written_off: { variant: "default", label: "Written Off" },
+  };
+  const { variant, label } = config[status] ?? { variant: "default" as const, label: status };
+  return <Badge variant={variant} dot size="md">{label}</Badge>;
+}
+
+function PaymentStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { variant: "success" | "warning" | "error" | "default" }> = {
+    succeeded: { variant: "success" },
+    completed: { variant: "success" },
+    pending: { variant: "warning" },
+    failed: { variant: "error" },
+    refunded: { variant: "default" },
+  };
+  const { variant } = config[status] ?? { variant: "default" as const };
+  return (
+    <Badge variant={variant} dot>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </Badge>
+  );
+}
 
 export default function InvoiceDetailPage() {
   const params = useParams();
-  const invoiceId = params.id;
+  const invoiceId = params.id as string;
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
 
-  // Mock data - in real app, fetch based on invoiceId
-  const invoice = {
-    id: invoiceId,
-    number: "INV-2026-0234",
-    status: "pending",
-    issueDate: "2026-02-01",
-    dueDate: "2026-02-15",
-    paidDate: null,
-    resident: {
-      name: "Sarah Martinez",
-      email: "sarah.m@example.com",
-      house: "Serenity House - Room 3B",
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "check" | "wire" | "other">("cash");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+
+  const { data: invoice, isLoading, error } = trpc.invoice.getById.useQuery(
+    { id: invoiceId },
+    { enabled: !!invoiceId }
+  );
+
+  const { data: paymentsData } = trpc.payment.list.useQuery(
+    { invoiceId, limit: 50 },
+    { enabled: !!invoiceId }
+  );
+
+  const sendMutation = trpc.invoice.send.useMutation({
+    onSuccess: () => {
+      toast("success", "Invoice sent", "Invoice has been marked as pending");
+      utils.invoice.getById.invalidate({ id: invoiceId });
     },
-    lineItems: [
-      {
-        id: "1",
-        description: "February 2026 Rent",
-        type: "Rent",
-        quantity: 1,
-        unitPrice: 850,
-        amount: 850,
-      },
-    ],
-    subtotal: 850,
-    tax: 0,
-    total: 850,
-    paid: 0,
-    balance: 850,
-    notes: "Monthly rent payment for February 2026. Payment is due by the 15th of the month.",
-    payments: [],
-    activity: [
-      {
-        id: "1",
-        type: "created",
-        date: "2026-02-01T10:00:00",
-        description: "Invoice created",
-        user: "System",
-      },
-    ],
-  };
+    onError: (err) => toast("error", "Failed to send invoice", err.message),
+  });
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      draft: "bg-slate-100 text-slate-700",
-      pending: "bg-blue-100 text-blue-700",
-      paid: "bg-green-100 text-green-700",
-      partially_paid: "bg-yellow-100 text-yellow-700",
-      overdue: "bg-red-100 text-red-700",
-      void: "bg-slate-100 text-slate-500 line-through",
-    };
-    const labels = {
-      draft: "Draft",
-      pending: "Pending",
-      paid: "Paid",
-      partially_paid: "Partially Paid",
-      overdue: "Overdue",
-      void: "Void",
-    };
-    return {
-      className: styles[status as keyof typeof styles] || styles.pending,
-      label: labels[status as keyof typeof labels] || status,
-    };
-  };
+  const voidMutation = trpc.invoice.void.useMutation({
+    onSuccess: () => {
+      toast("success", "Invoice voided");
+      utils.invoice.getById.invalidate({ id: invoiceId });
+      setShowVoidConfirm(false);
+    },
+    onError: (err) => toast("error", "Failed to void invoice", err.message),
+  });
 
-  const badge = getStatusBadge(invoice.status);
+  const recordPaymentMutation = trpc.payment.recordManual.useMutation({
+    onSuccess: () => {
+      toast("success", "Payment recorded");
+      utils.invoice.getById.invalidate({ id: invoiceId });
+      utils.payment.list.invalidate({ invoiceId });
+      setShowPaymentModal(false);
+      setPaymentAmount("");
+      setPaymentNotes("");
+    },
+    onError: (err) => toast("error", "Failed to record payment", err.message),
+  });
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "created":
-        return FileText;
-      case "sent":
-        return Mail;
-      case "payment":
-        return DollarSign;
-      case "void":
-        return XCircle;
-      default:
-        return Clock;
-    }
-  };
+  const invoicePayments = paymentsData?.items ?? [];
+
+  if (error) {
+    return (
+      <PageContainer>
+        <Card variant="outlined" className="border-red-500/30 bg-red-500/10">
+          <CardContent>
+            <ErrorState
+              title="Failed to load invoice"
+              description={error.message}
+            />
+          </CardContent>
+        </Card>
+      </PageContainer>
+    );
+  }
+
+  if (isLoading || !invoice) {
+    return (
+      <PageContainer>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="h-8 w-8 bg-zinc-700 rounded-lg animate-shimmer" />
+          <div className="space-y-2">
+            <div className="h-7 w-48 bg-zinc-700 rounded animate-shimmer" />
+            <div className="h-4 w-32 bg-zinc-700 rounded animate-shimmer" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SkeletonCard />
+          </div>
+          <SkeletonCard />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  const total = parseFloat(invoice.total ?? "0");
+  const amountPaid = parseFloat(invoice.amount_paid ?? "0");
+  const amountDue = parseFloat(invoice.amount_due ?? "0");
+  const subtotal = parseFloat(invoice.subtotal ?? "0");
+  const taxAmount = parseFloat(invoice.tax_amount ?? "0");
+  const residentName = invoice.resident
+    ? `${invoice.resident.first_name} ${invoice.resident.last_name}`
+    : "Unknown";
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/payments/invoices"
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-slate-600" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-slate-900">{invoice.number}</h1>
-              <span className={`px-3 py-1 rounded text-sm font-medium ${badge.className}`}>
-                {badge.label}
-              </span>
-            </div>
-            <p className="text-slate-600 mt-1">
-              Created {new Date(invoice.issueDate).toLocaleDateString()}
-            </p>
+    <PageContainer>
+      {/* Header with back button */}
+      <PageHeader
+        title={invoice.invoice_number ?? "Invoice"}
+        description={`Created ${new Date(invoice.issue_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
+        badge={<InvoiceStatusBadge status={invoice.status} />}
+        actions={
+          <div className="flex gap-3">
+            {invoice.status === "draft" && (
+              <Button
+                variant="primary"
+                icon={<Send className="h-4 w-4" />}
+                onClick={() => sendMutation.mutate({ id: invoiceId })}
+                disabled={sendMutation.isPending}
+              >
+                {sendMutation.isPending ? "Sending..." : "Send Invoice"}
+              </Button>
+            )}
+            {(invoice.status === "pending" || invoice.status === "overdue" || invoice.status === "partially_paid") && (
+              <Button
+                variant="primary"
+                icon={<DollarSign className="h-4 w-4" />}
+                onClick={() => {
+                  setPaymentAmount(invoice.amount_due ?? "0");
+                  setShowPaymentModal(true);
+                }}
+              >
+                Record Payment
+              </Button>
+            )}
+            {invoice.status !== "void" && invoice.status !== "paid" && (
+              <Button
+                variant="destructive"
+                icon={<XCircle className="h-4 w-4" />}
+                onClick={() => setShowVoidConfirm(true)}
+                disabled={voidMutation.isPending}
+              >
+                Void
+              </Button>
+            )}
           </div>
-        </div>
+        }
+      />
 
-        <div className="flex gap-3">
-          {invoice.status === "draft" && (
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              Send Invoice
-            </button>
-          )}
-          {(invoice.status === "pending" || invoice.status === "overdue" || invoice.status === "partially_paid") && (
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Record Payment
-            </button>
-          )}
-          <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download PDF
-          </button>
-          {invoice.status !== "void" && invoice.status !== "paid" && (
-            <button className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              Void
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Back link */}
+      <Link
+        href="/billing/invoices"
+        className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors -mt-4"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Invoices
+      </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                  Invoice Number
-                </h2>
-                <p className="text-xl font-bold font-mono text-slate-900">{invoice.number}</p>
-              </div>
-              <div className="text-right">
-                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">
-                  Issue Date
-                </h2>
-                <p className="text-lg font-semibold text-slate-900">
-                  {new Date(invoice.issueDate).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 mb-6 pb-6 border-b border-slate-200">
-              <div>
-                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-2">
-                  Due Date
-                </h2>
-                <p className="text-lg font-semibold text-slate-900">
-                  {new Date(invoice.dueDate).toLocaleDateString()}
-                </p>
-              </div>
-              {invoice.paidDate && (
+          {/* Invoice details */}
+          <Card>
+            <CardContent>
+              <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-2">
-                    Paid Date
-                  </h2>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {new Date(invoice.paidDate).toLocaleDateString()}
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Invoice Number</p>
+                  <p className="text-xl font-bold font-mono text-zinc-100">{invoice.invoice_number}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Issue Date</p>
+                  <p className="text-lg font-semibold text-zinc-100">
+                    {new Date(invoice.issue_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
-              )}
-            </div>
-
-            <div>
-              <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">
-                Line Items
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left py-2 text-sm font-semibold text-slate-700">
-                        Description
-                      </th>
-                      <th className="text-left py-2 text-sm font-semibold text-slate-700">
-                        Type
-                      </th>
-                      <th className="text-right py-2 text-sm font-semibold text-slate-700">
-                        Qty
-                      </th>
-                      <th className="text-right py-2 text-sm font-semibold text-slate-700">
-                        Unit Price
-                      </th>
-                      <th className="text-right py-2 text-sm font-semibold text-slate-700">
-                        Amount
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoice.lineItems.map((item) => (
-                      <tr key={item.id} className="border-b border-slate-100">
-                        <td className="py-3 text-sm text-slate-900">{item.description}</td>
-                        <td className="py-3 text-sm text-slate-600">{item.type}</td>
-                        <td className="py-3 text-sm text-slate-600 text-right">
-                          {item.quantity}
-                        </td>
-                        <td className="py-3 text-sm text-slate-600 text-right">
-                          ${item.unitPrice.toLocaleString()}
-                        </td>
-                        <td className="py-3 text-sm font-semibold text-slate-900 text-right">
-                          ${item.amount.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-200">
-                <div className="flex justify-end">
-                  <div className="w-64 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Subtotal</span>
-                      <span className="font-semibold text-slate-900">
-                        ${invoice.subtotal.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Tax</span>
-                      <span className="font-semibold text-slate-900">
-                        ${invoice.tax.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-200">
-                      <span className="text-slate-900">Total</span>
-                      <span className="text-slate-900">${invoice.total.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Paid</span>
-                      <span className="font-semibold text-green-600">
-                        ${invoice.paid.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-slate-200">
-                      <span className="text-slate-900">Balance Due</span>
-                      <span className="text-blue-600">${invoice.balance.toLocaleString()}</span>
+              <div className="grid grid-cols-2 gap-6 mb-6 pb-6 border-b border-zinc-800">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Due Date</p>
+                  <p className="text-lg font-semibold text-zinc-100">
+                    {new Date(invoice.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Bill To</p>
+                  <p className="text-lg font-semibold text-zinc-100">{residentName}</p>
+                </div>
+              </div>
+
+              {/* Line Items */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Line Items</p>
+                <div className="overflow-x-auto -mx-6">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                        <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Description</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Type</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Qty</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Unit Price</th>
+                        <th className="text-right py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/50">
+                      {(invoice.lineItems ?? []).map((item) => (
+                        <tr key={item.id} className="hover:bg-zinc-800/50 transition-colors">
+                          <td className="py-3 px-6 text-sm text-zinc-100">{item.description}</td>
+                          <td className="py-3 px-4">
+                            <Badge variant="default">{item.payment_type}</Badge>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-zinc-400 text-right">{item.quantity ?? 1}</td>
+                          <td className="py-3 px-4 text-sm text-zinc-400 text-right">{formatCurrency(item.unit_price)}</td>
+                          <td className="py-3 px-6 text-sm font-semibold text-zinc-100 text-right">{formatCurrency(item.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals */}
+                <div className="mt-6 pt-4 border-t border-zinc-800">
+                  <div className="flex justify-end">
+                    <div className="w-64 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-500">Subtotal</span>
+                        <span className="font-medium text-zinc-100">{formatCurrency(subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-500">Tax</span>
+                        <span className="font-medium text-zinc-100">{formatCurrency(taxAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-800">
+                        <span className="text-zinc-100">Total</span>
+                        <span className="text-zinc-100">{formatCurrency(total)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-500">Paid</span>
+                        <span className="font-semibold text-green-400">{formatCurrency(amountPaid)}</span>
+                      </div>
+                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-800">
+                        <span className="text-zinc-100">Balance Due</span>
+                        <span className="text-indigo-400">{formatCurrency(amountDue)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {invoice.notes && (
-              <div className="mt-6 pt-6 border-t border-slate-200">
-                <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-2">
-                  Notes
-                </h2>
-                <p className="text-sm text-slate-700 leading-relaxed">{invoice.notes}</p>
-              </div>
-            )}
-          </div>
+              {invoice.notes && (
+                <div className="mt-6 pt-6 border-t border-zinc-800">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Notes</p>
+                  <p className="text-sm text-zinc-300 leading-relaxed">{invoice.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          {invoice.payments.length > 0 && (
-            <div className="bg-white rounded-lg border border-slate-200">
-              <div className="p-6 border-b border-slate-200">
-                <h2 className="text-lg font-semibold text-slate-900">Payment History</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                        Date
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                        Amount
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                        Method
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                        Status
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                        Reference
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoice.payments.map((payment: any) => (
-                      <tr key={payment.id} className="border-b border-slate-100">
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {new Date(payment.date).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm font-semibold text-slate-900">
-                          ${payment.amount.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600">{payment.method}</td>
-                        <td className="py-3 px-4">
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
-                            {payment.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm font-mono text-slate-700">
-                          {payment.reference}
-                        </td>
+          {/* Payment History */}
+          {invoicePayments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment History</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="overflow-x-auto -mx-6">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                        <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Date</th>
+                        <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Amount</th>
+                        <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Method</th>
+                        <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/50">
+                      {invoicePayments.map((payment) => (
+                        <tr key={payment.id} className="hover:bg-zinc-800/50 transition-colors">
+                          <td className="py-3 px-6 text-sm text-zinc-400">
+                            {new Date(payment.payment_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-semibold text-zinc-100 text-right">
+                            {formatCurrency(payment.amount)}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-zinc-400 capitalize">
+                            {payment.payment_method_type?.replace(/_/g, " ") ?? "—"}
+                          </td>
+                          <td className="py-3 px-6">
+                            <PaymentStatusBadge status={payment.status} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
-
-          <div className="bg-white rounded-lg border border-slate-200">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">Activity Timeline</h2>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {invoice.activity.map((item) => {
-                  const Icon = getActivityIcon(item.type);
-                  return (
-                    <div key={item.id} className="flex gap-3">
-                      <div className="p-2 bg-slate-100 rounded-lg h-fit">
-                        <Icon className="h-4 w-4 text-slate-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">{item.description}</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {new Date(item.date).toLocaleString()} • {item.user}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
         </div>
 
+        {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-slate-200 p-6 sticky top-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Resident Information</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
-                  Name
-                </p>
-                <p className="text-sm font-semibold text-slate-900">{invoice.resident.name}</p>
+          <Card className="sticky top-6">
+            <CardContent>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-4">Resident Information</h2>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500/15 to-indigo-500/25 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-indigo-300">
+                    {residentName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-zinc-100">{residentName}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
-                  Email
-                </p>
-                <p className="text-sm text-slate-700">{invoice.resident.email}</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
-                  Location
-                </p>
-                <p className="text-sm text-slate-700">{invoice.resident.house}</p>
-              </div>
-            </div>
 
-            {invoice.balance > 0 && (
-              <div className="mt-6 pt-6 border-t border-slate-200">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              {amountDue > 0 && (
+                <div className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
                   <div className="flex items-start gap-3">
-                    <DollarSign className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <DollarSign className="h-5 w-5 text-indigo-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="text-sm font-semibold text-blue-900">Balance Due</h3>
-                      <p className="text-2xl font-bold text-blue-900 mt-1">
-                        ${invoice.balance.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-blue-800 mt-2">
-                        Due by {new Date(invoice.dueDate).toLocaleDateString()}
+                      <p className="text-sm font-semibold text-indigo-100">Balance Due</p>
+                      <p className="text-2xl font-bold text-indigo-100 mt-1">{formatCurrency(amountDue)}</p>
+                      <p className="text-xs text-indigo-300 mt-2">
+                        Due by {new Date(invoice.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {invoice.status === "paid" && (
-              <div className="mt-6 pt-6 border-t border-slate-200">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              {invoice.status === "paid" && (
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                   <div className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="text-sm font-semibold text-green-900">Paid in Full</h3>
-                      <p className="text-xs text-green-800 mt-1">
-                        Payment received on{" "}
-                        {invoice.paidDate && new Date(invoice.paidDate).toLocaleDateString()}
-                      </p>
+                      <p className="text-sm font-semibold text-green-300">Paid in Full</p>
+                      <p className="text-xs text-green-300 mt-1">Payment complete</p>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+
+      {/* Record Payment Modal */}
+      {showPaymentModal && invoice.resident && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-md w-full mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Record Payment</h2>
+              <p className="text-sm text-zinc-500 mt-1">
+                For invoice {invoice.invoice_number}
+              </p>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                recordPaymentMutation.mutate({
+                  residentId: invoice.resident!.id,
+                  invoiceId: invoice.id,
+                  amount: paymentAmount,
+                  paymentMethodType: paymentMethod,
+                  paymentDate: new Date().toISOString(),
+                  notes: paymentNotes || undefined,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  Amount <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Balance due: {formatCurrency(invoice.amount_due ?? "0")}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  Payment Method <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
+                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="cash">Cash</option>
+                  <option value="check">Check</option>
+                  <option value="wire">Wire Transfer</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
+                <textarea
+                  rows={2}
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  placeholder="Optional notes..."
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={() => setShowPaymentModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" disabled={recordPaymentMutation.isPending}>
+                  {recordPaymentMutation.isPending ? "Recording..." : "Record Payment"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Void Confirmation */}
+      {showVoidConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-sm w-full mx-4 border border-zinc-800 p-6">
+            <h2 className="text-lg font-bold text-zinc-100 mb-2">Void Invoice?</h2>
+            <p className="text-sm text-zinc-400 mb-6">
+              This will permanently mark invoice {invoice.invoice_number} as void. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="secondary" onClick={() => setShowVoidConfirm(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => voidMutation.mutate({ id: invoiceId })}
+                disabled={voidMutation.isPending}
+              >
+                {voidMutation.isPending ? "Voiding..." : "Void Invoice"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </PageContainer>
   );
 }

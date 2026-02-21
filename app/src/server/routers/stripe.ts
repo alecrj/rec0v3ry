@@ -344,6 +344,69 @@ export const stripeRouter = router({
     }),
 
   /**
+   * Create PaymentIntent for invoice payment (resident-facing)
+   */
+  createPaymentIntent: protectedProcedure
+    .input(
+      z.object({
+        invoiceIds: z.array(z.string().uuid()).min(1),
+        amountCents: z.number().int().positive(),
+        residentId: z.string().uuid(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      // Get org Stripe account
+      const [org] = await db
+        .select()
+        .from(organizations)
+        .where(eq(organizations.id, orgId))
+        .limit(1);
+
+      if (!org) {
+        throw new Error('Organization not found');
+      }
+
+      const settings = (org.settings as any) || {};
+      const stripeSettings = settings.stripe || {};
+
+      if (!stripeSettings.accountId) {
+        throw new Error('Stripe payments not configured for this organization');
+      }
+
+      // Calculate platform fee (2.5% + 30c)
+      const feePercent = stripeSettings.platformFeePercent || 2.5;
+      const feeFixed = stripeSettings.platformFeeFixedCents || 30;
+      const platformFee = Math.round(input.amountCents * (feePercent / 100) + feeFixed);
+
+      // Create payment intent on connected account
+      const paymentIntent = await stripe.paymentIntents.create(
+        {
+          amount: input.amountCents,
+          currency: 'usd',
+          application_fee_amount: platformFee,
+          metadata: {
+            org_id: orgId,
+            resident_id: input.residentId,
+            invoice_id: input.invoiceIds[0] || '',
+            invoice_ids: input.invoiceIds.join(','),
+            recoveryos_payer_id: ctx.user!.id,
+          },
+        },
+        {
+          stripeAccount: stripeSettings.accountId,
+        }
+      );
+
+      return {
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        connectedAccountId: stripeSettings.accountId,
+      };
+    }),
+
+  /**
    * List payment methods for payer
    */
   listPaymentMethods: protectedProcedure

@@ -70,7 +70,8 @@ export const houses = pgTable(
     org_id: uuid('org_id').notNull().references(() => organizations.id),
     property_id: uuid('property_id').notNull().references(() => properties.id),
     name: text('name').notNull(),
-    capacity: integer('capacity').notNull(), // Max residents
+    capacity: integer('capacity').notNull(), // Max residents (computed from total beds)
+    bathrooms: integer('bathrooms'), // Number of bathrooms in the house
     gender_restriction: text('gender_restriction'), // 'male', 'female', 'coed', null
     address_line1: text('address_line1'),
     address_line2: text('address_line2'),

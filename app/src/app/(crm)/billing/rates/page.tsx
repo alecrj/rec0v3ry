@@ -1,386 +1,407 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Edit, XCircle, DollarSign, Calendar, Home } from "lucide-react";
+import { useState, FormEvent } from "react";
+import {
+  Plus,
+  Edit,
+  XCircle,
+  DollarSign,
+  Calendar,
+  Home,
+  Loader2,
+} from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { useToast } from "@/components/ui";
+import {
+  PageContainer,
+  PageHeader,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Badge,
+  EmptyState,
+  ErrorState,
+} from "@/components/ui";
+import { SkeletonCard } from "@/components/ui";
+
+export const dynamic = "force-dynamic";
+
+const paymentTypeLabels: Record<string, string> = {
+  rent: "Rent",
+  security_deposit: "Security Deposit",
+  program_fee: "Program Fee",
+  service_fee: "Service Fee",
+  damage: "Damage",
+  late_fee: "Late Fee",
+  other: "Other",
+};
+
+const paymentTypeBadge: Record<string, "info" | "success" | "default" | "warning" | "error"> = {
+  rent: "info",
+  security_deposit: "success",
+  program_fee: "default",
+  service_fee: "default",
+  damage: "warning",
+  late_fee: "error",
+  other: "default",
+};
+
+const frequencyLabels: Record<string, string> = {
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
+
+function formatCurrency(amount: string | number) {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+}
 
 export default function RatesPage() {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
+  const [rateForm, setRateForm] = useState({
+    propertyId: "",
+    houseId: "",
+    paymentType: "",
+    rateName: "",
+    amount: "",
+    billingFrequency: "",
+    effectiveFrom: new Date().toISOString().split("T")[0],
+  });
 
-  const rates = [
-    {
-      id: "1",
-      house: "Serenity House",
-      name: "Standard Room - Single Occupancy",
-      amount: 850,
-      frequency: "monthly",
-      paymentType: "rent",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "2",
-      house: "Serenity House",
-      name: "Shared Room - Double Occupancy",
-      amount: 650,
-      frequency: "monthly",
-      paymentType: "rent",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "3",
-      house: "Serenity House",
-      name: "Weekly Program Fee",
-      amount: 50,
-      frequency: "weekly",
-      paymentType: "program_fee",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "4",
-      house: "Hope Manor",
-      name: "Standard Room - Single Occupancy",
-      amount: 900,
-      frequency: "monthly",
-      paymentType: "rent",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "5",
-      house: "Hope Manor",
-      name: "Premium Suite",
-      amount: 1200,
-      frequency: "monthly",
-      paymentType: "rent",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "6",
-      house: "Hope Manor",
-      name: "Monthly Program Fee",
-      amount: 200,
-      frequency: "monthly",
-      paymentType: "program_fee",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "7",
-      house: "Recovery Haven",
-      name: "Standard Room",
-      amount: 825,
-      frequency: "monthly",
-      paymentType: "rent",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "8",
-      house: "Recovery Haven",
-      name: "Security Deposit",
-      amount: 1000,
-      frequency: "one_time",
-      paymentType: "deposit",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "9",
-      house: "Serenity House",
-      name: "Late Payment Fee",
-      amount: 50,
-      frequency: "per_incident",
-      paymentType: "late_fee",
-      effectiveFrom: "2026-01-01",
-      effectiveUntil: null,
-      isActive: true,
-    },
-    {
-      id: "10",
-      house: "Hope Manor",
-      name: "Old Rate - Deprecated",
-      amount: 800,
-      frequency: "monthly",
-      paymentType: "rent",
-      effectiveFrom: "2025-06-01",
-      effectiveUntil: "2025-12-31",
-      isActive: false,
-    },
-  ];
+  const { data: rates, isLoading, error } = trpc.rate.list.useQuery({ activeOnly: !showInactive });
+  const { data: propertyList } = trpc.property.list.useQuery();
+  const { data: housesForProperty } = trpc.property.listHouses.useQuery(
+    { propertyId: rateForm.propertyId },
+    { enabled: !!rateForm.propertyId }
+  );
 
-  const houses = ["Serenity House", "Hope Manor", "Recovery Haven"];
+  const createRate = trpc.rate.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Rate created successfully");
+      utils.rate.list.invalidate();
+      setRateForm({ propertyId: "", houseId: "", paymentType: "", rateName: "", amount: "", billingFrequency: "", effectiveFrom: new Date().toISOString().split("T")[0] });
+      setShowAddForm(false);
+    },
+    onError: (err) => {
+      toast("error", err.message);
+    },
+  });
 
-  const paymentTypes = [
-    { value: "rent", label: "Rent" },
-    { value: "program_fee", label: "Program Fee" },
-    { value: "deposit", label: "Deposit" },
-    { value: "late_fee", label: "Late Fee" },
-    { value: "utilities", label: "Utilities" },
-    { value: "other", label: "Other" },
-  ];
+  const deactivateRate = trpc.rate.deactivate.useMutation({
+    onSuccess: () => {
+      toast("success", "Rate deactivated");
+      utils.rate.list.invalidate();
+    },
+    onError: (err) => {
+      toast("error", err.message);
+    },
+  });
 
-  const frequencies = [
-    { value: "weekly", label: "Weekly" },
-    { value: "monthly", label: "Monthly" },
-    { value: "one_time", label: "One Time" },
-    { value: "per_incident", label: "Per Incident" },
-  ];
-
-  const getFrequencyLabel = (freq: string) => {
-    const f = frequencies.find((f) => f.value === freq);
-    return f ? f.label : freq;
+  const handleCreateRate = (e: FormEvent) => {
+    e.preventDefault();
+    createRate.mutate({
+      houseId: rateForm.houseId || undefined,
+      paymentType: rateForm.paymentType as "rent" | "security_deposit" | "program_fee" | "service_fee" | "damage" | "late_fee" | "other",
+      rateName: rateForm.rateName,
+      amount: rateForm.amount,
+      billingFrequency: rateForm.billingFrequency as "daily" | "weekly" | "monthly",
+      effectiveFrom: rateForm.effectiveFrom,
+    });
   };
 
-  const getPaymentTypeLabel = (type: string) => {
-    const t = paymentTypes.find((t) => t.value === type);
-    return t ? t.label : type;
-  };
+  const allRates = rates ?? [];
+  const properties = propertyList ?? [];
 
-  const getPaymentTypeBadge = (type: string) => {
-    const styles = {
-      rent: "bg-blue-100 text-blue-700",
-      program_fee: "bg-purple-100 text-purple-700",
-      deposit: "bg-green-100 text-green-700",
-      late_fee: "bg-red-100 text-red-700",
-      utilities: "bg-yellow-100 text-yellow-700",
-      other: "bg-slate-100 text-slate-700",
-    };
-    return styles[type as keyof typeof styles] || styles.other;
-  };
-
-  const groupedRates = houses.map((house) => ({
-    house,
-    rates: rates.filter((rate) => rate.house === house),
+  // Group rates by house
+  const houseMap = new Map<string, { name: string; rates: typeof allRates }>();
+  for (const rate of allRates) {
+    const houseName = rate.house?.name ?? "Organization-Wide";
+    const houseId = rate.house_id ?? "org-wide";
+    if (!houseMap.has(houseId)) {
+      houseMap.set(houseId, { name: houseName, rates: [] });
+    }
+    houseMap.get(houseId)!.rates.push(rate);
+  }
+  const groupedRates = Array.from(houseMap.entries()).map(([id, data]) => ({
+    id,
+    house: data.name,
+    rates: data.rates,
   }));
 
+  if (error) {
+    return (
+      <PageContainer>
+        <Card><CardContent><ErrorState title="Failed to load rates" description={error.message} /></CardContent></Card>
+      </PageContainer>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Rate Configuration</h1>
-          <p className="text-slate-600 mt-1">Manage pricing for all houses and services</p>
-        </div>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Rate
-        </button>
-      </div>
-
-      {showAddForm && (
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Add New Rate</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                House <span className="text-red-500">*</span>
-              </label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select house...</option>
-                {houses.map((house) => (
-                  <option key={house} value={house}>
-                    {house}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Payment Type <span className="text-red-500">*</span>
-              </label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select type...</option>
-                {paymentTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Rate Name <span className="text-red-500">*</span>
-              </label>
+    <PageContainer>
+      <PageHeader
+        title="Rate Configuration"
+        description="Manage pricing for all houses and services"
+        actions={
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-zinc-500 cursor-pointer">
               <input
-                type="text"
-                placeholder="e.g., Standard Room - Single Occupancy"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Amount <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">
-                  $
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Billing Frequency <span className="text-red-500">*</span>
-              </label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select frequency...</option>
-                {frequencies.map((freq) => (
-                  <option key={freq.value} value={freq.value}>
-                    {freq.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Effective From <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Effective Until (Optional)
-              </label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50"
+              Show inactive
+            </label>
+            <Button
+              variant="primary"
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => setShowAddForm(!showAddForm)}
             >
-              Cancel
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
-              Save Rate
-            </button>
+              Add Rate
+            </Button>
           </div>
+        }
+      />
+
+      {/* Add Rate Form */}
+      {showAddForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add New Rate</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <form onSubmit={handleCreateRate}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                    Property
+                  </label>
+                  <select
+                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    value={rateForm.propertyId}
+                    onChange={(e) => setRateForm({ ...rateForm, propertyId: e.target.value, houseId: "" })}
+                  >
+                    <option value="">Organization-wide</option>
+                    {properties.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                    House
+                  </label>
+                  <select
+                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    value={rateForm.houseId}
+                    onChange={(e) => setRateForm({ ...rateForm, houseId: e.target.value })}
+                    disabled={!rateForm.propertyId}
+                  >
+                    <option value="">All houses</option>
+                    {(housesForProperty ?? []).map((h) => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                    Payment Type <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    required
+                    value={rateForm.paymentType}
+                    onChange={(e) => setRateForm({ ...rateForm, paymentType: e.target.value })}
+                  >
+                    <option value="">Select type...</option>
+                    {Object.entries(paymentTypeLabels).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                    Rate Name <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Weekly Rent"
+                    required
+                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    value={rateForm.rateName}
+                    onChange={(e) => setRateForm({ ...rateForm, rateName: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                    Amount <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      required
+                      className="w-full h-12 pl-8 pr-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      value={rateForm.amount}
+                      onChange={(e) => setRateForm({ ...rateForm, amount: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                    Billing Frequency <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    required
+                    value={rateForm.billingFrequency}
+                    onChange={(e) => setRateForm({ ...rateForm, billingFrequency: e.target.value })}
+                  >
+                    <option value="">Select frequency...</option>
+                    {Object.entries(frequencyLabels).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                    Effective From <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    value={rateForm.effectiveFrom}
+                    onChange={(e) => setRateForm({ ...rateForm, effectiveFrom: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <Button variant="secondary" type="button" onClick={() => setShowAddForm(false)}>Cancel</Button>
+                <Button variant="primary" type="submit" disabled={createRate.isPending}>
+                  {createRate.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : "Save Rate"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading */}
+      {isLoading && (
+        <div className="space-y-6">
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       )}
 
-      <div className="space-y-6">
-        {groupedRates.map((group) => (
-          <div key={group.house} className="bg-white rounded-lg border border-slate-200">
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <Home className="h-5 w-5 text-slate-600" />
-                <h2 className="text-lg font-semibold text-slate-900">{group.house}</h2>
-                <span className="text-sm text-slate-500">
-                  ({group.rates.filter((r) => r.isActive).length} active rates)
-                </span>
+      {/* Empty */}
+      {!isLoading && groupedRates.length === 0 && (
+        <Card>
+          <CardContent>
+            <EmptyState
+              iconType="inbox"
+              title="No rates configured"
+              description="Add your first rate to start billing residents."
+              action={{ label: "Add Rate", onClick: () => setShowAddForm(true) }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Rate Groups */}
+      {!isLoading && groupedRates.map((group) => (
+        <Card key={group.id}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-green-500/10">
+                <Home className="h-5 w-5 text-green-400" />
+              </div>
+              <div>
+                <CardTitle>{group.house}</CardTitle>
+                <p className="text-sm text-zinc-500">
+                  {group.rates.filter((r) => r.is_active).length} active rate{group.rates.filter((r) => r.is_active).length !== 1 ? "s" : ""}
+                </p>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {group.rates.map((rate) => (
                 <div
                   key={rate.id}
-                  className={`border rounded-lg p-4 ${
-                    rate.isActive
-                      ? "border-slate-200 bg-white"
-                      : "border-slate-100 bg-slate-50 opacity-60"
+                  className={`border rounded-xl p-5 transition-all ${
+                    rate.is_active
+                      ? "border-zinc-800 bg-zinc-900 hover:border-zinc-700 hover:shadow-sm"
+                      : "border-zinc-800/50 bg-zinc-800/40 opacity-60"
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-slate-900 mb-1">
-                        {rate.name}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${getPaymentTypeBadge(
-                          rate.paymentType
-                        )}`}
-                      >
-                        {getPaymentTypeLabel(rate.paymentType)}
-                      </span>
+                      <h3 className="text-sm font-semibold text-zinc-100 mb-1.5">{rate.rate_name}</h3>
+                      <Badge variant={paymentTypeBadge[rate.payment_type] ?? "default"}>
+                        {paymentTypeLabels[rate.payment_type] ?? rate.payment_type}
+                      </Badge>
                     </div>
-                    {!rate.isActive && (
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-slate-200 text-slate-600">
-                        Inactive
-                      </span>
-                    )}
+                    {!rate.is_active && <Badge variant="default">Inactive</Badge>}
                   </div>
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-baseline gap-2">
-                      <DollarSign className="h-4 w-4 text-slate-600 mt-1" />
-                      <div>
-                        <p className="text-2xl font-bold text-slate-900">
-                          ${rate.amount.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-slate-600">
-                          {getFrequencyLabel(rate.frequency)}
-                        </p>
-                      </div>
+                      <p className="text-2xl font-bold text-zinc-100">{formatCurrency(rate.amount)}</p>
+                      <p className="text-xs text-zinc-500">
+                        / {frequencyLabels[rate.billing_frequency]?.toLowerCase() ?? rate.billing_frequency}
+                      </p>
                     </div>
-
-                    <div className="flex items-start gap-2">
-                      <Calendar className="h-4 w-4 text-slate-600 mt-0.5" />
-                      <div className="text-xs text-slate-600">
-                        <p>
-                          From:{" "}
-                          {new Date(rate.effectiveFrom).toLocaleDateString()}
-                        </p>
-                        {rate.effectiveUntil && (
-                          <p>
-                            Until:{" "}
-                            {new Date(rate.effectiveUntil).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                      <Calendar className="h-3 w-3" />
+                      <span>From {new Date(rate.effective_from).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                     </div>
+                    {rate.effective_until && (
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                        <Calendar className="h-3 w-3" />
+                        <span>Until {new Date(rate.effective_until).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex gap-2 pt-3 border-t border-slate-200">
-                    <button className="flex-1 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium text-sm flex items-center justify-center gap-1">
-                      <Edit className="h-3 w-3" />
+                  <div className="flex gap-2 pt-3 border-t border-zinc-800/50">
+                    <Button variant="ghost" size="sm" icon={<Edit className="h-3 w-3" />} className="flex-1">
                       Edit
-                    </button>
-                    {rate.isActive && (
-                      <button className="flex-1 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm flex items-center justify-center gap-1">
-                        <XCircle className="h-3 w-3" />
+                    </Button>
+                    {rate.is_active && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<XCircle className="h-3 w-3" />}
+                        className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        onClick={() => deactivateRate.mutate({ id: rate.id })}
+                        disabled={deactivateRate.isPending}
+                      >
                         Deactivate
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
+          </CardContent>
+        </Card>
+      ))}
+    </PageContainer>
   );
 }

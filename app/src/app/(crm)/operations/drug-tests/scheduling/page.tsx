@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -11,398 +11,298 @@ import {
   CalendarDays,
   Play,
   Pause,
-  Edit2,
   Trash2,
   ChevronLeft,
   AlertCircle,
   CheckCircle,
   Users,
   BarChart3,
+  Loader2,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  Button,
+  Badge,
+  EmptyState,
+  SkeletonTable,
+  useToast,
+} from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
 type ScheduleType = "random" | "scheduled" | "weekly" | "monthly";
 type TestType = "urine" | "breathalyzer" | "oral_swab" | "blood" | "hair_follicle";
 
-interface Schedule {
-  id: string;
-  name: string;
-  scheduleType: ScheduleType;
-  testType: TestType;
-  houseName: string | null;
-  isActive: boolean;
-  randomPercentage: number | null;
-  daysOfWeek: string[] | null;
-  nextExecution: string | null;
-  lastExecuted: string | null;
-  testsCreated: number;
-}
+const scheduleTypeStyles: Record<ScheduleType, string> = {
+  random: "bg-purple-500/15 text-purple-300",
+  scheduled: "bg-indigo-500/15 text-indigo-300",
+  weekly: "bg-green-500/15 text-green-300",
+  monthly: "bg-orange-500/15 text-orange-300",
+};
+
+const testTypeStyles: Record<TestType, string> = {
+  urine: "bg-indigo-500/15 text-indigo-300",
+  breathalyzer: "bg-purple-500/15 text-purple-300",
+  oral_swab: "bg-cyan-500/15 text-cyan-300",
+  blood: "bg-red-500/15 text-red-300",
+  hair_follicle: "bg-orange-500/15 text-orange-300",
+};
+
+const testTypeLabels: Record<TestType, string> = {
+  urine: "Urine",
+  breathalyzer: "Breathalyzer",
+  oral_swab: "Oral Swab",
+  blood: "Blood",
+  hair_follicle: "Hair Follicle",
+};
 
 export default function DrugTestSchedulingPage() {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedScheduleType, setSelectedScheduleType] = useState<ScheduleType>("random");
+  const [form, setForm] = useState({
+    name: "",
+    scheduleType: "random" as ScheduleType,
+    testType: "urine" as TestType,
+    houseId: "",
+    randomPercentage: "25",
+    notifyResidents: false,
+  });
 
-  const schedules: Schedule[] = [
-    {
-      id: "1",
-      name: "Weekly Random Testing",
-      scheduleType: "random",
-      testType: "urine",
-      houseName: null,
-      isActive: true,
-      randomPercentage: 25,
-      daysOfWeek: null,
-      nextExecution: "2026-02-20T09:00:00",
-      lastExecuted: "2026-02-13T09:00:00",
-      testsCreated: 48,
+  const { data: userData } = trpc.user.getCurrentUser.useQuery(undefined, { retry: false });
+  const orgId = userData?.org_id;
+
+  const { data: schedules, isLoading } = trpc.drugTestSchedule.list.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
+
+  const { data: stats } = trpc.drugTestSchedule.getStats.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
+
+  const { data: houses } = trpc.property.listAllHouses.useQuery(undefined, { enabled: !!orgId });
+
+  const createSchedule = trpc.drugTestSchedule.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Schedule created");
+      utils.drugTestSchedule.list.invalidate();
+      utils.drugTestSchedule.getStats.invalidate();
+      setForm({ name: "", scheduleType: "random", testType: "urine", houseId: "", randomPercentage: "25", notifyResidents: false });
+      setShowCreateModal(false);
     },
-    {
-      id: "2",
-      name: "Serenity House Mon/Wed/Fri",
-      scheduleType: "weekly",
-      testType: "breathalyzer",
-      houseName: "Serenity House",
-      isActive: true,
-      randomPercentage: null,
-      daysOfWeek: ["monday", "wednesday", "friday"],
-      nextExecution: "2026-02-19T07:00:00",
-      lastExecuted: "2026-02-17T07:00:00",
-      testsCreated: 156,
+    onError: (err) => toast("error", "Failed to create schedule", err.message),
+  });
+
+  const toggleActive = trpc.drugTestSchedule.update.useMutation({
+    onSuccess: () => {
+      toast("success", "Schedule updated");
+      utils.drugTestSchedule.list.invalidate();
+      utils.drugTestSchedule.getStats.invalidate();
     },
-    {
-      id: "3",
-      name: "Monthly Random Lab Test",
-      scheduleType: "monthly",
-      testType: "urine",
-      houseName: null,
-      isActive: true,
-      randomPercentage: 50,
-      daysOfWeek: null,
-      nextExecution: "2026-03-01T10:00:00",
-      lastExecuted: "2026-02-01T10:00:00",
-      testsCreated: 24,
+    onError: (err) => toast("error", "Failed to update", err.message),
+  });
+
+  const deleteSchedule = trpc.drugTestSchedule.delete.useMutation({
+    onSuccess: () => {
+      toast("success", "Schedule deleted");
+      utils.drugTestSchedule.list.invalidate();
+      utils.drugTestSchedule.getStats.invalidate();
     },
-    {
-      id: "4",
-      name: "Hope Manor Weekend Testing",
-      scheduleType: "weekly",
-      testType: "oral_swab",
-      houseName: "Hope Manor",
-      isActive: false,
-      randomPercentage: null,
-      daysOfWeek: ["saturday", "sunday"],
-      nextExecution: null,
-      lastExecuted: "2026-02-09T08:00:00",
-      testsCreated: 32,
+    onError: (err) => toast("error", "Failed to delete", err.message),
+  });
+
+  const executeSchedule = trpc.drugTestSchedule.execute.useMutation({
+    onSuccess: (data) => {
+      toast("success", "Tests created", `${data.testsCreated} drug tests have been created`);
+      utils.drugTestSchedule.list.invalidate();
+      utils.drugTestSchedule.getStats.invalidate();
     },
-  ];
+    onError: (err) => toast("error", "Failed to execute", err.message),
+  });
 
-  const stats = {
-    totalSchedules: schedules.length,
-    activeSchedules: schedules.filter((s) => s.isActive).length,
-    randomSchedules: schedules.filter((s) => s.scheduleType === "random").length,
-    testsLast30Days: 228,
-  };
-
-  const upcomingTests = [
-    { id: "1", scheduleName: "Weekly Random Testing", date: "2026-02-20", time: "09:00 AM", houseName: "All Houses", expectedTests: 12 },
-    { id: "2", scheduleName: "Serenity House Mon/Wed/Fri", date: "2026-02-19", time: "07:00 AM", houseName: "Serenity House", expectedTests: 8 },
-    { id: "3", scheduleName: "Weekly Random Testing", date: "2026-02-27", time: "09:00 AM", houseName: "All Houses", expectedTests: 12 },
-    { id: "4", scheduleName: "Monthly Random Lab Test", date: "2026-03-01", time: "10:00 AM", houseName: "All Houses", expectedTests: 24 },
-  ];
-
-  const getScheduleTypeBadge = (type: ScheduleType) => {
-    const styles: Record<ScheduleType, string> = {
-      random: "bg-purple-100 text-purple-700",
-      scheduled: "bg-blue-100 text-blue-700",
-      weekly: "bg-green-100 text-green-700",
-      monthly: "bg-orange-100 text-orange-700",
-    };
-    const labels: Record<ScheduleType, string> = {
-      random: "Random",
-      scheduled: "Scheduled",
-      weekly: "Weekly",
-      monthly: "Monthly",
-    };
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[type]}`}>
-        {labels[type]}
-      </span>
-    );
-  };
-
-  const getTestTypeBadge = (type: TestType) => {
-    const styles: Record<TestType, string> = {
-      urine: "bg-blue-100 text-blue-700",
-      breathalyzer: "bg-purple-100 text-purple-700",
-      oral_swab: "bg-indigo-100 text-indigo-700",
-      blood: "bg-red-100 text-red-700",
-      hair_follicle: "bg-orange-100 text-orange-700",
-    };
-    const labels: Record<TestType, string> = {
-      urine: "Urine",
-      breathalyzer: "Breathalyzer",
-      oral_swab: "Oral Swab",
-      blood: "Blood",
-      hair_follicle: "Hair Follicle",
-    };
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[type]}`}>
-        {labels[type]}
-      </span>
-    );
-  };
+  const allSchedules = schedules ?? [];
 
   return (
-    <div className="p-6 space-y-6">
+    <PageContainer>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
             href="/operations/drug-tests"
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
           >
-            <ChevronLeft className="h-5 w-5 text-slate-600" />
+            <ChevronLeft className="h-5 w-5 text-zinc-400" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Drug Test Scheduling</h1>
-            <p className="text-slate-600 mt-1">Configure automated and random test schedules</p>
+            <h1 className="text-2xl font-bold text-zinc-100">Drug Test Scheduling</h1>
+            <p className="text-zinc-400 mt-1">Configure automated and random test schedules</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
+        <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setShowCreateModal(true)}>
           Create Schedule
-        </button>
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <CalendarDays className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Total Schedules</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.totalSchedules}</p>
-            </div>
-          </div>
+      {/* Stats */}
+      <div className="flex items-start gap-0 divide-x divide-zinc-800">
+        <div className="flex-1 pr-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total Schedules</p>
+          <p className="text-2xl font-bold text-zinc-100 mt-1">{stats?.total ?? 0}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Active</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.activeSchedules}</p>
-            </div>
-          </div>
+        <div className="flex-1 px-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Active</p>
+          <p className="text-2xl font-bold text-green-400 mt-1">{stats?.active ?? 0}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Shuffle className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Random Schedules</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.randomSchedules}</p>
-            </div>
-          </div>
+        <div className="flex-1 px-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Random Schedules</p>
+          <p className="text-2xl font-bold text-purple-400 mt-1">{stats?.random ?? 0}</p>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <BarChart3 className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Tests (30 days)</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.testsLast30Days}</p>
-            </div>
-          </div>
+        <div className="flex-1 pl-6">
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Tests (30 days)</p>
+          <p className="text-2xl font-bold text-zinc-100 mt-1">{stats?.last30Days?.testsCreated ?? 0}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Schedules List */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-lg border border-slate-200">
-            <div className="p-4 border-b border-slate-200">
-              <h2 className="text-lg font-semibold text-slate-900">Test Schedules</h2>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {schedules.map((schedule) => (
-                <div key={schedule.id} className="p-4 hover:bg-slate-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-medium text-slate-900">{schedule.name}</h3>
-                        {schedule.isActive ? (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                            Paused
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 mt-2">
-                        {getScheduleTypeBadge(schedule.scheduleType)}
-                        {getTestTypeBadge(schedule.testType)}
-                        {schedule.houseName ? (
-                          <div className="flex items-center gap-1 text-sm text-slate-600">
-                            <Home className="h-3 w-3" />
-                            {schedule.houseName}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-slate-500">All Houses</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
-                        {schedule.randomPercentage && (
-                          <span>{schedule.randomPercentage}% of residents</span>
-                        )}
-                        {schedule.daysOfWeek && (
-                          <span className="capitalize">
-                            {schedule.daysOfWeek.slice(0, 2).join(", ")}
-                            {schedule.daysOfWeek.length > 2 && ` +${schedule.daysOfWeek.length - 2}`}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {schedule.testsCreated} tests created
-                        </span>
-                      </div>
-                      {schedule.nextExecution && (
-                        <div className="flex items-center gap-1 mt-2 text-sm text-blue-600">
-                          <Clock className="h-3 w-3" />
-                          Next: {new Date(schedule.nextExecution).toLocaleDateString()} at{" "}
-                          {new Date(schedule.nextExecution).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
-                        title={schedule.isActive ? "Pause" : "Resume"}
-                      >
-                        {schedule.isActive ? (
-                          <Pause className="h-4 w-4" />
-                        ) : (
-                          <Play className="h-4 w-4" />
-                        )}
-                      </button>
-                      <button
-                        className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
-                        title="Edit"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        className="p-2 hover:bg-red-50 rounded-lg text-red-600"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+      {/* Schedules List */}
+      {isLoading ? (
+        <SkeletonTable rows={4} columns={5} />
+      ) : allSchedules.length === 0 ? (
+        <EmptyState
+          iconType="inbox"
+          title="No test schedules"
+          description="Create a drug test schedule to automate testing."
+          action={{ label: "Create Schedule", onClick: () => setShowCreateModal(true) }}
+        />
+      ) : (
+        <div className="space-y-3">
+          {allSchedules.map((schedule) => (
+            <div key={schedule.id} className="border border-zinc-800 rounded-lg p-4 hover:bg-zinc-800/30 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-medium text-zinc-100">{schedule.name}</h3>
+                    {schedule.is_active ? (
+                      <Badge variant="success" size="sm">Active</Badge>
+                    ) : (
+                      <Badge variant="default" size="sm">Paused</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${scheduleTypeStyles[schedule.schedule_type as ScheduleType] ?? ""}`}>
+                      {schedule.schedule_type}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${testTypeStyles[schedule.test_type as TestType] ?? ""}`}>
+                      {testTypeLabels[schedule.test_type as TestType] ?? schedule.test_type}
+                    </span>
+                    {schedule.house_name ? (
+                      <span className="flex items-center gap-1 text-sm text-zinc-400">
+                        <Home className="h-3 w-3" />
+                        {schedule.house_name}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-zinc-500">All Houses</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-zinc-500">
+                    {schedule.random_percentage && (
+                      <span>{schedule.random_percentage}% of residents</span>
+                    )}
+                    {schedule.next_execution_at && (
+                      <span className="flex items-center gap-1 text-indigo-400">
+                        <Clock className="h-3 w-3" />
+                        Next: {new Date(schedule.next_execution_at).toLocaleDateString()} at{" "}
+                        {new Date(schedule.next_execution_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Upcoming Tests Calendar */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg border border-slate-200">
-            <div className="p-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-slate-600" />
-                <h2 className="text-lg font-semibold text-slate-900">Upcoming Tests</h2>
+                <div className="flex items-center gap-2">
+                  {schedule.is_active && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon={<Shuffle className="h-3.5 w-3.5" />}
+                      disabled={executeSchedule.isPending}
+                      onClick={() => executeSchedule.mutate({ scheduleId: schedule.id })}
+                    >
+                      Run Now
+                    </Button>
+                  )}
+                  <button
+                    className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400"
+                    title={schedule.is_active ? "Pause" : "Resume"}
+                    onClick={() => toggleActive.mutate({ scheduleId: schedule.id, isActive: !schedule.is_active })}
+                  >
+                    {schedule.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </button>
+                  <button
+                    className="p-2 hover:bg-red-500/10 rounded-lg text-red-400"
+                    title="Delete"
+                    onClick={() => {
+                      if (confirm("Delete this schedule?")) {
+                        deleteSchedule.mutate({ scheduleId: schedule.id });
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="divide-y divide-slate-100">
-              {upcomingTests.map((test) => (
-                <div key={test.id} className="p-4">
-                  <div className="font-medium text-slate-900">{test.scheduleName}</div>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-600">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(test.date).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                    <span className="text-slate-400">|</span>
-                    <Clock className="h-3 w-3" />
-                    {test.time}
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm text-slate-500">{test.houseName}</span>
-                    <span className="text-sm font-medium text-blue-600">
-                      ~{test.expectedTests} tests
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <h3 className="font-medium text-slate-900 mb-3">Quick Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                <Shuffle className="h-4 w-4" />
-                Run Random Test Now
-              </button>
-              <button className="w-full px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                View Full Calendar
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
-      </div>
+      )}
 
       {/* Create Schedule Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg m-4">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-xl font-bold text-slate-900">Create Test Schedule</h2>
+      {showCreateModal && orgId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Create Test Schedule</h2>
             </div>
-            <div className="p-6 space-y-4">
+            <form
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                createSchedule.mutate({
+                  orgId,
+                  name: form.name,
+                  scheduleType: form.scheduleType,
+                  testType: form.testType,
+                  houseId: form.houseId || undefined,
+                  randomPercentage: form.scheduleType === "random" ? parseInt(form.randomPercentage) || 25 : undefined,
+                  notifyResidents: form.notifyResidents,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Schedule Name
-                </label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Schedule Name <span className="text-red-400">*</span></label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   placeholder="e.g., Weekly Random Testing"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Schedule Type
-                </label>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Schedule Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(["random", "scheduled", "weekly", "monthly"] as ScheduleType[]).map((type) => (
                     <button
                       key={type}
-                      onClick={() => setSelectedScheduleType(type)}
+                      type="button"
+                      onClick={() => setForm({ ...form, scheduleType: type })}
                       className={`px-4 py-2 border rounded-lg text-sm font-medium capitalize ${
-                        selectedScheduleType === type
-                          ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                        form.scheduleType === type
+                          ? "border-indigo-500 bg-indigo-500/10 text-indigo-300"
+                          : "border-zinc-800 text-zinc-300 hover:bg-zinc-800/40"
                       }`}
                     >
                       {type}
@@ -412,10 +312,12 @@ export default function DrugTestSchedulingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Test Type
-                </label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Test Type</label>
+                <select
+                  value={form.testType}
+                  onChange={(e) => setForm({ ...form, testType: e.target.value as TestType })}
+                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
                   <option value="urine">Urine Test</option>
                   <option value="breathalyzer">Breathalyzer</option>
                   <option value="oral_swab">Oral Swab</option>
@@ -425,76 +327,65 @@ export default function DrugTestSchedulingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  House (optional)
-                </label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">House (optional)</label>
+                <select
+                  value={form.houseId}
+                  onChange={(e) => setForm({ ...form, houseId: e.target.value })}
+                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
                   <option value="">All Houses</option>
-                  <option value="h1">Serenity House</option>
-                  <option value="h2">Hope Manor</option>
-                  <option value="h3">Recovery Haven</option>
+                  {(houses ?? []).map((h) => (
+                    <option key={h.id} value={h.id}>{h.name} ({h.property_name})</option>
+                  ))}
                 </select>
               </div>
 
-              {selectedScheduleType === "random" && (
+              {form.scheduleType === "random" && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Percentage of Residents
-                  </label>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Percentage of Residents</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
                       min="1"
                       max="100"
-                      defaultValue="25"
-                      className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={form.randomPercentage}
+                      onChange={(e) => setForm({ ...form, randomPercentage: e.target.value })}
+                      className="w-24 h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
-                    <span className="text-slate-600">% of residents per execution</span>
+                    <span className="text-sm text-zinc-400">% of residents per execution</span>
                   </div>
                 </div>
               )}
 
-              {selectedScheduleType === "weekly" && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Days of Week
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                      <button
-                        key={day}
-                        className="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-blue-50 hover:border-blue-500"
-                      >
-                        {day}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.notifyResidents}
+                  onChange={(e) => setForm({ ...form, notifyResidents: e.target.checked })}
+                  className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-zinc-300">Notify residents in advance</span>
+              </label>
 
-              <div className="p-3 bg-amber-50 rounded-lg">
+              <div className="p-3 bg-amber-500/10 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
-                  <p className="text-sm text-amber-700">
+                  <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-amber-300">
                     Random testing helps maintain unpredictability and is recommended for compliance programs.
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
-                Create Schedule
-              </button>
-            </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary" disabled={createSchedule.isPending}>
+                  {createSchedule.isPending ? "Creating..." : "Create Schedule"}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

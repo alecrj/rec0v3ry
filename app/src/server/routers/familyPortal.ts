@@ -495,9 +495,9 @@ export const familyPortalRouter = router({
   getLinkedResidents: protectedProcedure
     .input(z.object({
       userEmail: z.string().email(),
-      orgId: z.string().uuid(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
       const linkedResidents = await db
         .select({
           contact_id: residentContacts.id,
@@ -522,7 +522,7 @@ export const familyPortalRouter = router({
         .leftJoin(houses, eq(admissions.house_id, houses.id))
         .where(
           and(
-            eq(residentContacts.org_id, input.orgId),
+            eq(residentContacts.org_id, orgId),
             eq(residentContacts.email, input.userEmail),
             eq(residentContacts.can_access_portal, true),
             isNull(residentContacts.deleted_at)

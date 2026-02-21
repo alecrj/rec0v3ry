@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Plus,
   Search,
@@ -9,16 +8,388 @@ import {
   Download,
   FileText,
   Eye,
-  Calendar,
-  ArrowUpRight,
-  Filter,
+  X,
+  Loader2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  Button,
+  Badge,
+  EmptyState,
+  SkeletonTable,
+  useToast,
+} from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
+const DOC_TYPES = [
+  "intake_form", "resident_agreement", "house_rules", "consent_form",
+  "release_of_info", "financial_agreement", "treatment_plan",
+  "discharge_summary", "incident_report", "other",
+] as const;
+
+const SENSITIVITY_LEVELS = [
+  "public", "internal", "confidential", "part2_protected",
+] as const;
+
+const statusConfig: Record<string, { variant: "success" | "warning" | "error" | "default"; label: string }> = {
+  draft: { variant: "default", label: "Draft" },
+  pending_signature: { variant: "warning", label: "Pending Signature" },
+  signed: { variant: "success", label: "Signed" },
+  expired: { variant: "error", label: "Expired" },
+  voided: { variant: "default", label: "Voided" },
+};
+
+const sensitivityConfig: Record<string, { variant: "info" | "warning" | "error" | "default"; label: string }> = {
+  public: { variant: "default", label: "Public" },
+  internal: { variant: "info", label: "Internal" },
+  confidential: { variant: "warning", label: "Confidential" },
+  part2_protected: { variant: "error", label: "Part 2" },
+};
+
+const typeLabels: Record<string, string> = {
+  intake_form: "Intake Form",
+  resident_agreement: "Resident Agreement",
+  house_rules: "House Rules",
+  consent_form: "Consent Form",
+  release_of_info: "Release of Info",
+  financial_agreement: "Financial Agreement",
+  treatment_plan: "Treatment Plan",
+  discharge_summary: "Discharge Summary",
+  incident_report: "Incident Report",
+  other: "Other",
+};
+
+const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+
+// ── Create Document Modal ──────────────────────────────────
+function CreateDocumentModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const [title, setTitle] = useState("");
+  const [documentType, setDocumentType] = useState<typeof DOC_TYPES[number]>("other");
+  const [residentId, setResidentId] = useState("");
+  const [sensitivityLevel, setSensitivityLevel] = useState<typeof SENSITIVITY_LEVELS[number]>("confidential");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const { data: residents } = trpc.resident.list.useQuery(
+    { limit: 200 },
+    { enabled: isOpen }
+  );
+
+  const getUploadUrl = trpc.document.getUploadUrl.useMutation();
+
+  const createMutation = trpc.document.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Document created");
+      utils.document.list.invalidate();
+      resetAndClose();
+    },
+    onError: (err) => toast("error", "Failed to create document", err.message),
+  });
+
+  async function handleSubmit() {
+    setUploading(true);
+    try {
+      let fileUrl: string | undefined;
+
+      if (file) {
+        const { uploadUrl, storageKey } = await getUploadUrl.mutateAsync({
+          fileName: file.name,
+          contentType: file.type,
+          category: "document",
+          residentId: residentId || undefined,
+        });
+
+        await fetch(uploadUrl, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        });
+
+        fileUrl = storageKey;
+      }
+
+      createMutation.mutate({
+        title,
+        documentType,
+        residentId: residentId || undefined,
+        sensitivityLevel,
+        description: description || undefined,
+        fileUrl,
+      });
+    } catch (err: any) {
+      toast("error", "Upload failed", err.message ?? "Could not upload file");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function resetAndClose() {
+    setTitle("");
+    setDocumentType("other");
+    setResidentId("");
+    setSensitivityLevel("confidential");
+    setDescription("");
+    setFile(null);
+    onClose();
+  }
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-zinc-100">New Document</h2>
+            <p className="text-sm text-zinc-500 mt-1">Create a new document record</p>
+          </div>
+          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          className="p-6 space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Title <span className="text-red-400">*</span>
+            </label>
+            <input
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. Intake Form - John Smith"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                Document Type <span className="text-red-400">*</span>
+              </label>
+              <select
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value as typeof DOC_TYPES[number])}
+                className={inputClass}
+              >
+                {DOC_TYPES.map((t) => (
+                  <option key={t} value={t}>{typeLabels[t]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Sensitivity</label>
+              <select
+                value={sensitivityLevel}
+                onChange={(e) => setSensitivityLevel(e.target.value as typeof SENSITIVITY_LEVELS[number])}
+                className={inputClass}
+              >
+                <option value="public">Public</option>
+                <option value="internal">Internal</option>
+                <option value="confidential">Confidential</option>
+                <option value="part2_protected">Part 2 Protected</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident (Optional)</label>
+            <select
+              value={residentId}
+              onChange={(e) => setResidentId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Organization-wide</option>
+              {(residents?.items ?? []).map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.first_name} {r.last_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Attach File</label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="w-full text-sm text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer"
+            />
+            {file && (
+              <p className="text-xs text-zinc-500 mt-1">
+                {file.name} ({(file.size / 1024).toFixed(0)} KB)
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description</label>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              placeholder="Brief description of this document..."
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={resetAndClose}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={!title || uploading || createMutation.isPending}>
+              {uploading ? "Uploading..." : createMutation.isPending ? "Creating..." : "Create Document"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── View Document Modal ────────────────────────────────────
+function ViewDocumentModal({
+  isOpen,
+  onClose,
+  doc,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  doc: {
+    id: string;
+    title: string;
+    document_type: string;
+    status: string;
+    description?: string | null;
+    sensitivity_level?: string | null;
+    created_at: string;
+    updated_at?: string | null;
+    resident?: { first_name: string; last_name: string } | null;
+  } | null;
+}) {
+  if (!isOpen || !doc) return null;
+
+  const sc = statusConfig[doc.status] ?? statusConfig.draft;
+  const sens = sensitivityConfig[doc.sensitivity_level ?? "internal"] ?? sensitivityConfig.internal;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-zinc-100">Document Details</h2>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Title</label>
+            <p className="text-sm text-zinc-100 mt-1">{doc.title}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Type</label>
+              <p className="text-sm text-zinc-100 mt-1">{typeLabels[doc.document_type] ?? doc.document_type}</p>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Resident</label>
+              <p className="text-sm text-zinc-100 mt-1">
+                {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "Organization-wide"}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</label>
+              <div className="mt-1"><Badge variant={sc!.variant}>{sc!.label}</Badge></div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Sensitivity</label>
+              <div className="mt-1"><Badge variant={sens!.variant}>{sens!.label}</Badge></div>
+            </div>
+          </div>
+          {doc.description && (
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Description</label>
+              <p className="text-sm text-zinc-400 mt-1">{doc.description}</p>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Created</label>
+              <p className="text-sm text-zinc-400 mt-1">{new Date(doc.created_at).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Updated</label>
+              <p className="text-sm text-zinc-400 mt-1">
+                {doc.updated_at ? new Date(doc.updated_at).toLocaleDateString() : "\u2014"}
+              </p>
+            </div>
+          </div>
+          <div className="pt-2 flex justify-end">
+            <Button variant="secondary" onClick={onClose}>Close</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────
 export default function DocumentLibraryPage() {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<any>(null);
+
+  const { data, isLoading } = trpc.document.list.useQuery({
+    status: activeTab === "all" ? undefined : activeTab as "draft" | "pending_signature" | "signed" | "expired" | "voided",
+    search: searchTerm || undefined,
+    limit: 50,
+  });
+
+  const downloadMutation = trpc.document.getDownloadUrl.useMutation({
+    onSuccess: (data) => {
+      if (data.downloadUrl) {
+        window.open(data.downloadUrl, "_blank");
+      } else {
+        toast("info", "No file attached", "This document doesn't have an uploaded file yet.");
+      }
+    },
+    onError: (err) => toast("error", "Download failed", err.message),
+  });
+
+  const deleteMutation = trpc.document.delete.useMutation({
+    onSuccess: () => {
+      toast("success", "Document deleted");
+      utils.document.list.invalidate();
+    },
+    onError: (err) => toast("error", "Failed to delete", err.message),
+  });
+
+  const documents = data?.items ?? [];
 
   const tabs = [
     { id: "all", label: "All" },
@@ -28,324 +399,150 @@ export default function DocumentLibraryPage() {
     { id: "expired", label: "Expired" },
   ];
 
-  const documents = [
-    {
-      id: "1",
-      title: "Resident Agreement - Sarah Martinez",
-      type: "resident_agreement",
-      resident: "Sarah Martinez",
-      status: "signed",
-      sensitivity: "confidential",
-      createdAt: "2026-01-15",
-      updatedAt: "2026-01-20",
-    },
-    {
-      id: "2",
-      title: "Intake Form - Michael Chen",
-      type: "intake_form",
-      resident: "Michael Chen",
-      status: "pending_signature",
-      sensitivity: "part2_protected",
-      createdAt: "2026-02-10",
-      updatedAt: "2026-02-10",
-    },
-    {
-      id: "3",
-      title: "House Rules v3",
-      type: "house_rules",
-      resident: null,
-      status: "signed",
-      sensitivity: "internal",
-      createdAt: "2025-12-01",
-      updatedAt: "2026-01-05",
-    },
-    {
-      id: "4",
-      title: "Release of Information - Jennifer Parker",
-      type: "release_of_info",
-      resident: "Jennifer Parker",
-      status: "draft",
-      sensitivity: "part2_protected",
-      createdAt: "2026-02-11",
-      updatedAt: "2026-02-11",
-    },
-    {
-      id: "5",
-      title: "Financial Agreement - Robert Thompson",
-      type: "financial_agreement",
-      resident: "Robert Thompson",
-      status: "pending_signature",
-      sensitivity: "confidential",
-      createdAt: "2026-02-08",
-      updatedAt: "2026-02-09",
-    },
-    {
-      id: "6",
-      title: "Consent Form - Lisa Anderson",
-      type: "consent_form",
-      resident: "Lisa Anderson",
-      status: "expired",
-      sensitivity: "part2_protected",
-      createdAt: "2025-06-15",
-      updatedAt: "2025-06-15",
-    },
-    {
-      id: "7",
-      title: "Discharge Summary - David Wilson",
-      type: "discharge_summary",
-      resident: "David Wilson",
-      status: "signed",
-      sensitivity: "part2_protected",
-      createdAt: "2026-01-30",
-      updatedAt: "2026-02-01",
-    },
-  ];
-
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      draft: "bg-slate-100 text-slate-700",
-      pending_signature: "bg-yellow-100 text-yellow-700",
-      signed: "bg-green-100 text-green-700",
-      expired: "bg-red-100 text-red-700",
-      voided: "bg-slate-100 text-slate-500",
-    };
-    const labels: Record<string, string> = {
-      draft: "Draft",
-      pending_signature: "Pending Signature",
-      signed: "Signed",
-      expired: "Expired",
-      voided: "Voided",
-    };
-    return {
-      className: styles[status] || styles.draft,
-      label: labels[status] || status,
-    };
-  };
-
-  const getSensitivityBadge = (level: string) => {
-    const styles: Record<string, string> = {
-      public: "bg-slate-100 text-slate-600",
-      internal: "bg-blue-100 text-blue-700",
-      confidential: "bg-orange-100 text-orange-700",
-      part2_protected: "bg-red-100 text-red-700",
-    };
-    const labels: Record<string, string> = {
-      public: "Public",
-      internal: "Internal",
-      confidential: "Confidential",
-      part2_protected: "Part 2",
-    };
-    return {
-      className: styles[level] || styles.internal,
-      label: labels[level] || level,
-    };
-  };
-
-  const getTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      intake_form: "Intake Form",
-      resident_agreement: "Resident Agreement",
-      house_rules: "House Rules",
-      consent_form: "Consent Form",
-      release_of_info: "Release of Info",
-      financial_agreement: "Financial Agreement",
-      treatment_plan: "Treatment Plan",
-      discharge_summary: "Discharge Summary",
-      incident_report: "Incident Report",
-      other: "Other",
-    };
-    return labels[type] || type;
-  };
-
-  const filteredDocs = documents.filter((doc) => {
-    const matchesTab = activeTab === "all" || doc.status === activeTab;
-    const matchesSearch =
-      doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (doc.resident &&
-        doc.resident.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesTab && matchesSearch;
-  });
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Document Library
-          </h1>
-          <p className="text-slate-600 mt-1">
-            Manage all resident and organization documents
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Upload
-          </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            New Document
-          </button>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Document Library"
+        actions={
+          <div className="flex gap-3">
+            <Button
+              variant="primary"
+              icon={<Plus className="h-4 w-4" />}
+              onClick={() => setShowCreateModal(true)}
+            >
+              New Document
+            </Button>
+          </div>
+        }
+      />
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-4 border-b border-slate-200">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search by title or resident name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filters
+      {/* Search + Tabs */}
+      <div className="space-y-0">
+        <div className="flex flex-col sm:flex-row gap-4 pb-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search by title or resident name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 border-b border-zinc-800 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "border-indigo-500 text-indigo-400"
+                  : "border-transparent text-zinc-400 hover:text-zinc-100"
+              }`}
+            >
+              {tab.label}
             </button>
-          </div>
+          ))}
         </div>
-
-        <div className="border-b border-slate-200">
-          <div className="flex overflow-x-auto">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {filteredDocs.length > 0 ? (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Document
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Type
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Resident
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Sensitivity
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Updated
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDocs.map((doc) => {
-                    const statusBadge = getStatusBadge(doc.status);
-                    const sensitivityBadge = getSensitivityBadge(
-                      doc.sensitivity
-                    );
-                    return (
-                      <tr
-                        key={doc.id}
-                        className="border-b border-slate-100 hover:bg-slate-50"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                            <span className="text-sm font-medium text-slate-900">
-                              {doc.title}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {getTypeLabel(doc.type)}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {doc.resident || "—"}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${sensitivityBadge.className}`}
-                          >
-                            {sensitivityBadge.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${statusBadge.className}`}
-                          >
-                            {statusBadge.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-600">
-                          {new Date(doc.updatedAt).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              className="p-1 text-slate-400 hover:text-blue-600"
-                              title="View"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              className="p-1 text-slate-400 hover:text-blue-600"
-                              title="Download"
-                            >
-                              <Download className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="p-4 border-t border-slate-200 flex items-center justify-between">
-              <button className="px-3 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </button>
-              <p className="text-sm text-slate-600">
-                Showing {filteredDocs.length} of {documents.length} documents
-              </p>
-            </div>
-          </>
-        ) : (
-          <div className="p-12 text-center">
-            <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm font-medium text-slate-900">
-              No documents found
-            </p>
-            <p className="text-sm text-slate-600 mt-1">
-              {searchTerm
-                ? "Try adjusting your search criteria"
-                : "Upload or create your first document to get started"}
-            </p>
-          </div>
-        )}
       </div>
-    </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <SkeletonTable rows={6} columns={7} />
+      ) : documents.length === 0 ? (
+        <EmptyState
+          iconType="inbox"
+          title="No documents found"
+          description={searchTerm ? "Try adjusting your search criteria" : "Create your first document to get started."}
+          action={!searchTerm ? { label: "New Document", onClick: () => setShowCreateModal(true) } : undefined}
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-zinc-800">
+                <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Document</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Type</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resident</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Sensitivity</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Updated</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800/50">
+              {documents.map((doc) => {
+                const sc = statusConfig[doc.status] ?? statusConfig.draft;
+                const sens = sensitivityConfig[doc.sensitivity_level ?? "internal"] ?? sensitivityConfig.internal;
+                return (
+                  <tr key={doc.id} className="hover:bg-zinc-800/40 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-zinc-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-zinc-100">{doc.title}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-zinc-400">
+                      {typeLabels[doc.document_type] ?? doc.document_type}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-zinc-400">
+                      {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "\u2014"}
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge variant={sens!.variant}>{sens!.label}</Badge>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Badge variant={sc!.variant}>{sc!.label}</Badge>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-zinc-400">
+                      {doc.updated_at ? new Date(doc.updated_at).toLocaleDateString() : "\u2014"}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="p-1.5 text-zinc-500 hover:text-indigo-400 rounded transition-colors"
+                          title="View"
+                          onClick={() => setViewingDoc(doc)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="p-1.5 text-zinc-500 hover:text-indigo-400 rounded transition-colors"
+                          title="Download"
+                          onClick={() => downloadMutation.mutate({ id: doc.id })}
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                        {doc.status === "draft" && (
+                          <button
+                            className="p-1.5 text-zinc-500 hover:text-red-400 rounded transition-colors"
+                            title="Delete"
+                            onClick={() => {
+                              if (window.confirm(`Delete "${doc.title}"?`)) {
+                                deleteMutation.mutate({ id: doc.id });
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="px-4 py-3 border-t border-zinc-800/50">
+            <p className="text-sm text-zinc-500">Showing {documents.length} document{documents.length !== 1 ? "s" : ""}</p>
+          </div>
+        </div>
+      )}
+
+      <CreateDocumentModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      <ViewDocumentModal isOpen={!!viewingDoc} onClose={() => setViewingDoc(null)} doc={viewingDoc} />
+    </PageContainer>
   );
 }

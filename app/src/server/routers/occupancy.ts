@@ -22,14 +22,15 @@ export const occupancyRouter = router({
    */
   getDashboardStats: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       propertyId: z.string().uuid().optional(),
       houseId: z.string().uuid().optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       // Build conditions based on filters
       const houseConditions = [
-        eq(houses.org_id, input.orgId),
+        eq(houses.org_id, orgId),
         isNull(houses.deleted_at),
       ];
       if (input.propertyId) {
@@ -115,7 +116,7 @@ export const occupancyRouter = router({
         .from(waitlistEntries)
         .where(
           and(
-            eq(waitlistEntries.org_id, input.orgId),
+            eq(waitlistEntries.org_id, orgId),
             isNull(waitlistEntries.removed_at),
             or(
               isNull(waitlistEntries.house_id),
@@ -150,20 +151,21 @@ export const occupancyRouter = router({
    */
   getBedGrid: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       propertyId: z.string().uuid().optional(),
       houseId: z.string().uuid().optional(),
-    }))
-    .query(async ({ input }) => {
+    }).optional())
+    .query(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       // Build house conditions
       const houseConditions = [
-        eq(houses.org_id, input.orgId),
+        eq(houses.org_id, orgId),
         isNull(houses.deleted_at),
       ];
-      if (input.propertyId) {
+      if (input?.propertyId) {
         houseConditions.push(eq(houses.property_id, input.propertyId));
       }
-      if (input.houseId) {
+      if (input?.houseId) {
         houseConditions.push(eq(houses.id, input.houseId));
       }
 
@@ -541,20 +543,21 @@ export const occupancyRouter = router({
    */
   listWaitlist: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       houseId: z.string().uuid().optional(),
       status: z.enum(['new', 'contacted', 'qualified', 'touring', 'applied', 'accepted', 'deposit_pending', 'converted', 'lost']).optional(),
-    }))
-    .query(async ({ input }) => {
+    }).optional())
+    .query(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       const conditions = [
-        eq(waitlistEntries.org_id, input.orgId),
+        eq(waitlistEntries.org_id, orgId),
         isNull(waitlistEntries.removed_at),
       ];
 
-      if (input.houseId) {
+      if (input?.houseId) {
         conditions.push(eq(waitlistEntries.house_id, input.houseId));
       }
-      if (input.status) {
+      if (input?.status) {
         conditions.push(eq(waitlistEntries.status, input.status));
       }
 
@@ -589,7 +592,6 @@ export const occupancyRouter = router({
    */
   addToWaitlist: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       residentId: z.string().uuid(),
       houseId: z.string().uuid().optional(),
       priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
@@ -597,6 +599,8 @@ export const occupancyRouter = router({
       notes: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       // Check if already on waitlist
       const [existing] = await db
         .select()
@@ -619,7 +623,7 @@ export const occupancyRouter = router({
       const [entry] = await db
         .insert(waitlistEntries)
         .values({
-          org_id: input.orgId,
+          org_id: orgId,
           resident_id: input.residentId,
           house_id: input.houseId,
           priority: input.priority,
@@ -766,26 +770,26 @@ export const occupancyRouter = router({
    */
   getOccupancyTrends: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       propertyId: z.string().uuid().optional(),
       houseId: z.string().uuid().optional(),
       days: z.number().int().min(7).max(365).default(30),
-    }))
-    .query(async ({ input }) => {
+    }).optional())
+    .query(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
       // For trends, we calculate based on admission/discharge dates
       // This is a simplified version - a production system would use a time-series approach
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - input.days);
+      startDate.setDate(startDate.getDate() - (input?.days ?? 30));
 
       // Get house IDs matching filters
       const houseConditions = [
-        eq(houses.org_id, input.orgId),
+        eq(houses.org_id, orgId),
         isNull(houses.deleted_at),
       ];
-      if (input.propertyId) {
+      if (input?.propertyId) {
         houseConditions.push(eq(houses.property_id, input.propertyId));
       }
-      if (input.houseId) {
+      if (input?.houseId) {
         houseConditions.push(eq(houses.id, input.houseId));
       }
 
@@ -837,7 +841,7 @@ export const occupancyRouter = router({
         capacity: totalCapacity,
         current_occupancy: currentOccupied,
         occupancy_rate: totalCapacity > 0 ? Math.round((currentOccupied / totalCapacity) * 100) : 0,
-        period_days: input.days,
+        period_days: input?.days ?? 30,
       };
     }),
 
@@ -846,23 +850,25 @@ export const occupancyRouter = router({
    */
   getAvailableBeds: protectedProcedure
     .input(z.object({
-      orgId: z.string().uuid(),
       houseId: z.string().uuid().optional(),
       genderRestriction: z.enum(['male', 'female', 'coed']).optional(),
-    }))
-    .query(async ({ input }) => {
+    }).optional())
+    .query(async ({ input, ctx }) => {
+      const orgId = (ctx as any).orgId as string;
+
       const houseConditions = [
-        eq(houses.org_id, input.orgId),
+        eq(houses.org_id, orgId),
         isNull(houses.deleted_at),
       ];
 
-      if (input.houseId) {
+      if (input?.houseId) {
         houseConditions.push(eq(houses.id, input.houseId));
       }
-      if (input.genderRestriction) {
+      if (input?.genderRestriction) {
+        const genderRestriction = input.genderRestriction;
         houseConditions.push(
           or(
-            eq(houses.gender_restriction, input.genderRestriction),
+            eq(houses.gender_restriction, genderRestriction),
             eq(houses.gender_restriction, 'coed'),
             isNull(houses.gender_restriction)
           )!

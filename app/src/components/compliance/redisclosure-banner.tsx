@@ -2,14 +2,14 @@ import { AlertCircle } from "lucide-react";
 
 export function RedisclosureBanner() {
   return (
-    <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
+    <div className="bg-amber-500/10 border-l-4 border-amber-500 p-4 rounded-r-lg">
       <div className="flex items-start gap-3">
-        <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <AlertCircle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
         <div>
-          <h3 className="text-sm font-semibold text-amber-900">
+          <h3 className="text-sm font-semibold text-amber-200">
             42 CFR Part 2 Redisclosure Notice
           </h3>
-          <p className="text-sm text-amber-800 mt-1">
+          <p className="text-sm text-amber-300 mt-1">
             This information has been disclosed to you from records protected by
             Federal confidentiality rules (42 CFR Part 2). The Federal rules
             prohibit you from making any further disclosure of this information

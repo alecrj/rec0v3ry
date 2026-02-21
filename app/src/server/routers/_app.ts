@@ -26,6 +26,7 @@ import { propertyRouter } from './property';
 import { occupancyRouter } from './occupancy';
 import { leadRouter } from './lead';
 import { admissionRouter } from './admission';
+import { residentRouter } from './resident';
 // Sprint 13-14: House Operations
 import { choreRouter } from './chore';
 import { meetingRouter } from './meeting';
@@ -76,6 +77,7 @@ export const appRouter = router({
   occupancy: occupancyRouter,
   lead: leadRouter,
   admission: admissionRouter,
+  resident: residentRouter,
   // Sprint 13-14: House Operations
   chore: choreRouter,
   meeting: meetingRouter,

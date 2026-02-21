@@ -8,7 +8,7 @@ export default function ResidentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
+    <div className="min-h-screen bg-zinc-800/40 pb-16">
       <main className="max-w-2xl mx-auto">
         {children}
       </main>

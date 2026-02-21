@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import {
   Calendar,
   Plus,
@@ -8,432 +8,462 @@ import {
   Clock,
   MapPin,
   CheckCircle,
-  XCircle,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
+  Loader2,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Badge,
+  EmptyState,
+  ErrorState,
+  SkeletonCard,
+  useToast,
+} from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-type MeetingType = "house" | "aa" | "na" | "therapy" | "life_skills" | "other";
-type AttendanceStatus = "attended" | "absent" | "excused" | null;
-
-interface Meeting {
-  id: string;
-  title: string;
-  meetingType: MeetingType;
-  houseName: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  duration: number;
-  location: string;
-  isRequired: boolean;
-  totalResidents: number;
-  attended: number;
-  absent: number;
-  excused: number;
-}
+const meetingTypeBadge: Record<string, { variant: "info" | "success" | "warning" | "error" | "default"; label: string }> = {
+  house_meeting: { variant: "info", label: "House" },
+  group_therapy: { variant: "success", label: "Therapy" },
+  aa_na: { variant: "default", label: "AA/NA" },
+  life_skills: { variant: "warning", label: "Life Skills" },
+  one_on_one: { variant: "info", label: "1-on-1" },
+  family_session: { variant: "error", label: "Family" },
+  other: { variant: "default", label: "Other" },
+};
 
 export default function MeetingsPage() {
-  const [selectedHouse, setSelectedHouse] = useState<string>("all");
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const [selectedType, setSelectedType] = useState<string>("all");
-  const [currentWeek, setCurrentWeek] = useState(0);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [meetingForm, setMeetingForm] = useState({
+    title: "",
+    meetingType: "house_meeting",
+    scheduledAt: "",
+    durationMinutes: "60",
+    location: "",
+    isMandatory: false,
+  });
+  const [attendanceMeetingId, setAttendanceMeetingId] = useState<string | null>(null);
+  const [attendanceState, setAttendanceState] = useState<Record<string, { attended: boolean; excused: boolean }>>({});
 
-  const houses = [
-    { id: "h1", name: "Serenity House" },
-    { id: "h2", name: "Hope Manor" },
-    { id: "h3", name: "Recovery Haven" },
-  ];
+  const { data: userData } = trpc.user.getCurrentUser.useQuery(undefined, { retry: false });
+  const orgId = userData?.org_id;
 
-  const meetings: Meeting[] = [
-    {
-      id: "1",
-      title: "Morning House Meeting",
-      meetingType: "house",
-      houseName: "Serenity House",
-      scheduledDate: "2026-02-17",
-      scheduledTime: "08:00",
-      duration: 30,
-      location: "Common Room",
-      isRequired: true,
-      totalResidents: 8,
-      attended: 7,
-      absent: 1,
-      excused: 0,
+  const createMeeting = trpc.meeting.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Meeting scheduled");
+      utils.meeting.list.invalidate();
+      utils.meeting.getStats.invalidate();
+      setMeetingForm({ title: "", meetingType: "house_meeting", scheduledAt: "", durationMinutes: "60", location: "", isMandatory: false });
+      setShowCreateModal(false);
     },
-    {
-      id: "2",
-      title: "AA Meeting",
-      meetingType: "aa",
-      houseName: "All Houses",
-      scheduledDate: "2026-02-17",
-      scheduledTime: "19:00",
-      duration: 60,
-      location: "Community Center",
-      isRequired: true,
-      totalResidents: 24,
-      attended: 20,
-      absent: 2,
-      excused: 2,
-    },
-    {
-      id: "3",
-      title: "NA Meeting",
-      meetingType: "na",
-      houseName: "All Houses",
-      scheduledDate: "2026-02-18",
-      scheduledTime: "19:00",
-      duration: 60,
-      location: "Church Hall",
-      isRequired: true,
-      totalResidents: 24,
-      attended: 0,
-      absent: 0,
-      excused: 0,
-    },
-    {
-      id: "4",
-      title: "Life Skills Workshop",
-      meetingType: "life_skills",
-      houseName: "Hope Manor",
-      scheduledDate: "2026-02-18",
-      scheduledTime: "14:00",
-      duration: 90,
-      location: "Training Room",
-      isRequired: false,
-      totalResidents: 8,
-      attended: 0,
-      absent: 0,
-      excused: 0,
-    },
-    {
-      id: "5",
-      title: "Group Therapy",
-      meetingType: "therapy",
-      houseName: "Recovery Haven",
-      scheduledDate: "2026-02-19",
-      scheduledTime: "10:00",
-      duration: 60,
-      location: "Therapy Room",
-      isRequired: true,
-      totalResidents: 6,
-      attended: 0,
-      absent: 0,
-      excused: 0,
-    },
-    {
-      id: "6",
-      title: "Weekly House Meeting",
-      meetingType: "house",
-      houseName: "Serenity House",
-      scheduledDate: "2026-02-19",
-      scheduledTime: "18:00",
-      duration: 45,
-      location: "Common Room",
-      isRequired: true,
-      totalResidents: 8,
-      attended: 0,
-      absent: 0,
-      excused: 0,
-    },
-  ];
+    onError: (err) => toast("error", err.message),
+  });
 
-  const getMeetingTypeBadge = (type: MeetingType) => {
-    const styles: Record<MeetingType, string> = {
-      house: "bg-blue-100 text-blue-700",
-      aa: "bg-purple-100 text-purple-700",
-      na: "bg-indigo-100 text-indigo-700",
-      therapy: "bg-green-100 text-green-700",
-      life_skills: "bg-orange-100 text-orange-700",
-      other: "bg-slate-100 text-slate-700",
-    };
-    const labels: Record<MeetingType, string> = {
-      house: "House",
-      aa: "AA",
-      na: "NA",
-      therapy: "Therapy",
-      life_skills: "Life Skills",
-      other: "Other",
-    };
+  const { data: residents } = trpc.resident.list.useQuery({}, { enabled: !!orgId });
+
+  const { data: meetingDetail } = trpc.meeting.getById.useQuery(
+    { meetingId: attendanceMeetingId! },
+    { enabled: !!attendanceMeetingId }
+  );
+
+  const recordAttendance = trpc.meeting.recordAttendance.useMutation({
+    onSuccess: (data) => {
+      toast("success", "Attendance recorded", `${data.count} records saved`);
+      utils.meeting.list.invalidate();
+      utils.meeting.getStats.invalidate();
+      utils.meeting.getById.invalidate({ meetingId: attendanceMeetingId! });
+      setAttendanceMeetingId(null);
+      setAttendanceState({});
+    },
+    onError: (err) => toast("error", "Failed to record attendance", err.message),
+  });
+
+  const { data: meetings, isLoading, error } = trpc.meeting.list.useQuery(
+    { orgId: orgId!, limit: 50 },
+    { enabled: !!orgId }
+  );
+
+  const { data: stats } = trpc.meeting.getStats.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
+
+  const statsLoading = !stats && !!orgId;
+
+  const isPastMeeting = (date: Date | string) => new Date(date) < new Date(new Date().toDateString());
+  const isTodayMeeting = (date: Date | string) => new Date(date).toDateString() === new Date().toDateString();
+
+  const allMeetings = meetings ?? [];
+  const filteredMeetings = allMeetings.filter((m) => {
+    if (selectedType !== "all" && m.meeting_type !== selectedType) return false;
+    return true;
+  });
+
+  const upcomingMeetings = filteredMeetings.filter(
+    (m) => !isPastMeeting(m.scheduled_at) || isTodayMeeting(m.scheduled_at)
+  );
+  const pastMeetings = filteredMeetings.filter(
+    (m) => isPastMeeting(m.scheduled_at) && !isTodayMeeting(m.scheduled_at)
+  );
+
+  if (error) {
     return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[type]}`}>
-        {labels[type]}
-      </span>
+      <PageContainer>
+        <Card><CardContent><ErrorState title="Failed to load meetings" description={error.message} /></CardContent></Card>
+      </PageContainer>
     );
-  };
-
-  const isPastMeeting = (date: string) => {
-    return new Date(date) < new Date(new Date().toDateString());
-  };
-
-  const isTodayMeeting = (date: string) => {
-    return new Date(date).toDateString() === new Date().toDateString();
-  };
-
-  const getAttendanceRate = (meeting: Meeting) => {
-    if (meeting.totalResidents === 0) return null;
-    const total = meeting.attended + meeting.absent + meeting.excused;
-    if (total === 0) return null;
-    return Math.round((meeting.attended / total) * 100);
-  };
-
-  const upcomingMeetings = meetings.filter(
-    (m) => !isPastMeeting(m.scheduledDate) || isTodayMeeting(m.scheduledDate)
-  );
-  const pastMeetings = meetings.filter(
-    (m) => isPastMeeting(m.scheduledDate) && !isTodayMeeting(m.scheduledDate)
-  );
-
-  const weekStats = {
-    total: meetings.length,
-    completed: pastMeetings.length + meetings.filter((m) => isTodayMeeting(m.scheduledDate) && getAttendanceRate(m) !== null).length,
-    avgAttendance: 87, // Mock average
-    required: meetings.filter((m) => m.isRequired).length,
-  };
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Meeting Management</h1>
-          <p className="text-slate-600 mt-1">Schedule meetings and track attendance</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            View Calendar
-          </button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Schedule Meeting
-          </button>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Meeting Management"
+        description="Schedule meetings and track attendance"
+        actions={
+          <div className="flex gap-3">
+            <Button variant="secondary" icon={<Calendar className="h-4 w-4" />}>
+              View Calendar
+            </Button>
+            <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setShowCreateModal(true)}>
+              Schedule Meeting
+            </Button>
+          </div>
+        }
+      />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Calendar className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">This Week</p>
-              <p className="text-2xl font-bold text-slate-900">{weekStats.total}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Completed</p>
-              <p className="text-2xl font-bold text-slate-900">{weekStats.completed}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Users className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Avg Attendance</p>
-              <p className="text-2xl font-bold text-slate-900">{weekStats.avgAttendance}%</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Clock className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Required</p>
-              <p className="text-2xl font-bold text-slate-900">{weekStats.required}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard
+          title="Total Meetings"
+          value={statsLoading ? "—" : String(stats?.totalMeetings ?? allMeetings.length)}
+          icon={<Calendar className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Completed"
+          value={statsLoading ? "—" : String(pastMeetings.length)}
+          variant="success"
+          icon={<CheckCircle className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Avg Attendance"
+          value={statsLoading ? "—" : `${stats?.attendanceRate ?? 0}%`}
+          variant="info"
+          icon={<Users className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Upcoming"
+          value={statsLoading ? "—" : String(upcomingMeetings.length)}
+          variant="warning"
+          icon={<Clock className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+      </StatCardGrid>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-700">Filters:</span>
-          </div>
-          <select
-            value={selectedHouse}
-            onChange={(e) => setSelectedHouse(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Houses</option>
-            {houses.map((h) => (
-              <option key={h.id} value={h.name}>
-                {h.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Types</option>
-            <option value="house">House Meetings</option>
-            <option value="aa">AA Meetings</option>
-            <option value="na">NA Meetings</option>
-            <option value="therapy">Therapy</option>
-            <option value="life_skills">Life Skills</option>
-          </select>
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={() => setCurrentWeek(currentWeek - 1)}
-              className="p-2 hover:bg-slate-100 rounded-lg"
+      {/* Filter */}
+      <Card>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
-              <ChevronLeft className="h-4 w-4 text-slate-600" />
-            </button>
-            <span className="text-sm font-medium text-slate-700">This Week</span>
-            <button
-              onClick={() => setCurrentWeek(currentWeek + 1)}
-              className="p-2 hover:bg-slate-100 rounded-lg"
-            >
-              <ChevronRight className="h-4 w-4 text-slate-600" />
-            </button>
+              <option value="all">All Types</option>
+              <option value="house_meeting">House Meetings</option>
+              <option value="aa_na">AA/NA Meetings</option>
+              <option value="group_therapy">Therapy</option>
+              <option value="life_skills">Life Skills</option>
+              <option value="one_on_one">1-on-1</option>
+              <option value="family_session">Family</option>
+            </select>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Meetings List */}
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Upcoming Meetings</h2>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {upcomingMeetings.map((meeting) => (
-            <div key={meeting.id} className="p-4 hover:bg-slate-50">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="text-center min-w-[60px]">
-                    <p className="text-xs text-slate-500 uppercase">
-                      {new Date(meeting.scheduledDate).toLocaleDateString("en-US", { weekday: "short" })}
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {new Date(meeting.scheduledDate).getDate()}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(meeting.scheduledDate).toLocaleDateString("en-US", { month: "short" })}
-                    </p>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-sm font-semibold text-slate-900">{meeting.title}</h3>
-                      {getMeetingTypeBadge(meeting.meetingType)}
-                      {meeting.isRequired && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">
-                          Required
-                        </span>
-                      )}
-                      {isTodayMeeting(meeting.scheduledDate) && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">
-                          Today
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-slate-600">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{meeting.scheduledTime} ({meeting.duration} min)</span>
+      {/* Upcoming Meetings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Upcoming Meetings</CardTitle>
+        </CardHeader>
+        {isLoading ? (
+          <CardContent className="pt-0 space-y-3">
+            <SkeletonCard /><SkeletonCard />
+          </CardContent>
+        ) : upcomingMeetings.length === 0 ? (
+          <CardContent className="pt-0">
+            <EmptyState
+              iconType="inbox"
+              title="No upcoming meetings"
+              description="Schedule a meeting to get started."
+            />
+          </CardContent>
+        ) : (
+          <CardContent className="pt-0">
+            <div className="divide-y divide-zinc-800/50 -mx-6">
+              {upcomingMeetings.map((meeting) => {
+                const config = meetingTypeBadge[meeting.meeting_type] ?? meetingTypeBadge.other;
+                return (
+                  <div key={meeting.id} className="px-6 py-4 hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className="text-center min-w-[52px] pt-0.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                            {new Date(meeting.scheduled_at).toLocaleDateString("en-US", { weekday: "short" })}
+                          </p>
+                          <p className="text-2xl font-bold text-zinc-100 leading-tight">
+                            {new Date(meeting.scheduled_at).getDate()}
+                          </p>
+                          <p className="text-[10px] text-zinc-500">
+                            {new Date(meeting.scheduled_at).toLocaleDateString("en-US", { month: "short" })}
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <h3 className="text-sm font-semibold text-zinc-100">{meeting.title}</h3>
+                            <Badge variant={config.variant}>{config.label}</Badge>
+                            {meeting.is_mandatory && <Badge variant="error">Required</Badge>}
+                            {isTodayMeeting(meeting.scheduled_at) && <Badge variant="warning">Today</Badge>}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-zinc-500">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5" />
+                              <span>
+                                {new Date(meeting.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                                {meeting.duration_minutes ? ` (${meeting.duration_minutes} min)` : ""}
+                              </span>
+                            </div>
+                            {meeting.location && (
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="h-3.5 w-3.5" />
+                                <span>{meeting.location}</span>
+                              </div>
+                            )}
+                            {meeting.house_name && (
+                              <div className="flex items-center gap-1.5">
+                                <Users className="h-3.5 w-3.5" />
+                                <span>{meeting.house_name}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{meeting.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        <span>{meeting.houseName}</span>
-                      </div>
+                      <Button variant="primary" size="sm" onClick={() => {
+                        setAttendanceMeetingId(meeting.id);
+                        // Pre-populate from existing attendance if available
+                        setAttendanceState({});
+                      }}>Take Attendance</Button>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getAttendanceRate(meeting) !== null ? (
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-slate-900">
-                        {meeting.attended}/{meeting.totalResidents} attended
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {getAttendanceRate(meeting)}% attendance
-                      </p>
-                    </div>
-                  ) : (
-                    <button className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700">
-                      Take Attendance
-                    </button>
-                  )}
-                </div>
-              </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
+          </CardContent>
+        )}
+      </Card>
 
       {/* Past Meetings */}
       {pastMeetings.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200">
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-900">Recent Meetings</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Meeting</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Type</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Attendance</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pastMeetings.map((meeting) => (
-                  <tr key={meeting.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4 text-sm font-medium text-slate-900">
-                      {meeting.title}
-                    </td>
-                    <td className="py-3 px-4">{getMeetingTypeBadge(meeting.meetingType)}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
-                      {new Date(meeting.scheduledDate).toLocaleDateString()}
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-green-600">{meeting.attended} attended</span>
-                        <span className="text-slate-400">|</span>
-                        <span className="text-red-600">{meeting.absent} absent</span>
-                        {meeting.excused > 0 && (
-                          <>
-                            <span className="text-slate-400">|</span>
-                            <span className="text-yellow-600">{meeting.excused} excused</span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm font-medium text-slate-900">
-                        {getAttendanceRate(meeting)}%
-                      </span>
-                    </td>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Meetings</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="overflow-x-auto -mx-6">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                    <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Meeting</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Type</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Date</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">House</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {pastMeetings.map((meeting) => {
+                    const config = meetingTypeBadge[meeting.meeting_type] ?? meetingTypeBadge.other;
+                    return (
+                      <tr key={meeting.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                        <td className="py-3 px-6 text-sm font-medium text-zinc-100">{meeting.title}</td>
+                        <td className="py-3 px-4"><Badge variant={config.variant}>{config.label}</Badge></td>
+                        <td className="py-3 px-4 text-sm text-zinc-400">
+                          {new Date(meeting.scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-zinc-400">{meeting.house_name ?? "All Houses"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {/* Attendance Modal */}
+      {attendanceMeetingId && orgId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setAttendanceMeetingId(null); setAttendanceState({}); }} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800 max-h-[80vh] flex flex-col">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Take Attendance</h2>
+              {meetingDetail && <p className="text-sm text-zinc-500 mt-1">{meetingDetail.title}</p>}
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 space-y-2">
+              {(residents?.items ?? []).length === 0 ? (
+                <p className="text-sm text-zinc-500">No residents found.</p>
+              ) : (
+                (residents?.items ?? []).map((r) => {
+                  const state = attendanceState[r.id] ?? { attended: false, excused: false };
+                  // Check if pre-existing attendance
+                  const existing = meetingDetail?.attendance?.find((a) => a.resident_id === r.id);
+                  const attended = attendanceState[r.id] !== undefined ? state.attended : (existing?.attended ?? false);
+                  const excused = attendanceState[r.id] !== undefined ? state.excused : (existing?.excused ?? false);
+                  return (
+                    <div key={r.id} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-zinc-800/50">
+                      <span className="text-sm font-medium text-zinc-200">{r.first_name} {r.last_name}</span>
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={attended}
+                            onChange={(e) => setAttendanceState((prev) => ({
+                              ...prev,
+                              [r.id]: { attended: e.target.checked, excused: e.target.checked ? false : (prev[r.id]?.excused ?? false) },
+                            }))}
+                            className="rounded border-zinc-700 text-indigo-500 focus:ring-indigo-500"
+                          />
+                          <span className="text-xs text-zinc-400">Present</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={excused}
+                            onChange={(e) => setAttendanceState((prev) => ({
+                              ...prev,
+                              [r.id]: { excused: e.target.checked, attended: e.target.checked ? false : (prev[r.id]?.attended ?? false) },
+                            }))}
+                            className="rounded border-zinc-700 text-amber-500 focus:ring-amber-500"
+                          />
+                          <span className="text-xs text-zinc-400">Excused</span>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            <div className="p-6 border-t border-zinc-800 flex justify-end gap-3">
+              <Button variant="secondary" onClick={() => { setAttendanceMeetingId(null); setAttendanceState({}); }}>Cancel</Button>
+              <Button
+                variant="primary"
+                disabled={recordAttendance.isPending}
+                onClick={() => {
+                  const allResidents = residents?.items ?? [];
+                  const attendance = allResidents.map((r) => {
+                    const state = attendanceState[r.id];
+                    const existing = meetingDetail?.attendance?.find((a) => a.resident_id === r.id);
+                    const attended = state !== undefined ? state.attended : (existing?.attended ?? false);
+                    const excused = state !== undefined ? state.excused : (existing?.excused ?? false);
+                    return {
+                      residentId: r.id,
+                      attended,
+                      excused,
+                    };
+                  });
+                  recordAttendance.mutate({
+                    orgId,
+                    meetingId: attendanceMeetingId,
+                    attendance,
+                  });
+                }}
+              >
+                {recordAttendance.isPending ? "Saving..." : "Save Attendance"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* Create Meeting Modal */}
+      {showCreateModal && orgId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Schedule Meeting</h2>
+            </div>
+            <form
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                createMeeting.mutate({
+                  orgId,
+                  title: meetingForm.title,
+                  meetingType: meetingForm.meetingType as "house_meeting" | "group_therapy" | "aa_na" | "life_skills" | "one_on_one" | "family_session" | "other",
+                  scheduledAt: meetingForm.scheduledAt,
+                  durationMinutes: parseInt(meetingForm.durationMinutes) || 60,
+                  location: meetingForm.location || undefined,
+                  isMandatory: meetingForm.isMandatory,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Title <span className="text-red-400">*</span></label>
+                <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="e.g., Weekly House Meeting" required value={meetingForm.title} onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Type <span className="text-red-400">*</span></label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={meetingForm.meetingType} onChange={(e) => setMeetingForm({ ...meetingForm, meetingType: e.target.value })}>
+                    <option value="house_meeting">House Meeting</option>
+                    <option value="group_therapy">Group Therapy</option>
+                    <option value="aa_na">AA/NA</option>
+                    <option value="life_skills">Life Skills</option>
+                    <option value="one_on_one">1-on-1</option>
+                    <option value="family_session">Family Session</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Duration (min)</label>
+                  <input type="number" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={meetingForm.durationMinutes} onChange={(e) => setMeetingForm({ ...meetingForm, durationMinutes: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date & Time <span className="text-red-400">*</span></label>
+                <input type="datetime-local" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={meetingForm.scheduledAt} onChange={(e) => setMeetingForm({ ...meetingForm, scheduledAt: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Location</label>
+                <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="e.g., Common Room" value={meetingForm.location} onChange={(e) => setMeetingForm({ ...meetingForm, location: e.target.value })} />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" checked={meetingForm.isMandatory} onChange={(e) => setMeetingForm({ ...meetingForm, isMandatory: e.target.checked })} />
+                <span className="text-sm text-zinc-300">Mandatory attendance</span>
+              </label>
+              <div className="pt-2 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary" disabled={createMeeting.isPending}>
+                  {createMeeting.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Scheduling...</> : "Schedule Meeting"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </PageContainer>
   );
 }

@@ -5,6 +5,7 @@ import { httpBatchLink } from "@trpc/client";
 import { useState } from "react";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc";
+import { ToastProvider } from "@/components/ui";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -30,7 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );

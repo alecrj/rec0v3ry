@@ -1,24 +1,50 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   BedDouble,
-  Building2,
   Home,
   Users,
-  Filter,
   Search,
   ChevronDown,
   User,
-  Calendar,
   ArrowRightLeft,
-  Settings,
+  AlertCircle,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  EmptyState,
+  ErrorState,
+  useToast,
+} from "@/components/ui";
+import { SkeletonStatCard } from "@/components/ui";
+import { cn } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+
+type BedStatus = "available" | "occupied" | "reserved" | "maintenance" | "out_of_service";
+
+const statusConfig: Record<BedStatus, { bg: string; border: string; text: string; label: string; dotColor: string }> = {
+  available: { bg: "bg-green-500/10", border: "border-green-500/30", text: "text-green-300", label: "Available", dotColor: "bg-green-500" },
+  occupied: { bg: "bg-indigo-500/10", border: "border-indigo-500/30", text: "text-indigo-200", label: "Occupied", dotColor: "bg-indigo-500" },
+  reserved: { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-300", label: "Reserved", dotColor: "bg-amber-500" },
+  maintenance: { bg: "bg-zinc-800", border: "border-zinc-700", text: "text-zinc-300", label: "Maintenance", dotColor: "bg-amber-400" },
+  out_of_service: { bg: "bg-zinc-800", border: "border-zinc-700", text: "text-zinc-400", label: "Out of Service", dotColor: "bg-zinc-500" },
+};
 
 interface Bed {
   id: string;
   name: string;
-  status: "available" | "occupied" | "reserved" | "maintenance" | "out_of_service";
+  status: BedStatus;
   notes: string | null;
   resident: {
     bed_id: string;
@@ -45,167 +71,61 @@ interface House {
   capacity: number;
   gender_restriction: string | null;
   rooms: Room[];
-  stats: {
-    total: number;
-    available: number;
-    occupied: number;
-    reserved: number;
-    maintenance: number;
-  };
+  stats: { total: number; available: number; occupied: number; reserved: number; maintenance: number };
 }
 
-// Mock data - will be replaced with tRPC query
-const mockBedGrid: House[] = [
-  {
-    id: "1",
-    name: "Men's House A",
-    property_id: "1",
-    property_name: "Recovery Ranch",
-    capacity: 8,
-    gender_restriction: "male",
-    stats: { total: 8, available: 2, occupied: 5, reserved: 1, maintenance: 0 },
-    rooms: [
-      {
-        id: "r1",
-        name: "Room 101",
-        floor: 1,
-        capacity: 2,
-        beds: [
-          { id: "b1", name: "Bed A", status: "occupied", notes: null, resident: { bed_id: "b1", resident_id: "res1", resident_first_name: "John", resident_last_name: "Smith", admission_date: "2025-12-01" } },
-          { id: "b2", name: "Bed B", status: "occupied", notes: null, resident: { bed_id: "b2", resident_id: "res2", resident_first_name: "Mike", resident_last_name: "Johnson", admission_date: "2026-01-15" } },
-        ],
-      },
-      {
-        id: "r2",
-        name: "Room 102",
-        floor: 1,
-        capacity: 2,
-        beds: [
-          { id: "b3", name: "Bed A", status: "occupied", notes: null, resident: { bed_id: "b3", resident_id: "res3", resident_first_name: "David", resident_last_name: "Wilson", admission_date: "2026-01-20" } },
-          { id: "b4", name: "Bed B", status: "available", notes: null, resident: null },
-        ],
-      },
-      {
-        id: "r3",
-        name: "Room 201",
-        floor: 2,
-        capacity: 2,
-        beds: [
-          { id: "b5", name: "Bed A", status: "reserved", notes: "Reserved for incoming admission 2/20", resident: null },
-          { id: "b6", name: "Bed B", status: "occupied", notes: null, resident: { bed_id: "b6", resident_id: "res4", resident_first_name: "Robert", resident_last_name: "Brown", admission_date: "2025-11-10" } },
-        ],
-      },
-      {
-        id: "r4",
-        name: "Room 202",
-        floor: 2,
-        capacity: 2,
-        beds: [
-          { id: "b7", name: "Bed A", status: "occupied", notes: null, resident: { bed_id: "b7", resident_id: "res5", resident_first_name: "James", resident_last_name: "Miller", admission_date: "2026-02-01" } },
-          { id: "b8", name: "Bed B", status: "available", notes: null, resident: null },
-        ],
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Women's House",
-    property_id: "1",
-    property_name: "Recovery Ranch",
-    capacity: 6,
-    gender_restriction: "female",
-    stats: { total: 6, available: 1, occupied: 4, reserved: 0, maintenance: 1 },
-    rooms: [
-      {
-        id: "r5",
-        name: "Room A",
-        floor: 1,
-        capacity: 2,
-        beds: [
-          { id: "b9", name: "Bed 1", status: "occupied", notes: null, resident: { bed_id: "b9", resident_id: "res6", resident_first_name: "Sarah", resident_last_name: "Davis", admission_date: "2025-10-15" } },
-          { id: "b10", name: "Bed 2", status: "occupied", notes: null, resident: { bed_id: "b10", resident_id: "res7", resident_first_name: "Emily", resident_last_name: "Taylor", admission_date: "2026-01-05" } },
-        ],
-      },
-      {
-        id: "r6",
-        name: "Room B",
-        floor: 1,
-        capacity: 2,
-        beds: [
-          { id: "b11", name: "Bed 1", status: "occupied", notes: null, resident: { bed_id: "b11", resident_id: "res8", resident_first_name: "Jessica", resident_last_name: "Anderson", admission_date: "2025-12-20" } },
-          { id: "b12", name: "Bed 2", status: "maintenance", notes: "Mattress replacement", resident: null },
-        ],
-      },
-      {
-        id: "r7",
-        name: "Room C",
-        floor: 1,
-        capacity: 2,
-        beds: [
-          { id: "b13", name: "Bed 1", status: "occupied", notes: null, resident: { bed_id: "b13", resident_id: "res9", resident_first_name: "Ashley", resident_last_name: "Thomas", admission_date: "2026-02-10" } },
-          { id: "b14", name: "Bed 2", status: "available", notes: null, resident: null },
-        ],
-      },
-    ],
-  },
-];
-
-const statusConfig = {
-  available: { color: "bg-green-100 border-green-300 text-green-800", label: "Available", dotColor: "bg-green-500" },
-  occupied: { color: "bg-blue-100 border-blue-300 text-blue-800", label: "Occupied", dotColor: "bg-blue-500" },
-  reserved: { color: "bg-yellow-100 border-yellow-300 text-yellow-800", label: "Reserved", dotColor: "bg-yellow-500" },
-  maintenance: { color: "bg-orange-100 border-orange-300 text-orange-800", label: "Maintenance", dotColor: "bg-orange-500" },
-  out_of_service: { color: "bg-slate-100 border-slate-300 text-slate-800", label: "Out of Service", dotColor: "bg-slate-500" },
-};
-
-function BedCard({ bed, onSelect }: { bed: Bed; onSelect: (bed: Bed) => void }) {
-  const config = statusConfig[bed.status];
+function BedCard({ bed }: { bed: Bed }) {
+  const config = statusConfig[bed.status] || statusConfig.available;
+  const isAvailable = bed.status === "available";
 
   return (
-    <button
-      onClick={() => onSelect(bed)}
-      className={`w-full p-3 rounded-lg border-2 transition-all hover:shadow-md ${config.color}`}
+    <div
+      className={cn(
+        "p-3 rounded-lg border-2 transition-all hover:shadow-md cursor-pointer",
+        config.bg, config.border, config.text,
+        isAvailable && "border-dashed"
+      )}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <BedDouble className="h-4 w-4" />
-          <span className="font-medium text-sm">{bed.name}</span>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <BedDouble className="h-3.5 w-3.5" />
+          <span className="font-semibold text-sm">{bed.name}</span>
         </div>
-        <div className={`w-2 h-2 rounded-full ${config.dotColor}`} />
+        <div className={cn("w-2 h-2 rounded-full", config.dotColor)} />
       </div>
       {bed.resident ? (
         <div className="text-left">
-          <p className="text-sm font-medium truncate">
+          <Link
+            href={`/residents/${bed.resident.resident_id}`}
+            className="text-sm font-medium truncate hover:underline block"
+            onClick={(e) => e.stopPropagation()}
+          >
             {bed.resident.resident_first_name} {bed.resident.resident_last_name}
-          </p>
-          <p className="text-xs opacity-75">
-            Since {new Date(bed.resident.admission_date).toLocaleDateString()}
+          </Link>
+          <p className="text-xs opacity-70 mt-0.5">
+            Since {new Date(bed.resident.admission_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
           </p>
         </div>
-      ) : bed.notes ? (
-        <p className="text-xs text-left opacity-75 truncate">{bed.notes}</p>
       ) : (
-        <p className="text-xs text-left opacity-75">{config.label}</p>
+        <p className="text-xs opacity-70">{bed.notes || config.label}</p>
       )}
-    </button>
+    </div>
   );
 }
 
 function RoomSection({ room }: { room: Room }) {
-  const [selectedBed, setSelectedBed] = useState<Bed | null>(null);
-
   return (
-    <div className="bg-slate-50 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-slate-900">
+    <div className="bg-zinc-800/40/80 rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-sm font-medium text-zinc-100">
           {room.name}
-          {room.floor && <span className="text-slate-500 text-sm ml-2">Floor {room.floor}</span>}
+          {room.floor !== null && <span className="text-zinc-500 ml-1.5">F{room.floor}</span>}
         </h4>
-        <span className="text-xs text-slate-500">{room.beds.length} beds</span>
+        <span className="text-xs text-zinc-500">{room.beds.length} bed{room.beds.length !== 1 ? "s" : ""}</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {room.beds.map((bed) => (
-          <BedCard key={bed.id} bed={bed} onSelect={setSelectedBed} />
+          <BedCard key={bed.id} bed={bed} />
         ))}
       </div>
     </div>
@@ -214,83 +134,196 @@ function RoomSection({ room }: { room: Room }) {
 
 function HouseSection({ house }: { house: House }) {
   const [isExpanded, setIsExpanded] = useState(true);
-
-  const getGenderBadge = (restriction: string | null) => {
-    if (!restriction) return null;
-    const styles: Record<string, string> = {
-      male: "bg-blue-100 text-blue-700",
-      female: "bg-pink-100 text-pink-700",
-      coed: "bg-purple-100 text-purple-700",
-    };
-    return (
-      <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[restriction]}`}>
-        {restriction.charAt(0).toUpperCase() + restriction.slice(1)}
-      </span>
-    );
-  };
+  const occupancyPct = house.stats.total > 0 ? Math.round((house.stats.occupied / house.stats.total) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200">
+    <Card>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+        className="w-full p-5 flex items-center justify-between hover:bg-zinc-800/50 transition-colors rounded-t-xl"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-50 rounded-lg">
-            <Home className="h-5 w-5 text-green-600" />
+          <div className="p-2.5 bg-green-500/10 rounded-lg">
+            <Home className="h-5 w-5 text-green-400" />
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-slate-900">{house.name}</h3>
-              {getGenderBadge(house.gender_restriction)}
+              <h3 className="font-semibold text-zinc-100">{house.name}</h3>
+              {house.gender_restriction && (
+                <Badge variant={house.gender_restriction === "male" ? "info" : house.gender_restriction === "female" ? "error" : "default"}>
+                  {house.gender_restriction.charAt(0).toUpperCase() + house.gender_restriction.slice(1)}
+                </Badge>
+              )}
             </div>
-            <p className="text-sm text-slate-500">{house.property_name}</p>
+            <p className="text-sm text-zinc-500">{house.property_name}</p>
           </div>
         </div>
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
+          {/* Mini stat dots */}
+          <div className="hidden sm:flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-slate-600">{house.stats.available}</span>
+              <span className="text-zinc-400">{house.stats.available}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-slate-600">{house.stats.occupied}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-indigo-500" />
+              <span className="text-zinc-400">{house.stats.occupied}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-yellow-500" />
-              <span className="text-slate-600">{house.stats.reserved}</span>
-            </div>
-            {house.stats.maintenance > 0 && (
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-orange-500" />
-                <span className="text-slate-600">{house.stats.maintenance}</span>
+            {house.stats.reserved > 0 && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="text-zinc-400">{house.stats.reserved}</span>
               </div>
             )}
           </div>
-          <ChevronDown
-            className={`h-5 w-5 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-          />
+          <Badge variant={occupancyPct >= 90 ? "success" : occupancyPct >= 70 ? "warning" : "default"}>
+            {occupancyPct}%
+          </Badge>
+          <ChevronDown className={cn("h-5 w-5 text-zinc-500 transition-transform", isExpanded && "rotate-180")} />
         </div>
       </button>
-      {isExpanded && (
-        <div className="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {house.rooms.map((room) => (
-            <RoomSection key={room.id} room={room} />
-          ))}
-        </div>
+      {isExpanded && house.rooms.length > 0 && (
+        <CardContent className="pt-0 pb-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {house.rooms.map((room) => (
+              <RoomSection key={room.id} room={room} />
+            ))}
+          </div>
+        </CardContent>
       )}
+      {isExpanded && house.rooms.length === 0 && (
+        <CardContent className="pt-0">
+          <p className="text-sm text-zinc-500 text-center py-4">No rooms configured for this house</p>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+function AssignBedModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const [selectedResidentId, setSelectedResidentId] = useState("");
+  const [selectedBedId, setSelectedBedId] = useState("");
+
+  const { data: residentData } = trpc.resident.list.useQuery(
+    { status: "active", limit: 100 },
+    { enabled: isOpen }
+  );
+  const { data: availableBeds } = trpc.occupancy.getAvailableBeds.useQuery(
+    undefined,
+    { enabled: isOpen }
+  );
+
+  // We need admissionId for the selected resident
+  const residents = residentData?.items ?? [];
+  const selectedResident = residents.find((r) => r.id === selectedResidentId);
+
+  const assignMutation = trpc.occupancy.assignBed.useMutation({
+    onSuccess: () => {
+      toast("success", "Bed assigned");
+      utils.occupancy.getBedGrid.invalidate();
+      utils.occupancy.getDashboardStats.invalidate();
+      utils.occupancy.getAvailableBeds.invalidate();
+      onClose();
+      setSelectedResidentId("");
+      setSelectedBedId("");
+    },
+    onError: (err) => toast("error", "Failed to assign bed", err.message),
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-md w-full mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-zinc-100">Assign Bed</h2>
+            <button onClick={onClose} className="text-zinc-500 hover:text-zinc-400 text-xl">&times;</button>
+          </div>
+          <p className="text-sm text-zinc-500 mt-1">Assign an active resident to an available bed</p>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!selectedResident?.admission_id) {
+              toast("error", "No active admission found for this resident");
+              return;
+            }
+            assignMutation.mutate({
+              admissionId: selectedResident.admission_id,
+              bedId: selectedBedId,
+            });
+          }}
+          className="p-6 space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Resident <span className="text-red-400">*</span>
+            </label>
+            <select
+              required
+              value={selectedResidentId}
+              onChange={(e) => setSelectedResidentId(e.target.value)}
+              className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            >
+              <option value="">Select a resident</option>
+              {residents
+                .filter((r) => r.admission_id && !r.bed_id)
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.first_name} {r.last_name}
+                    {r.house_name ? ` (${r.house_name})` : ""}
+                  </option>
+                ))}
+            </select>
+            <p className="text-xs text-zinc-500 mt-1">Only showing residents without a bed assignment</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Bed <span className="text-red-400">*</span>
+            </label>
+            <select
+              required
+              value={selectedBedId}
+              onChange={(e) => setSelectedBedId(e.target.value)}
+              className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            >
+              <option value="">Select a bed</option>
+              {(availableBeds ?? []).map((b) => (
+                <option key={b.bed_id} value={b.bed_id}>
+                  {b.property_name} / {b.house_name} / {b.room_name} / {b.bed_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={assignMutation.isPending}>
+              {assignMutation.isPending ? "Assigning..." : "Assign Bed"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
 
 export default function BedGridPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterProperty, setFilterProperty] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
-  // Calculate totals
-  const totals = mockBedGrid.reduce(
+  const { data: bedGrid, isLoading, error } = trpc.occupancy.getBedGrid.useQuery();
+  const { data: stats, isLoading: statsLoading } = trpc.occupancy.getDashboardStats.useQuery({});
+
+  const totals = (bedGrid || []).reduce(
     (acc, house) => ({
       total: acc.total + house.stats.total,
       available: acc.available + house.stats.available,
@@ -303,136 +336,135 @@ export default function BedGridPage() {
 
   const occupancyRate = totals.total > 0 ? Math.round((totals.occupied / totals.total) * 100) : 0;
 
+  const filteredHouses = (bedGrid || []).filter((house) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    if (house.name.toLowerCase().includes(q)) return true;
+    if (house.property_name.toLowerCase().includes(q)) return true;
+    for (const room of house.rooms) {
+      for (const bed of room.beds) {
+        if (bed.resident) {
+          const fullName = `${bed.resident.resident_first_name} ${bed.resident.resident_last_name}`.toLowerCase();
+          if (fullName.includes(q)) return true;
+        }
+      }
+    }
+    return false;
+  });
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Bed Grid</h1>
-          <p className="text-slate-600 mt-1">Visual overview of all beds and occupancy</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50">
-            <ArrowRightLeft className="h-4 w-4" />
-            Transfer Resident
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
-            <User className="h-4 w-4" />
+    <PageContainer>
+      <PageHeader
+        title="Bed Grid"
+        description="Visual overview of all beds and occupancy"
+        actions={
+          <Button
+            variant="primary"
+            icon={<User className="h-4 w-4" />}
+            onClick={() => setShowAssignModal(true)}
+          >
             Assign Bed
-          </button>
-        </div>
-      </div>
+          </Button>
+        }
+      />
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-100 rounded-lg">
-              <BedDouble className="h-5 w-5 text-slate-600" />
+      {error && (
+        <Card variant="outlined" className="border-red-500/30 bg-red-500/10">
+          <CardContent>
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-red-300">Error loading bed grid</p>
+                <p className="text-sm text-red-300 mt-1">{error.message}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{totals.total}</p>
-              <p className="text-sm text-slate-500">Total Beds</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <div className="w-5 h-5 rounded-full bg-green-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">{totals.available}</p>
-              <p className="text-sm text-slate-500">Available</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <div className="w-5 h-5 rounded-full bg-blue-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-600">{totals.occupied}</p>
-              <p className="text-sm text-slate-500">Occupied</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-50 rounded-lg">
-              <div className="w-5 h-5 rounded-full bg-yellow-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-yellow-600">{totals.reserved}</p>
-              <p className="text-sm text-slate-500">Reserved</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <Users className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-purple-600">{occupancyRate}%</p>
-              <p className="text-sm text-slate-500">Occupancy</p>
-            </div>
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      {/* Stats */}
+      <StatCardGrid columns={4}>
+        <StatCard
+          title="Total Beds"
+          value={statsLoading ? "—" : String(stats?.total_beds ?? totals.total)}
+          icon={<BedDouble className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Available"
+          value={statsLoading ? "—" : String(stats?.available_beds ?? totals.available)}
+          variant="success"
+          icon={<BedDouble className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Occupied"
+          value={statsLoading ? "—" : String(stats?.occupied_beds ?? totals.occupied)}
+          variant="info"
+          icon={<Users className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Occupancy Rate"
+          value={statsLoading ? "—" : `${stats?.occupancy_rate ?? occupancyRate}%`}
+          variant={(stats?.occupancy_rate ?? occupancyRate) >= 85 ? "success" : "warning"}
+          icon={<Users className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+      </StatCardGrid>
+
+      {/* Search + Legend */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex-1 relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
             type="text"
-            placeholder="Search by resident name or bed..."
+            placeholder="Search by resident, house, or property..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
           />
         </div>
-        <select
-          value={filterProperty}
-          onChange={(e) => setFilterProperty(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Properties</option>
-          <option value="1">Recovery Ranch</option>
-          <option value="2">Serenity Springs</option>
-        </select>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Statuses</option>
-          <option value="available">Available</option>
-          <option value="occupied">Occupied</option>
-          <option value="reserved">Reserved</option>
-          <option value="maintenance">Maintenance</option>
-        </select>
+        <div className="flex items-center gap-4 text-sm">
+          {Object.entries(statusConfig).map(([status, config]) => (
+            <div key={status} className="flex items-center gap-1.5">
+              <div className={cn("w-2.5 h-2.5 rounded-full", config.dotColor)} />
+              <span className="text-zinc-500">{config.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-6 text-sm">
-        <span className="text-slate-500">Legend:</span>
-        {Object.entries(statusConfig).map(([status, config]) => (
-          <div key={status} className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${config.dotColor}`} />
-            <span className="text-slate-600">{config.label}</span>
-          </div>
-        ))}
-      </div>
+      {/* Houses */}
+      {isLoading && (
+        <div className="space-y-4">
+          <SkeletonStatCard />
+          <SkeletonStatCard />
+        </div>
+      )}
 
-      {/* Houses Grid */}
-      <div className="space-y-4">
-        {mockBedGrid.map((house) => (
-          <HouseSection key={house.id} house={house} />
-        ))}
-      </div>
-    </div>
+      {!isLoading && filteredHouses.length === 0 && (
+        <Card>
+          <CardContent>
+            <EmptyState
+              iconType="inbox"
+              title={searchQuery ? "No houses match your search" : "No houses configured"}
+              description={searchQuery ? "Try adjusting your search terms." : "Add properties and houses in Admin > Properties."}
+              action={searchQuery ? { label: "Clear search", onClick: () => setSearchQuery("") } : undefined}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && (
+        <div className="space-y-4">
+          {filteredHouses.map((house) => (
+            <HouseSection key={house.id} house={house as House} />
+          ))}
+        </div>
+      )}
+
+      <AssignBedModal isOpen={showAssignModal} onClose={() => setShowAssignModal(false)} />
+    </PageContainer>
   );
 }

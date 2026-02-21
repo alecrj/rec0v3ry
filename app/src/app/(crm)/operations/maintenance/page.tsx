@@ -1,388 +1,353 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import Link from "next/link";
 import {
   Wrench,
   Plus,
-  Filter,
-  Search,
   Home,
-  User,
   Clock,
   AlertTriangle,
   CheckCircle,
-  Circle,
-  ArrowUpCircle,
-  ChevronRight,
+  Loader2,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Badge,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  SkeletonTable,
+  useToast,
+} from "@/components/ui";
+import type { Column } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-type Priority = "low" | "medium" | "high" | "urgent";
-type Status = "open" | "in_progress" | "completed" | "cancelled";
+const priorityBadge: Record<string, { variant: "info" | "warning" | "error" | "default"; label: string }> = {
+  low: { variant: "default", label: "Low" },
+  medium: { variant: "warning", label: "Medium" },
+  high: { variant: "warning", label: "High" },
+  urgent: { variant: "error", label: "Urgent" },
+};
 
-interface MaintenanceRequest {
+const statusBadge: Record<string, { variant: "info" | "success" | "warning" | "error" | "default"; label: string }> = {
+  open: { variant: "info", label: "Open" },
+  in_progress: { variant: "warning", label: "In Progress" },
+  completed: { variant: "success", label: "Completed" },
+  cancelled: { variant: "default", label: "Cancelled" },
+};
+
+type RequestRow = {
   id: string;
   title: string;
   description: string;
-  houseName: string;
-  location: string;
-  priority: Priority;
-  status: Status;
-  reporterName: string;
-  reporterType: "resident" | "staff";
-  assigneeName: string | null;
-  createdAt: string;
-  completedAt: string | null;
-}
+  location: string | null;
+  priority: string;
+  status: string;
+  house_name: string;
+  created_at: string | Date;
+  completed_at: string | Date | null;
+  [key: string]: unknown;
+};
 
 export default function MaintenancePage() {
-  const [selectedHouse, setSelectedHouse] = useState<string>("all");
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState("");
+  const [requestForm, setRequestForm] = useState({
+    houseId: "",
+    title: "",
+    description: "",
+    location: "",
+    priority: "medium",
+  });
 
-  const houses = [
-    { id: "h1", name: "Serenity House" },
-    { id: "h2", name: "Hope Manor" },
-    { id: "h3", name: "Recovery Haven" },
-  ];
+  const { data: userData } = trpc.user.getCurrentUser.useQuery(undefined, { retry: false });
+  const orgId = userData?.org_id;
 
-  const requests: MaintenanceRequest[] = [
-    {
-      id: "1",
-      title: "Leaking faucet in kitchen",
-      description: "The kitchen sink faucet has been dripping constantly for the past 2 days",
-      houseName: "Serenity House",
-      location: "Kitchen",
-      priority: "medium",
-      status: "in_progress",
-      reporterName: "Sarah Martinez",
-      reporterType: "resident",
-      assigneeName: "Mike Wilson",
-      createdAt: "2026-02-16T10:30:00",
-      completedAt: null,
-    },
-    {
-      id: "2",
-      title: "Broken window lock",
-      description: "The lock on the bedroom window doesn't engage properly - security concern",
-      houseName: "Serenity House",
-      location: "Room 3",
-      priority: "high",
-      status: "open",
-      reporterName: "John Manager",
-      reporterType: "staff",
-      assigneeName: null,
-      createdAt: "2026-02-17T08:15:00",
-      completedAt: null,
-    },
-    {
-      id: "3",
-      title: "HVAC not cooling",
-      description: "Air conditioning unit in the common area is blowing warm air",
-      houseName: "Hope Manor",
-      location: "Common Area",
-      priority: "urgent",
-      status: "open",
-      reporterName: "Michael Chen",
-      reporterType: "resident",
-      assigneeName: null,
-      createdAt: "2026-02-17T11:45:00",
-      completedAt: null,
-    },
-    {
-      id: "4",
-      title: "Light bulb replacement",
-      description: "Hallway light bulb burned out",
-      houseName: "Hope Manor",
-      location: "Hallway",
-      priority: "low",
-      status: "completed",
-      reporterName: "Jennifer Parker",
-      reporterType: "resident",
-      assigneeName: "Mike Wilson",
-      createdAt: "2026-02-15T14:00:00",
-      completedAt: "2026-02-15T16:30:00",
-    },
-    {
-      id: "5",
-      title: "Bathroom door squeaking",
-      description: "Main bathroom door hinges are very squeaky",
-      houseName: "Recovery Haven",
-      location: "Bathroom",
-      priority: "low",
-      status: "open",
-      reporterName: "Emily Thompson",
-      reporterType: "resident",
-      assigneeName: null,
-      createdAt: "2026-02-14T09:20:00",
-      completedAt: null,
-    },
-    {
-      id: "6",
-      title: "Toilet running constantly",
-      description: "Toilet in room 2 bathroom won't stop running",
-      houseName: "Recovery Haven",
-      location: "Room 2 Bathroom",
-      priority: "medium",
-      status: "in_progress",
-      reporterName: "Robert Garcia",
-      reporterType: "resident",
-      assigneeName: "Tom Maintenance",
-      createdAt: "2026-02-16T16:00:00",
-      completedAt: null,
-    },
-  ];
+  const { data: propertiesData } = trpc.property.list.useQuery();
+  const { data: housesForProp } = trpc.property.listHouses.useQuery(
+    { propertyId: selectedPropertyId },
+    { enabled: !!selectedPropertyId }
+  );
 
-  const stats = {
-    total: requests.length,
-    open: requests.filter((r) => r.status === "open").length,
-    inProgress: requests.filter((r) => r.status === "in_progress").length,
-    completed: requests.filter((r) => r.status === "completed").length,
-    urgent: requests.filter((r) => r.priority === "urgent" && r.status !== "completed").length,
-  };
+  const createRequest = trpc.maintenance.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Maintenance request created");
+      utils.maintenance.list.invalidate();
+      utils.maintenance.getStats.invalidate();
+      setRequestForm({ houseId: "", title: "", description: "", location: "", priority: "medium" });
+      setSelectedPropertyId("");
+      setShowCreateModal(false);
+    },
+    onError: (err) => toast("error", err.message),
+  });
 
-  const getPriorityBadge = (priority: Priority) => {
-    const styles: Record<Priority, string> = {
-      low: "bg-slate-100 text-slate-700",
-      medium: "bg-yellow-100 text-yellow-700",
-      high: "bg-orange-100 text-orange-700",
-      urgent: "bg-red-100 text-red-700",
-    };
-    const icons: Record<Priority, React.ReactNode> = {
-      low: <Circle className="h-3 w-3" />,
-      medium: <ArrowUpCircle className="h-3 w-3" />,
-      high: <AlertTriangle className="h-3 w-3" />,
-      urgent: <AlertTriangle className="h-3 w-3" />,
-    };
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${styles[priority]}`}>
-        {icons[priority]}
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-      </span>
-    );
-  };
+  const { data: requests, isLoading, error } = trpc.maintenance.list.useQuery(
+    { orgId: orgId!, limit: 100 },
+    { enabled: !!orgId }
+  );
 
-  const getStatusBadge = (status: Status) => {
-    const styles: Record<Status, string> = {
-      open: "bg-blue-100 text-blue-700",
-      in_progress: "bg-purple-100 text-purple-700",
-      completed: "bg-green-100 text-green-700",
-      cancelled: "bg-slate-100 text-slate-600",
-    };
-    const labels: Record<Status, string> = {
-      open: "Open",
-      in_progress: "In Progress",
-      completed: "Completed",
-      cancelled: "Cancelled",
-    };
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status]}`}>
-        {labels[status]}
-      </span>
-    );
-  };
+  const { data: stats } = trpc.maintenance.getStats.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
 
-  const filteredRequests = requests.filter((r) => {
-    if (selectedHouse !== "all" && r.houseName !== selectedHouse) return false;
+  const statsLoading = !stats && !!orgId;
+  const allRequests = (requests ?? []) as RequestRow[];
+  const filteredRequests = allRequests.filter((r) => {
     if (selectedStatus !== "all" && r.status !== selectedStatus) return false;
     if (selectedPriority !== "all" && r.priority !== selectedPriority) return false;
-    if (searchQuery && !r.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
-  // Sort by priority (urgent first) then by date
-  const sortedRequests = [...filteredRequests].sort((a, b) => {
-    const priorityOrder: Record<Priority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
-    if (a.status === "completed" && b.status !== "completed") return 1;
-    if (b.status === "completed" && a.status !== "completed") return -1;
-    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    }
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const columns: Column<RequestRow>[] = [
+    {
+      key: "title",
+      header: "Request",
+      sortable: true,
+      render: (_val, row) => (
+        <div>
+          <Link href={`/operations/maintenance/${row.id}`} className="text-sm font-medium text-indigo-400 hover:text-indigo-300">
+            {row.title}
+          </Link>
+          {row.location && <p className="text-xs text-zinc-500 mt-0.5">{row.location}</p>}
+        </div>
+      ),
+    },
+    {
+      key: "house_name",
+      header: "House",
+      render: (_val, row) => (
+        <div className="flex items-center gap-1.5">
+          <Home className="h-3.5 w-3.5 text-zinc-500" />
+          <span className="text-sm text-zinc-400">{row.house_name}</span>
+        </div>
+      ),
+    },
+    {
+      key: "priority",
+      header: "Priority",
+      render: (_val, row) => {
+        const config = priorityBadge[row.priority] ?? { variant: "default" as const, label: row.priority };
+        return <Badge variant={config.variant} dot>{config.label}</Badge>;
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (_val, row) => {
+        const config = statusBadge[row.status] ?? { variant: "default" as const, label: row.status };
+        return <Badge variant={config.variant}>{config.label}</Badge>;
+      },
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      sortable: true,
+      render: (_val, row) => (
+        <span className="text-sm text-zinc-400">
+          {new Date(row.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        </span>
+      ),
+    },
+  ];
+
+  if (error) {
+    return (
+      <PageContainer>
+        <Card><CardContent><ErrorState title="Failed to load maintenance requests" description={error.message} /></CardContent></Card>
+      </PageContainer>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Maintenance Requests</h1>
-          <p className="text-slate-600 mt-1">Track and manage property maintenance</p>
-        </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Request
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Maintenance Requests"
+        description="Track and manage property maintenance"
+        actions={
+          <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setShowCreateModal(true)}>
+            New Request
+          </Button>
+        }
+      />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Wrench className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Total Requests</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <Circle className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Open</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.open}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Clock className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">In Progress</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.inProgress}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Completed</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.completed}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Urgent</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.urgent}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard
+          title="Total Requests"
+          value={statsLoading ? "—" : String(stats?.total ?? allRequests.length)}
+          icon={<Wrench className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Open"
+          value={statsLoading ? "—" : String(stats?.open ?? 0)}
+          variant="warning"
+          icon={<Clock className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Completed"
+          value={statsLoading ? "—" : String(stats?.completed ?? 0)}
+          variant="success"
+          icon={<CheckCircle className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          title="Urgent"
+          value={statsLoading ? "—" : String(stats?.urgent ?? 0)}
+          variant="error"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          loading={statsLoading}
+        />
+      </StatCardGrid>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-700">Filters:</span>
-          </div>
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search requests..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          <select
-            value={selectedHouse}
-            onChange={(e) => setSelectedHouse(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Houses</option>
-            {houses.map((h) => (
-              <option key={h.id} value={h.name}>
-                {h.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Status</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
-          <select
-            value={selectedPriority}
-            onChange={(e) => setSelectedPriority(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Priority</option>
-            <option value="urgent">Urgent</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Requests List */}
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">All Requests</h2>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {sortedRequests.map((request) => (
-            <Link
-              key={request.id}
-              href={`/operations/maintenance/${request.id}`}
-              className="block p-4 hover:bg-slate-50 transition-colors"
+      <Card>
+        <CardContent>
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-slate-900">{request.title}</h3>
-                    {getPriorityBadge(request.priority)}
-                    {getStatusBadge(request.status)}
-                  </div>
-                  <p className="text-sm text-slate-600 mt-1 line-clamp-1">{request.description}</p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
-                    <div className="flex items-center gap-1">
-                      <Home className="h-3 w-3" />
-                      {request.houseName}
-                    </div>
-                    <span>|</span>
-                    <span>{request.location}</span>
-                    <span>|</span>
-                    <div className="flex items-center gap-1">
-                      <User className="h-3 w-3" />
-                      {request.reporterName}
-                      <span className="text-slate-400">
-                        ({request.reporterType === "resident" ? "Resident" : "Staff"})
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 mt-1 text-sm text-slate-400">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Created {new Date(request.createdAt).toLocaleDateString()}
-                    </div>
-                    {request.assigneeName && (
-                      <span>Assigned to: {request.assigneeName}</span>
-                    )}
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-slate-400" />
+              <option value="all">All Status</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <select
+              value={selectedPriority}
+              onChange={(e) => setSelectedPriority(e.target.value)}
+              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            >
+              <option value="all">All Priority</option>
+              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Requests Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>All Requests</CardTitle>
+        </CardHeader>
+        {isLoading ? (
+          <CardContent className="pt-0"><SkeletonTable rows={6} columns={5} /></CardContent>
+        ) : filteredRequests.length === 0 ? (
+          <CardContent className="pt-0">
+            <EmptyState
+              iconType="inbox"
+              title="No maintenance requests"
+              description="Create a new request to track maintenance work."
+              action={{ label: "New Request", onClick: () => setShowCreateModal(true) }}
+            />
+          </CardContent>
+        ) : (
+          <DataTable
+            data={filteredRequests}
+            columns={columns}
+            loading={isLoading}
+            getRowId={(row) => row.id}
+            className="border-0 rounded-none"
+            rowActions={(row) => (
+              <Link href={`/operations/maintenance/${row.id}`}>
+                <Button variant="ghost" size="sm" className="text-indigo-400">View</Button>
+              </Link>
+            )}
+          />
+        )}
+      </Card>
+
+      {/* Create Request Modal */}
+      {showCreateModal && orgId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">New Maintenance Request</h2>
+            </div>
+            <form
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                createRequest.mutate({
+                  orgId,
+                  houseId: requestForm.houseId,
+                  title: requestForm.title,
+                  description: requestForm.description,
+                  location: requestForm.location || undefined,
+                  priority: requestForm.priority as "low" | "medium" | "high" | "urgent",
+                });
+              }}
+              className="p-6 space-y-4"
+            >
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Property</label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={selectedPropertyId} onChange={(e) => { setSelectedPropertyId(e.target.value); setRequestForm({ ...requestForm, houseId: "" }); }}>
+                  <option value="">Select property...</option>
+                  {(propertiesData ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
               </div>
-            </Link>
-          ))}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">House <span className="text-red-400">*</span></label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={requestForm.houseId} onChange={(e) => setRequestForm({ ...requestForm, houseId: e.target.value })} disabled={!selectedPropertyId}>
+                  <option value="">Select house...</option>
+                  {(housesForProp ?? []).map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Title <span className="text-red-400">*</span></label>
+                <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="e.g., Leaking faucet in kitchen" required value={requestForm.title} onChange={(e) => setRequestForm({ ...requestForm, title: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description <span className="text-red-400">*</span></label>
+                <textarea className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 min-h-[80px]" required placeholder="Describe the issue..." value={requestForm.description} onChange={(e) => setRequestForm({ ...requestForm, description: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Location</label>
+                  <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="Kitchen, Room 3..." value={requestForm.location} onChange={(e) => setRequestForm({ ...requestForm, location: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Priority</label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={requestForm.priority} onChange={(e) => setRequestForm({ ...requestForm, priority: e.target.value })}>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+              <div className="pt-2 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary" disabled={createRequest.isPending}>
+                  {createRequest.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating...</> : "Create Request"}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </PageContainer>
   );
 }

@@ -2,267 +2,268 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  BedDouble,
-  ClipboardList,
+  Building2,
   Users,
   DollarSign,
   Wrench,
-  FileText,
   MessageSquare,
   BarChart3,
-  Shield,
   Settings,
-  ChevronDown,
+  Bell,
+  Search,
+  Menu,
+  X,
+  PanelLeftClose,
+  PanelLeft,
+  Shield,
   ChevronRight,
-  CreditCard,
-  BookOpen,
-  Receipt,
-  Layers,
-  CircleDollarSign,
-  ListTodo,
-  Calendar,
-  BadgeCheck,
-  TestTube,
-  AlertCircle,
-  ClipboardCheck,
-  Clock,
-  FolderOpen,
-  FileStack,
-  PenTool,
-  Archive,
-  Inbox,
-  Megaphone,
-  TrendingUp,
-  Building2,
-  UserCheck,
-  ShieldCheck,
-  FileSearch,
-  ShieldAlert,
-  UserPlus,
-  Crown,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface NavItem {
   label: string;
-  href?: string;
+  href: string;
   icon: React.ComponentType<{ className?: string }>;
-  children?: NavItem[];
+  badge?: string;
 }
 
-const navigation: NavItem[] = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Occupancy",
-    icon: BedDouble,
-    children: [
-      { label: "Bed Grid", href: "/occupancy/beds", icon: Layers },
-      { label: "Waitlist", href: "/occupancy/waitlist", icon: ClipboardList },
-    ],
-  },
-  {
-    label: "Admissions",
-    href: "/admissions",
-    icon: UserPlus,
-  },
-  {
-    label: "Residents",
-    href: "/residents",
-    icon: Users,
-  },
-  {
-    label: "Billing",
-    icon: DollarSign,
-    children: [
-      { label: "Overview", href: "/billing", icon: LayoutDashboard },
-      { label: "Invoices", href: "/billing/invoices", icon: Receipt },
-      { label: "Ledger", href: "/billing/ledger", icon: BookOpen },
-      { label: "Rates", href: "/billing/rates", icon: DollarSign },
-    ],
-  },
-  {
-    label: "Operations",
-    icon: Wrench,
-    children: [
-      { label: "Chores", href: "/operations/chores", icon: ListTodo },
-      { label: "Meetings", href: "/operations/meetings", icon: Calendar },
-      { label: "Passes", href: "/operations/passes", icon: BadgeCheck },
-      { label: "Curfew", href: "/operations/curfew", icon: Clock },
-      { label: "Drug Tests", href: "/operations/drug-tests", icon: TestTube },
-      { label: "Incidents", href: "/operations/incidents", icon: AlertCircle },
-      { label: "Check-ins", href: "/operations/check-ins", icon: ClipboardCheck },
-    ],
-  },
-  {
-    label: "Documents",
-    icon: FileText,
-    children: [
-      { label: "Library", href: "/documents/library", icon: FolderOpen },
-      { label: "Templates", href: "/documents/templates", icon: FileStack },
-      { label: "Signatures", href: "/documents/signatures", icon: PenTool },
-      { label: "Retention", href: "/documents/retention", icon: Archive },
-    ],
-  },
-  {
-    label: "Messages",
-    icon: MessageSquare,
-    children: [
-      { label: "Inbox", href: "/messages/inbox", icon: Inbox },
-      { label: "Announcements", href: "/messages/announcements", icon: Megaphone },
-    ],
-  },
-  {
-    label: "Reports",
-    icon: BarChart3,
-    children: [
-      { label: "Occupancy", href: "/reports/occupancy", icon: BedDouble },
-      { label: "Financial", href: "/reports/financial", icon: TrendingUp },
-      { label: "Operations", href: "/reports/operations", icon: Wrench },
-      { label: "Compliance", href: "/reports/compliance", icon: Shield },
-      { label: "Outcomes", href: "/reports/outcomes", icon: BarChart3 },
-      { label: "Grants", href: "/reports/grants", icon: FileText },
-    ],
-  },
-  {
-    label: "Compliance",
-    icon: Shield,
-    children: [
-      { label: "Dashboard", href: "/compliance/dashboard", icon: LayoutDashboard },
-      { label: "Consents", href: "/compliance/consents", icon: ShieldCheck },
-      { label: "Disclosures", href: "/compliance/disclosures", icon: FileSearch },
-      { label: "Audit Log", href: "/compliance/audit-log", icon: BookOpen },
-      { label: "Break-Glass Log", href: "/compliance/break-glass", icon: ShieldAlert },
-      { label: "BAA Registry", href: "/compliance/baa", icon: UserCheck },
-    ],
-  },
-  {
-    label: "Admin",
-    icon: Settings,
-    children: [
-      { label: "Users", href: "/admin/users", icon: Users },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
-      { label: "Properties", href: "/admin/properties", icon: Building2 },
-      { label: "Subscription", href: "/admin/subscription", icon: Crown },
-    ],
-  },
+const navItems: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Properties", href: "/admin/properties", icon: Building2 },
+  { label: "Residents", href: "/residents", icon: Users },
+  { label: "Billing", href: "/billing", icon: DollarSign },
+  { label: "Operations", href: "/operations", icon: Wrench },
+  { label: "Messages", href: "/messages", icon: MessageSquare },
+  { label: "Reports", href: "/reports", icon: BarChart3 },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
-function NavLink({ item, depth = 0 }: { item: NavItem; depth?: number }) {
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
-  const hasChildren = item.children && item.children.length > 0;
-  const isActive = item.href ? pathname === item.href : false;
+// Map sub-routes to their parent nav item for active state highlighting
+const routeParentMap: Record<string, string> = {
+  "/admin/properties": "/admin/properties",
+  "/residents": "/residents",
+  "/admissions": "/residents",
+  "/occupancy": "/admin/properties",
+  "/billing": "/billing",
+  "/operations": "/operations",
+  "/messages": "/messages",
+  "/reports": "/reports",
+  "/compliance": "/settings",
+  "/admin/users": "/settings",
+  "/admin/family-portal": "/settings",
+  "/admin/subscription": "/settings",
+  "/documents": "/settings",
+  "/settings": "/settings",
+};
 
-  if (hasChildren) {
-    return (
-      <div>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            "w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-            depth === 0
-              ? "text-slate-300 hover:text-white hover:bg-slate-700"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <item.icon className="h-5 w-5" />
-            <span>{item.label}</span>
-          </div>
-          {isOpen ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </button>
-        {isOpen && item.children && (
-          <div className="ml-4 mt-1 space-y-1">
-            {item.children.map((child) => (
-              <NavLink key={child.label} item={child} depth={depth + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
+function getActiveParent(pathname: string): string {
+  // Check exact matches first, then prefix matches (longest first)
+  const sortedKeys = Object.keys(routeParentMap).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    if (pathname === key || pathname.startsWith(key + "/")) {
+      return routeParentMap[key];
+    }
   }
+  return "/dashboard";
+}
 
+function NavLink({
+  item,
+  isCollapsed,
+  isActive,
+  onNavigate,
+}: {
+  item: NavItem;
+  isCollapsed: boolean;
+  isActive: boolean;
+  onNavigate?: () => void;
+}) {
   return (
     <Link
-      href={item.href!}
+      href={item.href}
+      onClick={onNavigate}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-        depth === 0
-          ? isActive
-            ? "bg-blue-600 text-white"
-            : "text-slate-300 hover:text-white hover:bg-slate-700"
-          : isActive
-          ? "bg-slate-700 text-white"
-          : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+        "group relative flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150",
+        isCollapsed ? "justify-center px-0 py-2.5" : "",
+        isActive
+          ? "text-zinc-100 bg-zinc-800/80"
+          : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
       )}
+      data-tooltip={isCollapsed ? item.label : undefined}
     >
-      <item.icon className="h-5 w-5" />
-      <span>{item.label}</span>
+      {isActive && !isCollapsed && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-indigo-500 rounded-r" />
+      )}
+      <item.icon
+        className={cn(
+          "h-[18px] w-[18px] flex-shrink-0 transition-colors duration-150",
+          isActive ? "text-indigo-400" : "text-zinc-500 group-hover:text-zinc-400"
+        )}
+      />
+      {!isCollapsed && (
+        <span className="flex-1">{item.label}</span>
+      )}
+      {!isCollapsed && item.badge && (
+        <span className="text-[10px] font-semibold bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">
+          {item.badge}
+        </span>
+      )}
     </Link>
   );
 }
 
-export function CrmSidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return isMobile;
+}
+
+export function CrmSidebar() {
+  const isMobile = useIsMobile();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const activeParent = getActiveParent(pathname);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Escape to close mobile
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [mobileOpen]);
+
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+
+  const sidebarContent = (
+    <>
+      {/* Logo + Collapse / Close */}
+      <div className="flex items-center justify-between h-14 px-3">
+        <div className={cn("flex items-center gap-2.5 overflow-hidden", !isMobile && isCollapsed && "justify-center w-full")}>
+          <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-bold text-white">R</span>
+          </div>
+          {(isMobile || !isCollapsed) && (
+            <span className="text-sm font-semibold text-zinc-100 tracking-tight">RecoveryOS</span>
+          )}
+        </div>
+        {isMobile ? (
+          <button
+            onClick={closeMobile}
+            className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors flex-shrink-0"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 rounded-md hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors flex-shrink-0"
+          >
+            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.href}
+            item={item}
+            isCollapsed={!isMobile && isCollapsed}
+            isActive={activeParent === item.href}
+            onNavigate={isMobile ? closeMobile : undefined}
+          />
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="p-2 border-t border-zinc-800/80 space-y-1">
+        {/* User */}
+        <div className={cn(
+          "flex items-center gap-2.5 px-3 py-2 rounded-lg",
+          !isMobile && isCollapsed ? "justify-center" : ""
+        )}>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8",
+                userButtonTrigger: "rounded-lg p-0 transition-colors",
+              },
+            }}
+          />
+          {(isMobile || !isCollapsed) && (
+            <div className="flex items-center gap-1.5">
+              <Shield className="h-3 w-3 text-green-500 flex-shrink-0" />
+              <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">HIPAA</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
+  // Mobile: hamburger trigger + overlay sidebar
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile top bar */}
+        <div className="fixed top-0 left-0 right-0 z-40 h-12 bg-[#09090B] border-b border-zinc-800/80 flex items-center px-3 gap-3 lg:hidden">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-indigo-500 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-white">R</span>
+            </div>
+            <span className="text-sm font-semibold text-zinc-100">RecoveryOS</span>
+          </div>
+        </div>
+
+        {/* Overlay */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/60" onClick={closeMobile} />
+            <aside className="absolute inset-y-0 left-0 w-[260px] flex flex-col bg-[#09090B] border-r border-zinc-800/80 shadow-2xl">
+              {sidebarContent}
+            </aside>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Desktop: standard sidebar
   return (
     <aside
       className={cn(
-        "bg-slate-800 border-r border-slate-700 flex flex-col transition-all duration-300",
-        isCollapsed ? "w-20" : "w-64"
+        "hidden lg:flex flex-col border-r border-zinc-800/80 transition-all duration-200 ease-out bg-[#09090B]",
+        isCollapsed ? "w-[60px]" : "w-[220px]"
       )}
     >
-      <div className="p-4 border-b border-slate-700">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                <span className="text-lg font-bold text-white">R</span>
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-white">RecoveryOS</h2>
-                <p className="text-xs text-slate-400">Operator CRM</p>
-              </div>
-            </div>
-          )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {!isCollapsed && (
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {navigation.map((item) => (
-            <NavLink key={item.label} item={item} />
-          ))}
-        </nav>
-      )}
-
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Shield className="h-4 w-4" />
-          {!isCollapsed && <span>HIPAA Compliant</span>}
-        </div>
-      </div>
+      {sidebarContent}
     </aside>
   );
 }

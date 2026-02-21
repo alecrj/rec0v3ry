@@ -31,20 +31,20 @@ function StatCard({
   color?: "blue" | "green" | "yellow" | "red" | "purple";
 }) {
   const colorClasses = {
-    blue: "bg-blue-50 text-blue-600",
-    green: "bg-green-50 text-green-600",
-    yellow: "bg-yellow-50 text-yellow-600",
-    red: "bg-red-50 text-red-600",
-    purple: "bg-purple-50 text-purple-600",
+    blue: "bg-indigo-500/15 text-indigo-400",
+    green: "bg-green-500/15 text-green-400",
+    yellow: "bg-yellow-500/15 text-yellow-400",
+    red: "bg-red-500/15 text-red-400",
+    purple: "bg-purple-500/15 text-purple-400",
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-5">
+    <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-600">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
-          <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+          <p className="text-sm font-medium text-zinc-400">{title}</p>
+          <p className="text-2xl font-bold text-zinc-100 mt-1">{value}</p>
+          <p className="text-sm text-zinc-500 mt-1">{subtitle}</p>
         </div>
         <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
           <Icon className="h-5 w-5" />
@@ -89,14 +89,14 @@ export default function ComplianceReportPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Compliance Report</h1>
-          <p className="text-slate-600 mt-1">
+          <h1 className="text-2xl font-bold text-zinc-100">Compliance Report</h1>
+          <p className="text-zinc-400 mt-1">
             Consents, disclosures, audit activity, and breach incidents
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-lg">
-            <Calendar className="h-4 w-4 text-slate-400" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg">
+            <Calendar className="h-4 w-4 text-zinc-500" />
             <select
               className="text-sm bg-transparent border-none outline-none"
               value="30d"
@@ -134,7 +134,7 @@ export default function ComplianceReportPage() {
           <button
             onClick={() => handleExport("csv")}
             disabled={exportMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-900 border border-zinc-700 rounded-lg hover:bg-zinc-800/40 disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
             Export
@@ -143,14 +143,14 @@ export default function ComplianceReportPage() {
       </div>
 
       {/* Part 2 Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <Lock className="h-5 w-5 text-blue-600 mt-0.5" />
+          <Lock className="h-5 w-5 text-indigo-400 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-blue-900">
+            <p className="text-sm font-medium text-indigo-200">
               42 CFR Part 2 Protected Information
             </p>
-            <p className="text-sm text-blue-700 mt-1">
+            <p className="text-sm text-indigo-300 mt-1">
               This report may contain information protected under federal confidentiality
               rules (42 CFR Part 2). Exports include the required redisclosure notice.
             </p>
@@ -195,47 +195,47 @@ export default function ComplianceReportPage() {
       </div>
 
       {/* Consent Status Breakdown */}
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+        <h2 className="text-lg font-semibold text-zinc-100 mb-4">
           Consent Status Breakdown
         </h2>
         {isLoading ? (
-          <div className="animate-pulse h-24 bg-slate-100 rounded"></div>
+          <div className="animate-pulse h-24 bg-zinc-800 rounded"></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-green-50 rounded-lg border border-green-100">
+            <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <p className="text-sm font-medium text-green-700">Active</p>
+                <CheckCircle className="h-5 w-5 text-green-400" />
+                <p className="text-sm font-medium text-green-300">Active</p>
               </div>
-              <p className="text-3xl font-bold text-green-900 mt-2">
+              <p className="text-3xl font-bold text-green-200 mt-2">
                 {summary?.consents.active || 0}
               </p>
             </div>
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+            <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-yellow-600" />
-                <p className="text-sm font-medium text-yellow-700">Pending</p>
+                <Clock className="h-5 w-5 text-yellow-400" />
+                <p className="text-sm font-medium text-yellow-300">Pending</p>
               </div>
-              <p className="text-3xl font-bold text-yellow-900 mt-2">
+              <p className="text-3xl font-bold text-yellow-200 mt-2">
                 {summary?.consents.pending || 0}
               </p>
             </div>
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+            <div className="p-4 bg-zinc-800/40 rounded-lg border border-zinc-800/50">
               <div className="flex items-center gap-2">
-                <XCircle className="h-5 w-5 text-slate-500" />
-                <p className="text-sm font-medium text-slate-700">Expired</p>
+                <XCircle className="h-5 w-5 text-zinc-500" />
+                <p className="text-sm font-medium text-zinc-300">Expired</p>
               </div>
-              <p className="text-3xl font-bold text-slate-900 mt-2">
+              <p className="text-3xl font-bold text-zinc-100 mt-2">
                 {summary?.consents.expired || 0}
               </p>
             </div>
-            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
+            <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
               <div className="flex items-center gap-2">
-                <XCircle className="h-5 w-5 text-red-600" />
-                <p className="text-sm font-medium text-red-700">Revoked</p>
+                <XCircle className="h-5 w-5 text-red-400" />
+                <p className="text-sm font-medium text-red-300">Revoked</p>
               </div>
-              <p className="text-3xl font-bold text-red-900 mt-2">
+              <p className="text-3xl font-bold text-red-200 mt-2">
                 {summary?.consents.revoked || 0}
               </p>
             </div>
@@ -244,17 +244,17 @@ export default function ComplianceReportPage() {
       </div>
 
       {/* Audit Activity */}
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+        <h2 className="text-lg font-semibold text-zinc-100 mb-4">
           Audit Activity by Sensitivity Level
         </h2>
         {isLoading ? (
-          <div className="animate-pulse h-24 bg-slate-100 rounded"></div>
+          <div className="animate-pulse h-24 bg-zinc-800 rounded"></div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <span className="text-sm font-medium text-slate-700">Total Audit Logs</span>
-              <span className="text-lg font-bold text-slate-900">
+            <div className="flex items-center justify-between p-3 bg-zinc-800/40 rounded-lg">
+              <span className="text-sm font-medium text-zinc-300">Total Audit Logs</span>
+              <span className="text-lg font-bold text-zinc-100">
                 {summary?.auditActivity.total || 0}
               </span>
             </div>
@@ -265,23 +265,23 @@ export default function ComplianceReportPage() {
                     key={level}
                     className={`p-3 rounded-lg border ${
                       level === "part2_protected"
-                        ? "bg-purple-50 border-purple-100"
+                        ? "bg-purple-500/10 border-purple-500/20"
                         : level === "confidential"
-                        ? "bg-red-50 border-red-100"
+                        ? "bg-red-500/10 border-red-500/20"
                         : level === "internal"
-                        ? "bg-yellow-50 border-yellow-100"
-                        : "bg-green-50 border-green-100"
+                        ? "bg-yellow-500/10 border-yellow-500/20"
+                        : "bg-green-500/10 border-green-500/20"
                     }`}
                   >
                     <p
                       className={`text-xs font-medium ${
                         level === "part2_protected"
-                          ? "text-purple-700"
+                          ? "text-purple-300"
                           : level === "confidential"
-                          ? "text-red-700"
+                          ? "text-red-300"
                           : level === "internal"
-                          ? "text-yellow-700"
-                          : "text-green-700"
+                          ? "text-yellow-300"
+                          : "text-green-300"
                       }`}
                     >
                       {level.replace(/_/g, " ").toUpperCase()}
@@ -289,12 +289,12 @@ export default function ComplianceReportPage() {
                     <p
                       className={`text-xl font-bold mt-1 ${
                         level === "part2_protected"
-                          ? "text-purple-900"
+                          ? "text-purple-200"
                           : level === "confidential"
-                          ? "text-red-900"
+                          ? "text-red-200"
                           : level === "internal"
-                          ? "text-yellow-900"
-                          : "text-green-900"
+                          ? "text-yellow-200"
+                          : "text-green-200"
                       }`}
                     >
                       {count}
@@ -309,26 +309,26 @@ export default function ComplianceReportPage() {
 
       {/* Breach Incidents */}
       {(summary?.breaches.open || 0) > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+          <h2 className="text-lg font-semibold text-zinc-100 mb-4">
             Open Breach Incidents
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-              <p className="text-sm font-medium text-green-700">Low Risk</p>
-              <p className="text-2xl font-bold text-green-900 mt-1">
+            <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+              <p className="text-sm font-medium text-green-300">Low Risk</p>
+              <p className="text-2xl font-bold text-green-200 mt-1">
                 {summary?.breaches.byRiskLevel.low || 0}
               </p>
             </div>
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-100">
-              <p className="text-sm font-medium text-yellow-700">Medium Risk</p>
-              <p className="text-2xl font-bold text-yellow-900 mt-1">
+            <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+              <p className="text-sm font-medium text-yellow-300">Medium Risk</p>
+              <p className="text-2xl font-bold text-yellow-200 mt-1">
                 {summary?.breaches.byRiskLevel.medium || 0}
               </p>
             </div>
-            <div className="p-4 bg-red-50 rounded-lg border border-red-100">
-              <p className="text-sm font-medium text-red-700">High Risk</p>
-              <p className="text-2xl font-bold text-red-900 mt-1">
+            <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+              <p className="text-sm font-medium text-red-300">High Risk</p>
+              <p className="text-2xl font-bold text-red-200 mt-1">
                 {summary?.breaches.byRiskLevel.high || 0}
               </p>
             </div>
@@ -337,14 +337,14 @@ export default function ComplianceReportPage() {
       )}
 
       {/* Expiring Consents Table */}
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
+      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-zinc-100">
             Consents Expiring Within 30 Days
           </h2>
           <a
             href="/compliance/consents"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
           >
             View All Consents
           </a>
@@ -352,30 +352,30 @@ export default function ComplianceReportPage() {
         {expiringLoading ? (
           <div className="animate-pulse space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-12 bg-slate-100 rounded"></div>
+              <div key={i} className="h-12 bg-zinc-800 rounded"></div>
             ))}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">
+                <tr className="border-b border-zinc-800">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-zinc-300">
                     Resident
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-zinc-300">
                     Consent Type
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-zinc-300">
                     Purpose
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-zinc-300">
                     Expires
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-zinc-300">
                     Days Left
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-zinc-300">
                     Action
                   </th>
                 </tr>
@@ -384,18 +384,18 @@ export default function ComplianceReportPage() {
                 {expiringConsents?.consents.map((consent) => (
                   <tr
                     key={consent.id}
-                    className="border-b border-slate-100 hover:bg-slate-50"
+                    className="border-b border-zinc-800/50 hover:bg-zinc-800/40"
                   >
-                    <td className="py-3 px-4 text-sm font-medium text-slate-900">
+                    <td className="py-3 px-4 text-sm font-medium text-zinc-100">
                       {consent.residentName}
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
+                    <td className="py-3 px-4 text-sm text-zinc-400">
                       {consent.consentType.replace(/_/g, " ")}
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600 max-w-xs truncate">
+                    <td className="py-3 px-4 text-sm text-zinc-400 max-w-xs truncate">
                       {consent.purpose}
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
+                    <td className="py-3 px-4 text-sm text-zinc-400">
                       {consent.expiresAt
                         ? new Date(consent.expiresAt).toLocaleDateString()
                         : "—"}
@@ -404,17 +404,17 @@ export default function ComplianceReportPage() {
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded ${
                           (consent.daysUntilExpiration || 0) <= 7
-                            ? "bg-red-100 text-red-700"
+                            ? "bg-red-500/15 text-red-300"
                             : (consent.daysUntilExpiration || 0) <= 14
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-blue-100 text-blue-700"
+                            ? "bg-yellow-500/15 text-yellow-300"
+                            : "bg-indigo-500/15 text-indigo-300"
                         }`}
                       >
                         {consent.daysUntilExpiration} days
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                      <button className="text-sm text-indigo-400 hover:text-indigo-300 font-medium">
                         Renew
                       </button>
                     </td>
@@ -425,7 +425,7 @@ export default function ComplianceReportPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="py-6 text-center text-sm text-slate-500"
+                      className="py-6 text-center text-sm text-zinc-500"
                     >
                       No consents expiring within 30 days
                     </td>
@@ -441,38 +441,38 @@ export default function ComplianceReportPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a
           href="/compliance/audit"
-          className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800/40 transition-colors"
         >
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <Eye className="h-5 w-5 text-purple-600" />
+          <div className="p-2 bg-purple-500/15 rounded-lg">
+            <Eye className="h-5 w-5 text-purple-400" />
           </div>
           <div>
-            <p className="font-medium text-slate-900">View Audit Logs</p>
-            <p className="text-sm text-slate-500">Full audit trail</p>
+            <p className="font-medium text-zinc-100">View Audit Logs</p>
+            <p className="text-sm text-zinc-500">Full audit trail</p>
           </div>
         </a>
         <a
           href="/compliance/disclosures"
-          className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800/40 transition-colors"
         >
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <FileText className="h-5 w-5 text-blue-600" />
+          <div className="p-2 bg-indigo-500/15 rounded-lg">
+            <FileText className="h-5 w-5 text-indigo-400" />
           </div>
           <div>
-            <p className="font-medium text-slate-900">View Disclosures</p>
-            <p className="text-sm text-slate-500">Disclosure history</p>
+            <p className="font-medium text-zinc-100">View Disclosures</p>
+            <p className="text-sm text-zinc-500">Disclosure history</p>
           </div>
         </a>
         <a
           href="/compliance/breaches"
-          className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800/40 transition-colors"
         >
-          <div className="p-2 bg-red-100 rounded-lg">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+          <div className="p-2 bg-red-500/15 rounded-lg">
+            <AlertTriangle className="h-5 w-5 text-red-400" />
           </div>
           <div>
-            <p className="font-medium text-slate-900">Breach Incidents</p>
-            <p className="text-sm text-slate-500">Manage incidents</p>
+            <p className="font-medium text-zinc-100">Breach Incidents</p>
+            <p className="text-sm text-zinc-500">Manage incidents</p>
           </div>
         </a>
       </div>

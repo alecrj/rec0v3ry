@@ -78,6 +78,48 @@ const listUsersSchema = z.object({
  */
 export const userRouter = router({
   /**
+   * Get current authenticated user
+   * Returns the current user with their org_id and role
+   */
+  getCurrentUser: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.user?.id;
+      const orgId = (ctx as any).orgId as string | undefined;
+
+      if (!userId) {
+        return null;
+      }
+
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, userId),
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      // Get current role assignment
+      let currentRole = null;
+      if (orgId) {
+        currentRole = await ctx.db.query.roleAssignments.findFirst({
+          where: and(
+            eq(roleAssignments.user_id, userId),
+            eq(roleAssignments.org_id, orgId),
+            isNull(roleAssignments.revoked_at)
+          ),
+        });
+      }
+
+      return {
+        ...user,
+        org_id: orgId,
+        role: currentRole?.role,
+        scope_type: currentRole?.scope_type,
+        scope_id: currentRole?.scope_id,
+      };
+    }),
+
+  /**
    * List organization users with their roles
    */
   list: protectedProcedure

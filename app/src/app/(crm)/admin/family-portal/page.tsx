@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import {
   Users,
   UserPlus,
@@ -9,491 +9,444 @@ import {
   Phone,
   Calendar,
   CheckCircle,
-  XCircle,
-  Search,
-  Filter,
-  Eye,
-  Key,
   Lock,
-  AlertCircle,
-  ExternalLink,
+  Search,
+  Key,
+  Eye,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Badge,
+  EmptyState,
+  NoResultsState,
+  ErrorState,
+  SkeletonTable,
+  SkeletonStatCard,
+  useToast,
+} from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-interface FamilyContact {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string | null;
-  relationship: string;
-  residentName: string;
-  residentId: string;
-  hasPortalAccess: boolean;
-  isEmergencyContact: boolean;
-  canReceiveUpdates: boolean;
-  lastAccess: string | null;
-  consentStatus: "active" | "expired" | "none";
-}
-
 export default function FamilyPortalPage() {
-  const [showInviteModal, setShowInviteModal] = useState(false);
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterAccess, setFilterAccess] = useState<string>("all");
-
-  const contacts: FamilyContact[] = [
-    {
-      id: "1",
-      firstName: "John",
-      lastName: "Martinez",
-      email: "john.martinez@email.com",
-      phone: "(555) 123-4567",
-      relationship: "Father",
-      residentName: "Sarah Martinez",
-      residentId: "r1",
-      hasPortalAccess: true,
-      isEmergencyContact: true,
-      canReceiveUpdates: true,
-      lastAccess: "2026-02-17T10:30:00",
-      consentStatus: "active",
-    },
-    {
-      id: "2",
-      firstName: "Maria",
-      lastName: "Martinez",
-      email: "maria.martinez@email.com",
-      phone: "(555) 123-4568",
-      relationship: "Mother",
-      residentName: "Sarah Martinez",
-      residentId: "r1",
-      hasPortalAccess: true,
-      isEmergencyContact: true,
-      canReceiveUpdates: true,
-      lastAccess: "2026-02-16T14:20:00",
-      consentStatus: "active",
-    },
-    {
-      id: "3",
-      firstName: "Robert",
-      lastName: "Chen",
-      email: "robert.chen@email.com",
-      phone: null,
-      relationship: "Brother",
-      residentName: "Michael Chen",
-      residentId: "r2",
-      hasPortalAccess: false,
-      isEmergencyContact: false,
-      canReceiveUpdates: false,
-      lastAccess: null,
-      consentStatus: "none",
-    },
-    {
-      id: "4",
-      firstName: "Susan",
-      lastName: "Parker",
-      email: "susan.parker@email.com",
-      phone: "(555) 987-6543",
-      relationship: "Sponsor",
-      residentName: "Jennifer Parker",
-      residentId: "r3",
-      hasPortalAccess: true,
-      isEmergencyContact: false,
-      canReceiveUpdates: true,
-      lastAccess: "2026-02-15T09:00:00",
-      consentStatus: "expired",
-    },
-    {
-      id: "5",
-      firstName: "David",
-      lastName: "Wilson",
-      email: "david.wilson@email.com",
-      phone: "(555) 456-7890",
-      relationship: "Father",
-      residentName: "Emily Thompson",
-      residentId: "r4",
-      hasPortalAccess: false,
-      isEmergencyContact: true,
-      canReceiveUpdates: false,
-      lastAccess: null,
-      consentStatus: "active",
-    },
-  ];
-
-  const stats = {
-    totalContacts: contacts.length,
-    withPortalAccess: contacts.filter((c) => c.hasPortalAccess).length,
-    emergencyContacts: contacts.filter((c) => c.isEmergencyContact).length,
-    activeConsents: contacts.filter((c) => c.consentStatus === "active").length,
-    accessedLast30Days: contacts.filter((c) => c.lastAccess !== null).length,
-  };
-
-  const filteredContacts = contacts.filter((c) => {
-    if (filterAccess === "with_access" && !c.hasPortalAccess) return false;
-    if (filterAccess === "without_access" && c.hasPortalAccess) return false;
-    if (
-      searchQuery &&
-      !`${c.firstName} ${c.lastName} ${c.residentName}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
-    )
-      return false;
-    return true;
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [managingContact, setManagingContact] = useState<{ contactId: string; name: string; hasPortal: boolean; email: string | null } | null>(null);
+  const [contactForm, setContactForm] = useState({
+    residentId: "",
+    firstName: "",
+    lastName: "",
+    relationship: "",
+    email: "",
+    phone: "",
+    isEmergencyContact: false,
+    canReceiveUpdates: false,
   });
 
-  const getConsentBadge = (status: "active" | "expired" | "none") => {
-    const styles = {
-      active: "bg-green-100 text-green-700",
-      expired: "bg-yellow-100 text-yellow-700",
-      none: "bg-slate-100 text-slate-600",
-    };
-    const labels = {
-      active: "Active Consent",
-      expired: "Expired",
-      none: "No Consent",
-    };
+  const { data: userData } = trpc.user.getCurrentUser.useQuery(undefined, { retry: false });
+  const orgId = userData?.org_id;
+
+  const { data: residents } = trpc.resident.list.useQuery({}, { enabled: !!orgId });
+
+  const addContact = trpc.familyPortal.upsertContact.useMutation({
+    onSuccess: () => {
+      toast("success", "Contact added");
+      utils.familyPortal.listPortalUsers.invalidate();
+      utils.familyPortal.getPortalStats.invalidate();
+      setContactForm({ residentId: "", firstName: "", lastName: "", relationship: "", email: "", phone: "", isEmergencyContact: false, canReceiveUpdates: false });
+      setShowAddModal(false);
+    },
+    onError: (err) => toast("error", "Failed to add contact", err.message),
+  });
+
+  const enablePortal = trpc.familyPortal.enablePortalAccess.useMutation({
+    onSuccess: () => {
+      toast("success", "Portal access enabled");
+      utils.familyPortal.listPortalUsers.invalidate();
+      utils.familyPortal.getPortalStats.invalidate();
+      setManagingContact(null);
+    },
+    onError: (err) => toast("error", "Failed to enable portal", err.message),
+  });
+
+  const disablePortal = trpc.familyPortal.disablePortalAccess.useMutation({
+    onSuccess: () => {
+      toast("success", "Portal access disabled");
+      utils.familyPortal.listPortalUsers.invalidate();
+      utils.familyPortal.getPortalStats.invalidate();
+      setManagingContact(null);
+    },
+    onError: (err) => toast("error", "Failed to disable portal", err.message),
+  });
+
+  const deleteContact = trpc.familyPortal.deleteContact.useMutation({
+    onSuccess: () => {
+      toast("success", "Contact removed");
+      utils.familyPortal.listPortalUsers.invalidate();
+      utils.familyPortal.getPortalStats.invalidate();
+      setManagingContact(null);
+    },
+    onError: (err) => toast("error", "Failed to remove contact", err.message),
+  });
+
+  const { data: stats, isLoading: statsLoading } = trpc.familyPortal.getPortalStats.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
+
+  const { data: portalUsers, isLoading: usersLoading, error } = trpc.familyPortal.listPortalUsers.useQuery(
+    { orgId: orgId!, limit: 50 },
+    { enabled: !!orgId }
+  );
+
+  const isLoading = statsLoading || usersLoading;
+  const allUsers = portalUsers ?? [];
+
+  const filteredUsers = allUsers.filter((u) => {
+    if (!searchQuery) return true;
+    const name = `${u.contact_first_name} ${u.contact_last_name} ${u.resident_first_name} ${u.resident_last_name}`.toLowerCase();
+    return name.includes(searchQuery.toLowerCase());
+  });
+
+  if (error) {
     return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status]}`}>
-        {labels[status]}
-      </span>
+      <PageContainer>
+        <Card><CardContent><ErrorState title="Failed to load family portal data" description={error.message} /></CardContent></Card>
+      </PageContainer>
     );
-  };
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Family Portal Management</h1>
-          <p className="text-slate-600 mt-1">Manage family and sponsor access to resident information</p>
-        </div>
-        <button
-          onClick={() => setShowInviteModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2"
-        >
-          <UserPlus className="h-4 w-4" />
-          Add Contact
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Family Portal Management"
+        description="Manage family and sponsor access to resident information"
+        actions={
+          <Button variant="primary" icon={<UserPlus className="h-4 w-4" />} onClick={() => setShowAddModal(true)}>
+            Add Contact
+          </Button>
+        }
+      />
 
       {/* Part 2 Notice */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-amber-900">42 CFR Part 2 Compliance</h3>
-            <p className="text-sm text-amber-700 mt-1">
-              Family portal access requires active consent from the resident. All data viewed through the
-              portal is logged for compliance auditing. Family members can only view information they have
-              been explicitly consented to access.
-            </p>
+      <Card variant="outlined" className="border-amber-500/30 bg-amber-500/10">
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <Shield className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-semibold text-amber-300">42 CFR Part 2 Compliance</h3>
+              <p className="text-sm text-amber-300 mt-1">
+                Family portal access requires active consent from the resident. All data viewed through the
+                portal is logged for compliance auditing. Family members can only view information they have
+                been explicitly consented to access.
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Total Contacts</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.totalContacts}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Key className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Portal Access</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.withPortalAccess}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <Phone className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Emergency</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.emergencyContacts}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Active Consents</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.activeConsents}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Eye className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Active (30d)</p>
-              <p className="text-2xl font-bold text-slate-900">{stats.accessedLast30Days}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {isLoading ? (
+        <StatCardGrid columns={4}>
+          <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+        </StatCardGrid>
+      ) : (
+        <StatCardGrid columns={4}>
+          <StatCard
+            title="Total Contacts"
+            value={String(stats?.totalContacts ?? 0)}
+            icon={<Users className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Portal Access"
+            value={String(stats?.withPortalAccess ?? 0)}
+            variant="success"
+            icon={<Key className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Emergency"
+            value={String(stats?.emergencyContacts ?? 0)}
+            variant="error"
+            icon={<Phone className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Active Tokens"
+            value={String(stats?.activeTokens ?? 0)}
+            icon={<CheckCircle className="h-5 w-5" />}
+          />
+          <StatCard
+            title="Active (30d)"
+            value={String(stats?.accessedLast30Days ?? 0)}
+            icon={<Eye className="h-5 w-5" />}
+          />
+        </StatCardGrid>
+      )}
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-700">Filters:</span>
+      {/* Table */}
+      <Card className="overflow-hidden">
+        <div className="px-4 pt-4 pb-0">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search contacts or residents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+            />
           </div>
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search contacts or residents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          <select
-            value={filterAccess}
-            onChange={(e) => setFilterAccess(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">All Contacts</option>
-            <option value="with_access">With Portal Access</option>
-            <option value="without_access">Without Portal Access</option>
-          </select>
         </div>
-      </div>
 
-      {/* Contacts Table */}
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">Family & Sponsor Contacts</h2>
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="px-4 pb-4"><SkeletonTable rows={6} columns={6} /></div>
+          ) : filteredUsers.length === 0 ? (
+            <CardContent>
+              {searchQuery ? (
+                <NoResultsState searchTerm={searchQuery} onClear={() => setSearchQuery("")} />
+              ) : (
+                <EmptyState
+                  iconType="users"
+                  title="No portal users configured"
+                  description="Add family contacts to enable portal access."
+                />
+              )}
+            </CardContent>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Contact</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resident</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Relationship</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Portal Status</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Last Access</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => (
+                      <tr key={user.contact_id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                        <td className="py-3 px-4">
+                          <div>
+                            <div className="text-sm font-medium text-zinc-100">
+                              {user.contact_first_name} {user.contact_last_name}
+                            </div>
+                            {user.contact_email && (
+                              <div className="text-xs text-zinc-500 flex items-center gap-1.5 mt-0.5">
+                                <Mail className="h-3 w-3" />
+                                {user.contact_email}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                          {user.resident_first_name} {user.resident_last_name}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-zinc-400">
+                          {user.relationship ?? "—"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {user.token_active ? (
+                            <Badge variant="success" dot>Active</Badge>
+                          ) : (
+                            <Badge variant="default" dot>No Token</Badge>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-zinc-400">
+                          {user.last_accessed_at ? (
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(user.last_accessed_at).toLocaleDateString()}
+                            </div>
+                          ) : (
+                            <span className="text-zinc-500">Never</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-indigo-400"
+                            onClick={() => setManagingContact({
+                              contactId: user.contact_id,
+                              name: `${user.contact_first_name} ${user.contact_last_name}`,
+                              hasPortal: !!user.token_active,
+                              email: user.contact_email,
+                            })}
+                          >
+                            Manage
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+                <p className="text-sm text-zinc-500">
+                  Showing {filteredUsers.length} contact{filteredUsers.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </>
+          )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Contact</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Resident</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Relationship</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Portal Access</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Consent</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Last Access</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContacts.map((contact) => (
-                <tr key={contact.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="py-3 px-4">
-                    <div>
-                      <div className="font-medium text-slate-900">
-                        {contact.firstName} {contact.lastName}
-                      </div>
-                      <div className="text-sm text-slate-500 flex items-center gap-2">
-                        <Mail className="h-3 w-3" />
-                        {contact.email}
-                      </div>
-                      {contact.phone && (
-                        <div className="text-sm text-slate-500 flex items-center gap-2">
-                          <Phone className="h-3 w-3" />
-                          {contact.phone}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="font-medium text-slate-900">{contact.residentName}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-600">{contact.relationship}</span>
-                      {contact.isEmergencyContact && (
-                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
-                          Emergency
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    {contact.hasPortalAccess ? (
-                      <span className="flex items-center gap-1 text-green-600">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="text-sm">Enabled</span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-slate-400">
-                        <Lock className="h-4 w-4" />
-                        <span className="text-sm">Disabled</span>
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">{getConsentBadge(contact.consentStatus)}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">
-                    {contact.lastAccess ? (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(contact.lastAccess).toLocaleDateString()}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400">Never</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      {contact.hasPortalAccess ? (
-                        <button className="text-sm text-red-600 hover:text-red-700 font-medium">
-                          Revoke
-                        </button>
-                      ) : (
-                        <button
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                          disabled={contact.consentStatus !== "active"}
-                          title={contact.consentStatus !== "active" ? "Requires active consent" : ""}
-                        >
-                          Enable
-                        </button>
-                      )}
-                      <span className="text-slate-300">|</span>
-                      <button className="text-sm text-slate-600 hover:text-slate-700 font-medium">
-                        Edit
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+      </Card>
       {/* Add Contact Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg m-4">
-            <div className="p-6 border-b border-slate-200">
-              <h2 className="text-xl font-bold text-slate-900">Add Family Contact</h2>
+      {showAddModal && orgId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Add Family Contact</h2>
             </div>
-            <div className="p-6 space-y-4">
+            <form
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                if (!contactForm.residentId) return;
+                addContact.mutate({
+                  orgId,
+                  residentId: contactForm.residentId,
+                  firstName: contactForm.firstName,
+                  lastName: contactForm.lastName,
+                  relationship: contactForm.relationship,
+                  email: contactForm.email || undefined,
+                  phone: contactForm.phone || undefined,
+                  isEmergencyContact: contactForm.isEmergencyContact,
+                  canReceiveUpdates: contactForm.canReceiveUpdates,
+                });
+              }}
+              className="p-6 space-y-4"
+            >
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Resident
-                </label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="">Select resident...</option>
-                  <option value="r1">Sarah Martinez</option>
-                  <option value="r2">Michael Chen</option>
-                  <option value="r3">Jennifer Parker</option>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident <span className="text-red-400">*</span></label>
+                <select
+                  required
+                  value={contactForm.residentId}
+                  onChange={(e) => setContactForm({ ...contactForm, residentId: e.target.value })}
+                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                >
+                  <option value="">Select a resident</option>
+                  {(residents?.items ?? []).map((r) => (
+                    <option key={r.id} value={r.id}>{r.first_name} {r.last_name}</option>
+                  ))}
                 </select>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name <span className="text-red-400">*</span></label>
+                  <input type="text" required value={contactForm.firstName} onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name <span className="text-red-400">*</span></label>
+                  <input type="text" required value={contactForm.lastName} onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                 </div>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Relationship
-                </label>
-                <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="">Select relationship...</option>
-                  <option value="parent">Parent</option>
-                  <option value="spouse">Spouse</option>
-                  <option value="sibling">Sibling</option>
-                  <option value="child">Child</option>
-                  <option value="sponsor">Sponsor</option>
-                  <option value="other">Other</option>
-                </select>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Relationship <span className="text-red-400">*</span></label>
+                <input type="text" required value={contactForm.relationship} onChange={(e) => setContactForm({ ...contactForm, relationship: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" placeholder="e.g., Parent, Spouse, Sibling" />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+                  <input type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
+                  <input type="tel" value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Phone (optional)
-                </label>
-                <input
-                  type="tel"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
               <div className="space-y-2">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="rounded border-slate-300" />
-                  <span className="text-sm text-slate-700">Emergency contact</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={contactForm.isEmergencyContact} onChange={(e) => setContactForm({ ...contactForm, isEmergencyContact: e.target.checked })} className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" />
+                  <span className="text-sm text-zinc-300">Emergency contact</span>
                 </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" className="rounded border-slate-300" />
-                  <span className="text-sm text-slate-700">Can receive updates</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={contactForm.canReceiveUpdates} onChange={(e) => setContactForm({ ...contactForm, canReceiveUpdates: e.target.checked })} className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" />
+                  <span className="text-sm text-zinc-300">Can receive updates</span>
                 </label>
               </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary" disabled={addContact.isPending}>
+                  {addContact.isPending ? "Adding..." : "Add Contact"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              <div className="p-3 bg-amber-50 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
-                  <p className="text-sm text-amber-700">
-                    Portal access requires active Part 2 consent from the resident. You can enable portal
-                    access after the contact is created and consent is obtained.
-                  </p>
-                </div>
-              </div>
+      {/* Manage Contact Modal */}
+      {managingContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setManagingContact(null)} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-zinc-100">Manage Contact</h2>
+              <p className="text-sm text-zinc-500 mt-1">{managingContact.name}</p>
             </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-              <button
-                onClick={() => setShowInviteModal(false)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50"
+            <div className="p-6 space-y-3">
+              {managingContact.hasPortal ? (
+                <Button
+                  variant="secondary"
+                  className="w-full justify-center"
+                  icon={<Lock className="h-4 w-4" />}
+                  disabled={disablePortal.isPending}
+                  onClick={() => disablePortal.mutate({ contactId: managingContact.contactId })}
+                >
+                  {disablePortal.isPending ? "Disabling..." : "Disable Portal Access"}
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  className="w-full justify-center"
+                  icon={<Key className="h-4 w-4" />}
+                  disabled={enablePortal.isPending || !managingContact.email}
+                  onClick={() => {
+                    if (!managingContact.email) {
+                      toast("warning", "Email required", "This contact needs an email to enable portal access");
+                      return;
+                    }
+                    enablePortal.mutate({ contactId: managingContact.contactId, email: managingContact.email });
+                  }}
+                >
+                  {enablePortal.isPending ? "Enabling..." : "Enable Portal Access"}
+                </Button>
+              )}
+              {!managingContact.email && !managingContact.hasPortal && (
+                <p className="text-xs text-amber-400">Email required for portal access</p>
+              )}
+              <Button
+                variant="ghost"
+                className="w-full justify-center text-red-400 hover:bg-red-500/10"
+                disabled={deleteContact.isPending}
+                onClick={() => {
+                  if (confirm(`Remove ${managingContact.name}?`)) {
+                    deleteContact.mutate({ contactId: managingContact.contactId });
+                  }
+                }}
               >
-                Cancel
-              </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
-                Add Contact
-              </button>
+                {deleteContact.isPending ? "Removing..." : "Remove Contact"}
+              </Button>
+            </div>
+            <div className="p-6 border-t border-zinc-800">
+              <Button variant="secondary" className="w-full justify-center" onClick={() => setManagingContact(null)}>Close</Button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

@@ -160,6 +160,67 @@ export const consentRouter = router({
     }),
 
   /**
+   * Renew an expired or expiring consent
+   * Creates a new active consent based on the original, with a new expiration date
+   * Source: 42 CFR 2.31 - renewal requires same elements as original consent
+   */
+  renew: part2Procedure
+    .meta({ permission: 'consent:create', resource: 'consent' })
+    .input(z.object({
+      id: z.string().uuid(),
+      newExpirationDate: z.string().datetime(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      const existing = await ctx.db.query.consents.findFirst({
+        where: and(
+          eq(consents.id, input.id),
+          eq(consents.org_id, orgId)
+        ),
+      });
+
+      if (!existing) {
+        throw new NotFoundError('Consent', input.id);
+      }
+
+      if (existing.status === 'active') {
+        throw new ConflictError('Consent is already active', {
+          consentId: input.id,
+        });
+      }
+
+      // Create a new consent record based on the expired one
+      const [renewed] = await ctx.db
+        .insert(consents)
+        .values({
+          org_id: orgId,
+          resident_id: existing.resident_id,
+          consent_type: existing.consent_type,
+          status: 'active',
+          purpose: existing.purpose,
+          recipient_name: existing.recipient_name,
+          recipient_organization: existing.recipient_organization,
+          scope_of_information: existing.scope_of_information,
+          granted_at: new Date(),
+          expires_at: new Date(input.newExpirationDate),
+          consent_form_signed: true,
+          signature_date: new Date().toISOString().split('T')[0],
+          notes: `Renewed from consent ${existing.id}`,
+          metadata: {
+            ...(existing.metadata as Record<string, unknown> ?? {}),
+            renewedFrom: existing.id,
+            renewedAt: new Date().toISOString(),
+          },
+          created_by: ctx.user!.id,
+          updated_by: ctx.user!.id,
+        })
+        .returning();
+
+      return renewed;
+    }),
+
+  /**
    * Revoke consent
    * Source: 42 CFR 2.31(b) - revocation does not apply retroactively
    */

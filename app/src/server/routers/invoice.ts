@@ -12,6 +12,8 @@ import { invoices, invoiceLineItems } from '../db/schema/payments';
 import { organizations } from '../db/schema/orgs';
 import { eq, and, isNull, desc, gte, lte, sql } from 'drizzle-orm';
 import { NotFoundError, InvalidInputError } from '@/lib/errors';
+import { residents } from '../db/schema/residents';
+import { sendInvoiceCreatedEmail } from '@/lib/email';
 
 /**
  * Invoice list filters schema
@@ -289,6 +291,28 @@ export const invoiceRouter = router({
         })
         .where(eq(invoices.id, input.id))
         .returning();
+
+      // Send email notification (fire-and-forget)
+      if (existing.resident_id) {
+        const resident = await db.query.residents.findFirst({
+          where: eq(residents.id, existing.resident_id),
+          columns: { first_name: true, last_name: true, email: true },
+        });
+        const org = await db.query.organizations.findFirst({
+          where: eq(organizations.id, orgId),
+          columns: { name: true },
+        });
+        if (resident?.email && org) {
+          sendInvoiceCreatedEmail({
+            to: resident.email,
+            recipientName: `${resident.first_name} ${resident.last_name}`,
+            invoiceNumber: existing.invoice_number,
+            amount: existing.total,
+            dueDate: existing.due_date ? new Date(existing.due_date).toLocaleDateString() : 'N/A',
+            orgName: org.name,
+          }).catch((err) => console.error('[Invoice] Email send failed:', err));
+        }
+      }
 
       return updated;
     }),

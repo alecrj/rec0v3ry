@@ -10,7 +10,7 @@
 
 | Phase | Focus | Duration | Status |
 |-------|-------|----------|--------|
-| 5A | Critical Fixes | 1 day | 🔴 Not Started |
+| 5A | Critical Fixes | 1 day | 🟡 ~90% Done |
 | 5B | UI Overhaul | 3-4 days | 🔴 Not Started |
 | 5C | Core Features | 3-4 days | 🔴 Not Started |
 | 5D | Integrations | 2-3 days | 🔴 Not Started |
@@ -22,26 +22,35 @@
 ## Phase 5A: Critical Fixes (Day 1)
 
 ### 5A.1 — Fix Broken Pages
-- [ ] Create `/residents` page (currently 404)
-- [ ] Create `/residents/[id]` detail page
-- [ ] Fix any other 404 routes
+- [x] Create `/residents` page (currently 404)
+- [x] Create `/residents/[id]` detail page
+- [x] Fix any other 404 routes
 - [ ] Test all sidebar navigation links
 
 ### 5A.2 — Fix User Setup Flow
-- [ ] Update `setup-user` API to properly set scope_type/scope_id
-- [ ] Add error handling for edge cases
+- [x] Update `setup-user` API to properly set scope_type/scope_id
+- [x] Add error handling for edge cases
 - [ ] Test full sign-up → dashboard flow
 
-### 5A.3 — Wire Up Real Data
-- [ ] Dashboard stats → connect to `reporting.getDashboard`
-- [ ] Bed grid → connect to `occupancy.getBedGrid`
-- [ ] Residents list → connect to `user.getResidents`
-- [ ] Remove all hardcoded mock data from pages
+### 5A.3 — Wire Up Real Data (~90% done)
+- [x] Dashboard stats → connect to `reporting.getDashboard`
+- [x] Bed grid → connect to `occupancy.getBedGrid`
+- [x] Residents list → connect to `resident.list`
+- [x] Operations pages (7): chores, meetings, passes, curfew, drug-tests, incidents, check-ins
+- [x] Billing pages (6): overview, invoices list, invoice detail, new invoice, ledger, rates
+- [x] Compliance pages (2): consents, dashboard
+- [x] Admin pages (2): family portal, invite user
+- [x] Admissions: lead detail [id]
+- [x] Messages: compose, inbox
+- [ ] **Messages: conversation detail** (`messages/[conversationId]`) → `conversation.getById` + `message.list` + `message.send`
+- [ ] **Compliance: disclosures** — check if needs wiring
+- [ ] **Resident PWA pages** (~7 pages) — check each for mock data
+- [ ] Final sweep — verify no remaining hardcoded mock data
 
 ### 5A.4 — Fix Clerk Integration
-- [ ] Remove OrganizationSwitcher dependency completely
-- [ ] Test sign-in/sign-out flow
-- [ ] Verify session handling works
+- [x] Remove OrganizationSwitcher dependency completely
+- [x] Test sign-in/sign-out flow
+- [x] Verify session handling works
 
 ---
 

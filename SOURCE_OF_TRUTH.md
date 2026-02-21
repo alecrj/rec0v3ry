@@ -4,11 +4,134 @@
 > Read this FIRST at the start of EVERY session.
 
 ## Current State
-- **Phase**: PHASE-5-POLISH (Active)
-- **Status**: Base platform running. Auth working (Clerk), DB connected (Neon), seed data loaded. Now fixing bugs and modernizing UI.
-- **Blocking Issues**: Residents page 404, UI needs modernization, mock data needs replacement
-- **Last Updated**: 2026-02-18
-- **Plan Doc**: See `docs/07_PHASE5_PLAN.md` for full roadmap
+- **Phase**: PHASE-6-V1-COMPLETION — **ALL SPRINTS COMPLETE (A-E)**
+- **Status**: 34 routers, 40+ CRM pages, 9 PWA pages. Auth (Clerk) + DB (Neon) connected. Build clean. **Obsidian Design System applied** (dark zinc, indigo accent, Geist font). Responsive CRM sidebar. All PWA buttons wired. Ledger + disclosure exports working.
+- **Blocking Issues**: None — ready for Phase 5 Verification
+- **Last Updated**: 2026-02-20
+- **Design System**: "Obsidian" — Geist font, zinc dark (#09090B), indigo accent (#6366F1). See globals.css for tokens.
+
+### Obsidian Design System (COMPLETE — 2026-02-20)
+
+**What changed:**
+- Font: Inter → Geist (Sans + Mono via `geist` npm package)
+- Palette: White/stone → Zinc dark (#09090B bg, #18181B surface, #27272A borders)
+- Accent: Green/emerald → Indigo (#6366F1 primary, #818CF8 hover)
+- Structure: CrmHeader removed, sidebar same bg as page, no card wrappers
+- Data: Mono font for numbers, divider-separated stats
+- Clerk: dark theme (`@clerk/themes`)
+- All 53+ files color-migrated (zero stone/slate/primary/bg-white remaining)
+- `tsc --noEmit` clean, `next build` clean
+
+**Component Library (`src/components/ui/`):** 10 components, all dark theme
+- `button.tsx` — Indigo primary, zinc secondary, ghost, destructive
+- `card.tsx` — ghost (invisible), surface (bg-zinc-900), outlined (border only)
+- `badge.tsx` — Dark tint backgrounds (green-500/12, red-500/12, etc.)
+- `input.tsx` — Dark inputs (bg-zinc-900, border-zinc-800), indigo focus
+- `skeleton.tsx` — Dark shimmer (#18181B → #27272A)
+- `stat-card.tsx` — Mono numbers, no boxes, uppercase labels
+- `data-table.tsx` — Dark headers, sticky bg, indigo selection
+- `empty-state.tsx` — Dark palette
+- `page-header.tsx` — Title only, no description
+- `toast.tsx` — Dark toast with colored accent bar
+
+### Phase 5B-MUTATIONS — Frontend Write Wiring (COMPLETE)
+
+**Problem**: All 40+ pages had real tRPC reads (`useQuery`) but ZERO writes — forms existed visually but no `useMutation` calls, no onClick handlers.
+
+**Solution**: Wired all high-value mutations in one session. Created toast notification system for feedback.
+
+**Toast System** (new):
+- `src/components/ui/toast.tsx` — ToastProvider context + useToast() hook
+- Supports success/error/warning/info with auto-dismiss (4s)
+- Wrapped in `providers.tsx` inside QueryClientProvider
+
+**Mutations Wired (12 files, 15 mutations)**:
+
+| Page | Mutation | What It Does |
+|------|----------|-------------|
+| Invoice Create | `invoice.create` | Full line-item form → backend, with validation |
+| Payment Checkout (PWA) | `payment.recordManual` | Select invoices, submit payment (Stripe placeholder) |
+| Chores | `chore.updateAssignment` | Mark Done, Reassign buttons |
+| Chores | `chore.verifyAssignment` | Verify completed chores |
+| Consent Wizard | `consent.create` | 5-step wizard with full form state → backend |
+| Consents List | `consent.revoke` | Revoke button with confirmation dialog |
+| Passes | `pass.approve` | Approve pending pass requests |
+| Passes | `pass.deny` | Deny with reason prompt |
+| Passes | `pass.complete` | Check In returning residents |
+| Curfew | `curfew.checkIn` | Record check-in for pending rows |
+| Curfew | `curfew.checkIn` | Mark Excused (late rows, with reason) |
+| Admissions Pipeline | `lead.updateStatus` | Move to Next Stage, Mark as Lost |
+| Admissions Detail | `lead.convertToResident` | Full modal: house picker, dates, DOB |
+| Resident Inbox | `message.send` | Send button + Enter key support |
+| Resident Maintenance | `maintenance.create` | Already wired (confirmed) |
+
+**Pattern**: Every mutation follows: `useMutation({ onSuccess: toast + invalidate, onError: toast })` with `disabled={mutation.isPending}` on buttons.
+
+**Already Wired (no work needed)**: Messages Compose (`createConversation` + `sendMessage`), Resident Maintenance (`maintenance.create`), Admissions Pipeline create (`lead.create`).
+
+**Remaining Unwired (lower priority)**:
+- Drug Tests/Incidents/Check-ins "View" buttons — need detail pages (navigation)
+- Document form modals (New Document, New Template, Edit Template, New Policy) — buttons exist but no onClick
+
+### Phase 5C — Clean Slate Production (COMPLETE)
+
+**Problem**: App didn't work from a clean/empty database. Setup required pre-existing seed data. Many Create forms were non-functional buttons. Maintenance page was 100% hardcoded mock data.
+
+**Phase 1 - Onboarding Flow (Complete):**
+- Setup page (`app/setup/page.tsx`) — Accepts org name, creates org + user + role from scratch
+- Setup API (`api/setup-user/route.ts`) — POST creates org when none exists, generates slug
+- Property create modal (`admin/properties/page.tsx`) — Full form → `property.create`
+- House create modal (`admin/properties/[id]/page.tsx`) — `property.createHouseWithRooms` with auto room/bed generation
+- Curfew config modal (`operations/curfew/page.tsx`) — `curfew.setHouseConfig` with house picker, weekday/weekend times
+- Rate create form (`billing/rates/page.tsx`) — Cascading property→house dropdowns, `rate.create` + `rate.deactivate`
+- Resident create modal (`residents/page.tsx`) — `resident.create` with all required fields
+- Bed assignment (`occupancy/beds/page.tsx`) — `occupancy.assignBed` with resident/bed pickers
+
+**Operator Setup Flow:** Sign up → setup org → create property → add house (auto rooms/beds) → configure curfew → create rate → add resident → assign bed
+
+**Phase 2 - Empty States (Complete):**
+- Dashboard onboarding checklist — Shows 5-step guide for new orgs (property → house → rates → resident)
+- All CRM pages already had empty states from UI overhaul
+
+**Phase 3 - Missing CRUD Forms (Complete):**
+- Chores create modal (`operations/chores/page.tsx`) — Property→house cascade, `chore.create`
+- Meetings create modal (`operations/meetings/page.tsx`) — Full form with type/datetime/location/mandatory, `meeting.create`
+- Drug tests create modal (`operations/drug-tests/page.tsx`) — Resident picker, `drugTest.create` (Part 2 protected)
+- Incidents create modal (`operations/incidents/page.tsx`) — Type/severity/datetime/description, `incident.create`
+- Maintenance full rewrite (`operations/maintenance/page.tsx`) — Replaced hardcoded mock data with tRPC queries + create modal
+- Maintenance detail rewrite (`operations/maintenance/[id]/page.tsx`) — `maintenance.getById` + `maintenance.update` for status changes
+
+**Phase 4 - UI Polish (Complete):**
+- Removed dashboard sparkline hardcoded data and fake trends
+- All forms follow consistent pattern: modal → form → `useMutation` → toast → invalidate
+
+**Build Status:** `tsc --noEmit` clean, `next build` clean — all 40+ pages compile
+
+### Phase 5A Progress — Mock→tRPC Wiring (COMPLETE)
+
+**ALL pages wired (30+ pages):**
+
+| Area | Pages Wired | tRPC Routers Used |
+|------|-------------|-------------------|
+| Operations (7) | chores, meetings, passes, curfew, drug-tests, incidents, check-ins | chore, meeting, pass, curfew, drugTest, incident, checkIn |
+| Billing (6) | overview, invoices list, invoice detail, new invoice, ledger, rates | invoice, payment, ledger, rate, resident |
+| Compliance (3) | consents, dashboard, disclosures | consent, reporting, disclosure |
+| Admin (2) | family portal, invite user | familyPortal, user, property |
+| Admissions (1) | lead detail `[id]` | lead |
+| Messages (3) | compose, inbox list, conversation detail | conversation, message |
+| Residents (1) | list + detail | resident |
+| PWA (7) | home, payments, pay, documents, maintenance, schedule, profile | user, resident, invoice, document, maintenance, meeting, chore |
+
+**Backend additions for Phase 5A.3:**
+- `disclosure.listAll` — org-wide disclosure listing (CRM admin view, no residentId required)
+- `resident.getMyProfile` — resolves resident from auth context (`scopeType=resident` + `scopeId`)
+
+### Earlier Phase 5A Changes
+1. **Residents pages** - Created `/residents` list and `/residents/[id]` detail (resident router with 6 procedures)
+2. **Setup flow fixed** - `setup-user` API now sets Clerk publicMetadata with dbUserId, orgId, role, scopeType, scopeId
+3. **tRPC context enhanced** - Now resolves DB user ID from Clerk metadata, provides full UserContext type
+4. **Proxy updated** - Redirects unauthenticated users to /setup, allows setup routes pre-DB-setup
+5. **Setup page improved** - Checks existing status first, better UX with loading states
 
 ## DECISIONS
 - **Workflow**: Opus direct writes, NO agent teams. One sprint pair per session. Sequential: read docs → backend → tsc → frontend → tsc → integration → next build → update SOURCE_OF_TRUTH.md
@@ -88,12 +211,141 @@ Non-blocking findings from compliance-reviewer to address during relevant sprint
 | F6 | INFO | Clerk webhook Svix signature verification not documented |
 | F7 | INFO | Stripe Connected Account names shouldn't reference "sober living" |
 
-## Next Session Pickup Instructions
+## FULL AUDIT — What Works vs What Doesn't (2026-02-20)
+
+### FULLY FUNCTIONAL (25+ pages — real data + working mutations)
+
+| Area | Pages | What Works |
+|------|-------|-----------|
+| Dashboard | `/dashboard` | Real stats, activity feed, action items, onboarding checklist |
+| Residents | `/residents` | List, search, create resident modal |
+| Properties | `/admin/properties`, `/admin/properties/[id]` | List, create property, create house with auto rooms/beds |
+| Rates | `/billing/rates` | List, create, deactivate |
+| Invoices | `/billing/invoices`, `/billing/invoices/new` | List with search/filter, full line-item create form |
+| Admissions | `/admissions`, `/admissions/[id]` | Kanban, create lead, move stages, convert to resident |
+| Operations | chores, curfew, passes, drug-tests, incidents, maintenance (list+detail) | All have real reads + create/action mutations. Curfew has Configure modal. |
+| Compliance | consents, audit-log, break-glass, disclosures, dashboard | Real data + revoke/activate mutations, resident picker |
+| Documents | library, templates, signatures, retention | Real data from document/template/retention routers |
+| Messages | compose, conversation detail | Create conversation, send messages |
+| Reports | All 4 report pages | Real reporting data |
+| PWA | home, payments, payments/pay, maintenance, schedule, profile, inbox | All real data, payment + maintenance mutations work |
+
+### REAL DATA BUT PLACEHOLDER ACTIONS (buttons exist, mutations not wired)
+
+| Page | What's Missing |
+|------|---------------|
+| `/documents/library` | Upload, New Document, View, Download buttons not wired |
+| `/documents/templates` | New Template, Edit buttons not wired |
+| `/documents/signatures` | Send for Signature, View buttons not wired |
+| `/documents/retention` | New Policy button not wired |
+
+### RECENTLY WIRED (Sprints C-E)
+
+| Page | What's Working |
+|------|---------------|
+| `/billing/ledger` | Date range filter, CSV export with trial balance |
+| `/compliance/disclosures` | CSV export with 42 CFR Part 2 redisclosure notice |
+| PWA `/documents` | Sign Now (`esign.getSigningUrl`), View/Download (`document.getDownloadUrl`) |
+| PWA `/family` | Pay Now (`payment.recordManual` modal), Send Message, Consent Details |
+
+### 100% FAKE — HARDCODED MOCK DATA (no tRPC at all)
+
+| Page | Status |
+|------|--------|
+| (none — all mock data removed!) | — |
+
+### PREVIOUSLY MISSING — NOW COMPLETE
+
+| Page | Status |
+|------|--------|
+| `/residents/[id]` | **Complete** — profile, admission, contacts, admission history, compliance status, quick actions |
+
+---
+
+## NEXT SESSION: Phase 6 — V1.0 Completion
 
 ### READ THIS FIRST
-1. Read this file (SOURCE_OF_TRUTH.md) for full context
-2. Sprint 1-20 COMPLETE — clean `next build`, 162 files, 48,628 lines
-3. Phase 5 (VERIFY) is NEXT — run E2E tests, execute compliance checklist, verify audit integrity
+1. Read this file (SOURCE_OF_TRUTH.md) — the audit above is your roadmap
+2. Run `/phase-status` to confirm
+3. Work through sprints below in order
+
+### Sprint Plan
+
+**Sprint A — Must-Have (COMPLETE — 2026-02-20)**
+1. ~~Resident Detail page~~ — already complete with profile, admission, contacts, history, compliance
+2. ~~Invoice actions~~ — wired Send (`invoice.send`), Record Payment (`payment.recordManual` with modal), Void (`invoice.void` with confirm)
+3. ~~Bed assignment~~ — wired Assign Bed modal (`occupancy.assignBed`) with resident/bed pickers
+4. ~~User invite~~ — wired `user.invite` mutation with scope selection, redirects to user list
+5. ~~Announcement creation~~ — wired create modal (`announcement.create`) with scope/priority/pin/draft + delete button
+6. ~~Waitlist add~~ — wired add modal (`occupancy.addToWaitlist`) with resident picker, house, priority, date, notes
+**Backend addition:** `property.listAllHouses` — returns all houses across all properties (for dropdowns)
+
+**Sprint B — Operator daily actions (COMPLETE — 2026-02-20)**
+7. ~~Record Payment from billing overview~~ — wired Record Payment modal (`payment.recordManual`) with resident picker, amount, method on `/billing`
+8. ~~Meeting attendance roster~~ — wired Take Attendance modal (`meeting.recordAttendance`) with present/excused checkboxes per resident
+9. ~~Drug test scheduling~~ — full rewrite from 100% mock → tRPC (`drugTestSchedule.list`, `.create`, `.update`, `.delete`, `.execute`) with stats, toggle active, run now
+10. ~~Edit/deactivate users~~ — wired Edit Role modal (`user.updateRole`), Deactivate/Activate buttons (`user.deactivate`/`user.reactivate`) on `/admin/users`
+11. ~~Family portal actions~~ — wired Add Contact modal (`familyPortal.upsertContact`), Manage modal (enable/disable portal, remove contact) on `/admin/family-portal`
+
+**Sprint C — Documents module + Curfew Config (COMPLETE — 2026-02-20)**
+12. ~~Wire document library~~ — rewired from mock to `document.list` with status/search filtering
+13. ~~Wire document templates~~ — rewired from mock to `document.template.list` + `template.delete` mutation
+14. ~~Wire document signatures~~ — rewired from mock to `document.list` (signature statuses) + `esign.voidEnvelope` mutation
+15. ~~Wire document retention~~ — rewired from mock to `document.retention.list` + `retention.getExpiring`
+16. ~~Configure Curfew~~ — built Configure Curfew modal (`curfew.setHouseConfig`) with house picker, weekday/weekend time inputs, loads existing config
+17. ~~Replace all prompt() calls~~ — curfew excuse → modal, pass denial → modal, admissions mark-lost → modal
+18. ~~PWA documents~~ — wired Sign Now (`esign.getSigningUrl`), View/Download (`document.getDownloadUrl`)
+
+**Sprint D — PWA completion (COMPLETE — 2026-02-20)**
+17. ~~PWA family portal~~ — wired Pay Now modal (`payment.recordManual`), Send Message (`conversation.create` + `message.send`), Add Payment Method (toast — Stripe pending), Consent Details modal (`familyPortal.getActiveConsents`)
+18. ~~Consent renewal flow~~ — added `consent.renew` backend procedure, wired Renew button on `/compliance/consents` (modal with date picker), wired Renew on `/dashboard` (links to consents page). Also replaced `confirm()` with proper modal for revoke.
+**Backend addition:** `consent.renew` — creates new active consent from expired/revoked, copies all 42 CFR 2.31 fields
+
+**Sprint E — Polish (COMPLETE — 2026-02-20)**
+19. ~~Revenue chart real historical data~~ — done (uses `reporting.getRevenueTrends`)
+20. ~~Ledger export + date range filter~~ — date range picker (from/to), filters `listEntries` queries, CSV export with trial balance totals, filter badge with clear button
+21. ~~Disclosure export~~ — client-side CSV export with 42 CFR Part 2 redisclosure notice prepended, exports all visible disclosures
+22. ~~Responsive breakpoints~~ — CRM sidebar: mobile hamburger menu (< lg), overlay drawer with backdrop, auto-close on navigation, fixed top bar on mobile with logo; desktop unchanged (collapsible sidebar)
+
+### Future Features (NOT blocking V1.0)
+- Stripe Connect (real payment processing) — currently uses manual recording
+- Real-time messaging (WebSocket/SSE)
+- Push notifications (service worker / Twilio)
+- Public application form (shareable link)
+- Rental agreement PDF generation
+- Document e-signature (DocuSign)
+- Automated alerts (overdue, curfew, consents)
+- Expense tracking (Plaid integration)
+
+### BACKEND ROUTERS VERIFIED (All exist, all inputs documented)
+| Router | Procedure | orgId | Key Fields |
+|--------|-----------|-------|------------|
+| property | `create` | auto | name, address_line1, city, state, zip |
+| property | `createHouseWithRooms` | auto | propertyId, name, capacity, gender_restriction, rooms[] |
+| property | `createRoom` | auto | houseId, name, floor, capacity |
+| property | `createBed` | auto | roomId, name |
+| resident | `create` | auto | firstName, lastName, dateOfBirth, email?, phone? |
+| rate | `create` | auto | rateName, amount, billingFrequency, houseId?, effectiveFrom |
+| chore | `create` | input | orgId, houseId, title, frequency? |
+| meeting | `create` | input | orgId, title, meetingType, scheduledAt, houseId? |
+| drugTest | `create` | input | orgId, residentId, testType, testDate, result? |
+| incident | `create` | input | orgId, incidentType, severity, occurredAt, description |
+| maintenance | `create` | input | orgId, houseId, title, description, priority |
+| curfew | `setHouseConfig` | input | orgId, houseId, weekdayCurfew, weekendCurfew, effectiveFrom |
+
+### KEY FILES FOR UI WORK
+- Design tokens: `src/app/globals.css`
+- Components: `src/components/ui/*.tsx`
+- UI Plan: `docs/08_UI_OVERHAUL_PLAN.md`
+- Import pattern: `import { Button, Card, StatCard } from "@/components/ui"`
+
+### Key Patterns for Future Work
+- **Newer routers** (ledger, rate, invoice, payment, reporting): get `orgId` from `ctx` automatically
+- **Older routers** (operations, familyPortal): require `orgId` as input → get via `trpc.user.getCurrentUser.useQuery()` → `userData?.org_id`
+- **Conditional queries**: `{ enabled: !!orgId }` to prevent queries with undefined params
+- **Drizzle returns snake_case** from DB, **camelCase** from custom selects — match exactly
+- **All pages need** `export const dynamic = "force-dynamic"` for Clerk
+- **Resident identity**: No `user_id` on residents table; resolved via `scopeType === 'resident'` + `scopeId` from Clerk metadata → `resident.getMyProfile` procedure
 
 ### What's Been Built (Sprint 1-19)
 

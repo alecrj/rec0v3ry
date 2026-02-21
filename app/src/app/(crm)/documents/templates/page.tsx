@@ -5,17 +5,239 @@ import {
   Plus,
   Search,
   FileStack,
-  Copy,
   Pencil,
   Trash2,
-  MoreVertical,
+  X,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  Button,
+  Badge,
+  EmptyState,
+  SkeletonCard,
+  useToast,
+} from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
+const DOC_TYPES = [
+  "intake_form", "resident_agreement", "house_rules", "consent_form",
+  "release_of_info", "financial_agreement", "treatment_plan",
+  "discharge_summary", "incident_report", "other",
+] as const;
+
+const typeLabels: Record<string, string> = {
+  intake_form: "Intake Form",
+  resident_agreement: "Agreement",
+  consent_form: "Consent",
+  release_of_info: "Release of Info",
+  house_rules: "House Rules",
+  financial_agreement: "Financial",
+  treatment_plan: "Treatment Plan",
+  discharge_summary: "Discharge Summary",
+  incident_report: "Incident Report",
+  other: "Other",
+};
+
+const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+
+// ── Template Form Modal (Create + Edit) ────────────────────
+function TemplateFormModal({
+  isOpen,
+  onClose,
+  template,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  template?: {
+    id: string;
+    name: string;
+    document_type: string;
+    description: string | null;
+    template_content: string | null;
+    version: string | null;
+  } | null;
+}) {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const isEdit = !!template;
+
+  const [name, setName] = useState(template?.name ?? "");
+  const [documentType, setDocumentType] = useState<typeof DOC_TYPES[number]>(
+    (template?.document_type as typeof DOC_TYPES[number]) ?? "other"
+  );
+  const [description, setDescription] = useState(template?.description ?? "");
+  const [templateContent, setTemplateContent] = useState(template?.template_content ?? "");
+  const [version, setVersion] = useState(template?.version ?? "1.0");
+
+  const createMutation = trpc.document.template.create.useMutation({
+    onSuccess: () => {
+      toast("success", "Template created");
+      utils.document.template.list.invalidate();
+      onClose();
+    },
+    onError: (err) => toast("error", "Failed to create template", err.message),
+  });
+
+  const updateMutation = trpc.document.template.update.useMutation({
+    onSuccess: () => {
+      toast("success", "Template updated");
+      utils.document.template.list.invalidate();
+      onClose();
+    },
+    onError: (err) => toast("error", "Failed to update template", err.message),
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-zinc-100">
+              {isEdit ? "Edit Template" : "New Template"}
+            </h2>
+            <p className="text-sm text-zinc-500 mt-1">
+              {isEdit ? "Update template details" : "Create a reusable document template"}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (isEdit && template) {
+              updateMutation.mutate({
+                id: template.id,
+                name,
+                documentType,
+                description: description || undefined,
+                templateContent: templateContent || undefined,
+                version,
+              });
+            } else {
+              createMutation.mutate({
+                name,
+                documentType,
+                description: description || undefined,
+                templateContent: templateContent || undefined,
+                version,
+              });
+            }
+          }}
+          className="p-6 space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Template Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. Standard Intake Form"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Document Type</label>
+              <select
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value as typeof DOC_TYPES[number])}
+                className={inputClass}
+              >
+                {DOC_TYPES.map((t) => (
+                  <option key={t} value={t}>{typeLabels[t]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Version</label>
+              <input
+                value={version}
+                onChange={(e) => setVersion(e.target.value)}
+                className={inputClass}
+                placeholder="1.0"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description</label>
+            <textarea
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              placeholder="Brief description..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Template Content</label>
+            <textarea
+              rows={5}
+              value={templateContent}
+              onChange={(e) => setTemplateContent(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y font-mono"
+              placeholder="Template body text or HTML content..."
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!name || createMutation.isPending || updateMutation.isPending}
+            >
+              {(createMutation.isPending || updateMutation.isPending)
+                ? (isEdit ? "Saving..." : "Creating...")
+                : (isEdit ? "Save Changes" : "Create Template")}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────
 export default function DocumentTemplatesPage() {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+
+  const { data: templates, isLoading } = trpc.document.template.list.useQuery({
+    documentType: activeCategory === "all" ? undefined : activeCategory,
+    activeOnly: false,
+  });
+
+  const deleteTemplate = trpc.document.template.delete.useMutation({
+    onSuccess: () => {
+      toast("success", "Template deactivated");
+      utils.document.template.list.invalidate();
+    },
+    onError: (err) => toast("error", "Failed to delete template", err.message),
+  });
+
+  const allTemplates = templates ?? [];
+  const filteredTemplates = allTemplates.filter((t) => {
+    if (!searchTerm) return true;
+    const q = searchTerm.toLowerCase();
+    return t.name.toLowerCase().includes(q) || (t.description ?? "").toLowerCase().includes(q);
+  });
 
   const categories = [
     { id: "all", label: "All Templates" },
@@ -26,110 +248,30 @@ export default function DocumentTemplatesPage() {
     { id: "house_rules", label: "House Rules" },
   ];
 
-  const templates = [
-    {
-      id: "1",
-      name: "Standard Resident Agreement",
-      category: "resident_agreement",
-      description: "Standard agreement for new residents including house rules, payment terms, and expectations.",
-      isActive: true,
-      version: 3,
-      usedCount: 47,
-      updatedAt: "2026-01-15",
-    },
-    {
-      id: "2",
-      name: "Intake Assessment Form",
-      category: "intake_form",
-      description: "Comprehensive intake form covering personal info, recovery history, and emergency contacts.",
-      isActive: true,
-      version: 2,
-      usedCount: 52,
-      updatedAt: "2026-01-20",
-    },
-    {
-      id: "3",
-      name: "42 CFR Part 2 Consent",
-      category: "consent_form",
-      description: "HIPAA + Part 2 compliant consent form for substance use disorder treatment records.",
-      isActive: true,
-      version: 4,
-      usedCount: 52,
-      updatedAt: "2026-02-05",
-    },
-    {
-      id: "4",
-      name: "Release of Information",
-      category: "release_of_info",
-      description: "Authorization for disclosure of protected health information to third parties.",
-      isActive: true,
-      version: 2,
-      usedCount: 23,
-      updatedAt: "2025-12-10",
-    },
-    {
-      id: "5",
-      name: "House Rules Acknowledgment",
-      category: "house_rules",
-      description: "Acknowledgment form for house rules, curfew, drug testing, and visitor policies.",
-      isActive: true,
-      version: 5,
-      usedCount: 48,
-      updatedAt: "2026-01-08",
-    },
-    {
-      id: "6",
-      name: "Financial Agreement",
-      category: "resident_agreement",
-      description: "Payment terms, auto-pay authorization, and late fee policy.",
-      isActive: false,
-      version: 1,
-      usedCount: 12,
-      updatedAt: "2025-11-20",
-    },
-  ];
-
-  const filteredTemplates = templates.filter((t) => {
-    const matchesCategory = activeCategory === "all" || t.category === activeCategory;
-    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      intake_form: "Intake Form",
-      resident_agreement: "Agreement",
-      consent_form: "Consent",
-      release_of_info: "Release of Info",
-      house_rules: "House Rules",
-      financial_agreement: "Financial",
-    };
-    return labels[category] || category;
-  };
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Document Templates</h1>
-          <p className="text-slate-600 mt-1">Create and manage reusable document templates</p>
-        </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Template
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Document Templates"
+        actions={
+          <Button
+            variant="primary"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setShowCreateModal(true)}
+          >
+            New Template
+          </Button>
+        }
+      />
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
             type="text"
             placeholder="Search templates..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
           />
         </div>
         <div className="flex gap-2 overflow-x-auto">
@@ -139,8 +281,8 @@ export default function DocumentTemplatesPage() {
               onClick={() => setActiveCategory(cat.id)}
               className={`px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                 activeCategory === cat.id
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  ? "bg-indigo-500/15 text-indigo-300"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
               }`}
             >
               {cat.label}
@@ -149,69 +291,78 @@ export default function DocumentTemplatesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map((template) => (
-          <div
-            key={template.id}
-            className="bg-white rounded-lg border border-slate-200 p-5 hover:border-slate-300 transition-colors"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <FileStack className="h-5 w-5 text-blue-600" />
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded">
-                  {getCategoryLabel(template.category)}
-                </span>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <SkeletonCard /><SkeletonCard /><SkeletonCard />
+        </div>
+      ) : filteredTemplates.length === 0 ? (
+        <EmptyState
+          iconType="inbox"
+          title="No templates found"
+          description={searchTerm ? "Try adjusting your search criteria" : "Create your first template to get started."}
+          action={!searchTerm ? { label: "New Template", onClick: () => setShowCreateModal(true) } : undefined}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredTemplates.map((template) => (
+            <div
+              key={template.id}
+              className="border border-zinc-800 rounded-lg p-5 hover:border-zinc-700 transition-colors"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <FileStack className="h-5 w-5 text-indigo-400" />
+                  <Badge variant="default">
+                    {typeLabels[template.document_type] ?? template.document_type}
+                  </Badge>
+                </div>
+                <Badge variant={template.is_active ? "success" : "default"}>
+                  {template.is_active ? "Active" : "Inactive"}
+                </Badge>
               </div>
-              <div className="flex items-center gap-1">
-                {template.isActive ? (
-                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
-                    Active
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs font-medium rounded">
-                    Inactive
-                  </span>
-                )}
+
+              <h3 className="font-semibold text-zinc-100 mb-1">{template.name}</h3>
+              <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{template.description ?? "No description"}</p>
+
+              <div className="flex items-center justify-between text-xs text-zinc-500 mb-4">
+                <span>v{template.version ?? "1.0"}</span>
+                <span>Updated {template.updated_at ? new Date(template.updated_at).toLocaleDateString() : "\u2014"}</span>
+              </div>
+
+              <div className="flex items-center gap-2 border-t border-zinc-800/50 pt-3">
+                <button
+                  className="flex-1 px-3 py-1.5 text-sm font-medium text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors flex items-center justify-center gap-1"
+                  onClick={() => setEditingTemplate(template)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </button>
+                <button
+                  className="px-2 py-1.5 text-sm text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                  onClick={() => {
+                    if (window.confirm(`Deactivate "${template.name}"?`)) {
+                      deleteTemplate.mutate({ id: template.id });
+                    }
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
-
-            <h3 className="font-semibold text-slate-900 mb-1">{template.name}</h3>
-            <p className="text-sm text-slate-600 mb-4 line-clamp-2">{template.description}</p>
-
-            <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
-              <span>v{template.version}</span>
-              <span>Used {template.usedCount} times</span>
-              <span>Updated {new Date(template.updatedAt).toLocaleDateString()}</span>
-            </div>
-
-            <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
-              <button className="flex-1 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-1">
-                <Pencil className="h-3.5 w-3.5" />
-                Edit
-              </button>
-              <button className="flex-1 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors flex items-center justify-center gap-1">
-                <Copy className="h-3.5 w-3.5" />
-                Duplicate
-              </button>
-              <button className="px-2 py-1.5 text-sm text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredTemplates.length === 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-          <FileStack className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-slate-900">No templates found</p>
-          <p className="text-sm text-slate-600 mt-1">
-            {searchTerm
-              ? "Try adjusting your search criteria"
-              : "Create your first template to get started"}
-          </p>
+          ))}
         </div>
       )}
-    </div>
+
+      <TemplateFormModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
+      <TemplateFormModal
+        key={editingTemplate?.id}
+        isOpen={!!editingTemplate}
+        onClose={() => setEditingTemplate(null)}
+        template={editingTemplate}
+      />
+    </PageContainer>
   );
 }

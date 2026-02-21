@@ -1,329 +1,248 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Download, CheckCircle2 } from "lucide-react";
+import { Download, CheckCircle2, XCircle, Shield } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  EmptyState,
+  ErrorState,
+  SkeletonTable,
+} from "@/components/ui";
 
-type SensitivityLevel = "part2" | "phi" | "pii" | "operational";
+export const dynamic = "force-dynamic";
 
-interface AuditEntry {
-  id: string;
-  timestamp: string;
-  user: string;
-  action: string;
-  resource: string;
-  resourceId: string;
-  sensitivity: SensitivityLevel;
-  ipAddress: string;
-}
+type SensitivityLevel = "public" | "internal" | "confidential" | "part2_protected";
 
-const mockAuditEntries: AuditEntry[] = [
-  {
-    id: "1",
-    timestamp: "2026-02-12T14:32:15Z",
-    user: "Sarah Johnson (Compliance Officer)",
-    action: "consent_created",
-    resource: "Consent",
-    resourceId: "CNS-2026-123",
-    sensitivity: "part2",
-    ipAddress: "192.168.1.45",
-  },
-  {
-    id: "2",
-    timestamp: "2026-02-12T14:28:03Z",
-    user: "Mike Davis (House Manager)",
-    action: "resident_viewed",
-    resource: "Resident",
-    resourceId: "RES-8472",
-    sensitivity: "phi",
-    ipAddress: "192.168.1.32",
-  },
-  {
-    id: "3",
-    timestamp: "2026-02-12T14:15:42Z",
-    user: "Jennifer Smith (Admin)",
-    action: "disclosure_made",
-    resource: "Disclosure",
-    resourceId: "DSC-2026-089",
-    sensitivity: "part2",
-    ipAddress: "192.168.1.20",
-  },
-  {
-    id: "4",
-    timestamp: "2026-02-12T14:05:18Z",
-    user: "Robert Taylor (Staff)",
-    action: "login_success",
-    resource: "Session",
-    resourceId: "SESS-45892",
-    sensitivity: "operational",
-    ipAddress: "192.168.1.67",
-  },
-  {
-    id: "5",
-    timestamp: "2026-02-12T13:52:31Z",
-    user: "Lisa Martinez (Case Manager)",
-    action: "consent_revoked",
-    resource: "Consent",
-    resourceId: "CNS-2025-456",
-    sensitivity: "part2",
-    ipAddress: "192.168.1.54",
-  },
-  {
-    id: "6",
-    timestamp: "2026-02-12T13:40:05Z",
-    user: "David Chen (Compliance Officer)",
-    action: "baa_created",
-    resource: "BAA",
-    resourceId: "BAA-2026-007",
-    sensitivity: "pii",
-    ipAddress: "192.168.1.45",
-  },
-  {
-    id: "7",
-    timestamp: "2026-02-12T13:22:47Z",
-    user: "Emily Wilson (Staff)",
-    action: "resident_updated",
-    resource: "Resident",
-    resourceId: "RES-3921",
-    sensitivity: "phi",
-    ipAddress: "192.168.1.89",
-  },
-  {
-    id: "8",
-    timestamp: "2026-02-12T13:10:12Z",
-    user: "System",
-    action: "consent_expiry_reminder",
-    resource: "Notification",
-    resourceId: "NOT-1847",
-    sensitivity: "operational",
-    ipAddress: "127.0.0.1",
-  },
-];
+const sensitivityConfig: Record<string, { variant: "error" | "warning" | "info" | "default"; label: string }> = {
+  part2_protected: { variant: "error", label: "42 CFR Part 2" },
+  confidential: { variant: "warning", label: "Confidential" },
+  internal: { variant: "info", label: "Internal" },
+  public: { variant: "default", label: "Public" },
+};
 
 export default function AuditLogPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
-  const [selectedEventType, setSelectedEventType] = useState("");
+  const [selectedSensitivity, setSelectedSensitivity] = useState<SensitivityLevel | "">("");
   const [selectedResourceType, setSelectedResourceType] = useState("");
-  const [selectedSensitivity, setSelectedSensitivity] = useState("");
+  const [dateFrom, setDateFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split("T")[0];
+  });
+  const [dateTo, setDateTo] = useState(() => new Date().toISOString().split("T")[0]);
 
-  const getSensitivityBadge = (level: SensitivityLevel) => {
-    const styles = {
-      part2: "bg-red-100 text-red-700 border-red-200",
-      phi: "bg-orange-100 text-orange-700 border-orange-200",
-      pii: "bg-yellow-100 text-yellow-700 border-yellow-200",
-      operational: "bg-slate-100 text-slate-700 border-slate-200",
-    };
+  const { data, isLoading, error } = trpc.audit.query.useQuery({
+    dateFrom: `${dateFrom}T00:00:00Z`,
+    dateTo: `${dateTo}T23:59:59Z`,
+    sensitivityLevel: selectedSensitivity || undefined,
+    resourceType: selectedResourceType || undefined,
+    limit: 50,
+  });
 
-    const labels = {
-      part2: "42 CFR Part 2",
-      phi: "PHI",
-      pii: "PII",
-      operational: "Operational",
-    };
+  const { data: chainVerification, isLoading: verifyingChain } = trpc.audit.verifyChain.useQuery({
+    dateFrom: `${dateFrom}T00:00:00Z`,
+    dateTo: `${dateTo}T23:59:59Z`,
+  });
 
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium border ${styles[level]}`}>
-        {labels[level]}
-      </span>
-    );
+  const entries = data?.items || [];
+
+  const formatActorName = (entry: (typeof entries)[0]) => {
+    if (entry.actorUser) {
+      return `${entry.actorUser.first_name} ${entry.actorUser.last_name}`;
+    }
+    if (entry.actorResident) {
+      return `${entry.actorResident.first_name} ${entry.actorResident.last_name} (Resident)`;
+    }
+    return entry.actor_type || "System";
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Audit Log</h1>
-          <p className="text-slate-600 mt-1">
-            Tamper-evident audit trail for all system activities
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium text-green-700">Chain Verified</span>
+    <PageContainer>
+      <PageHeader
+        title="Audit Log"
+        description="Tamper-evident audit trail for all system activities"
+        actions={
+          <div className="flex items-center gap-3">
+            {verifyingChain ? (
+              <div className="flex items-center gap-2 px-3 py-2 bg-zinc-800/40 border border-zinc-800 rounded-lg">
+                <div className="h-4 w-4 border-2 border-zinc-700 border-t-indigo-400 rounded-full animate-spin" />
+                <span className="text-sm font-medium text-zinc-400">Verifying...</span>
+              </div>
+            ) : chainVerification?.valid ? (
+              <Badge variant="success" dot>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Chain Verified
+                </span>
+              </Badge>
+            ) : chainVerification ? (
+              <Badge variant="error" dot>
+                <span className="flex items-center gap-1.5">
+                  <XCircle className="h-3.5 w-3.5" />
+                  Chain Broken
+                </span>
+              </Badge>
+            ) : null}
+            <Button variant="secondary" icon={<Download className="h-4 w-4" />}>
+              Export
+            </Button>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm font-medium text-slate-700">
-            <Download className="h-4 w-4" />
-            Export
-          </button>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
-          All audit events are cryptographically signed and chained to ensure integrity. Any
-          tampering or deletion will be immediately detected. Logs are retained for 7 years per
-          HIPAA requirements.
-        </p>
-      </div>
+      {/* Info Banner */}
+      <Card variant="outlined" className="border-indigo-500/30 bg-indigo-500/10">
+        <CardContent>
+          <div className="flex items-start gap-3">
+            <Shield className="h-5 w-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-indigo-200">
+              All audit events are cryptographically signed and chained to ensure integrity. Any
+              tampering or deletion will be immediately detected. Logs are retained for 7 years per
+              HIPAA requirements.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="bg-white rounded-lg border border-slate-200">
-        <div className="p-4 border-b border-slate-200">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+      {error && (
+        <Card><CardContent><ErrorState title="Error loading audit logs" description={error.message} /></CardContent></Card>
+      )}
+
+      {/* Filters + Table */}
+      <Card className="overflow-hidden">
+        <div className="px-4 pt-4 pb-0">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
                 Date Range
               </label>
               <div className="flex gap-2">
                 <input
                   type="date"
-                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  defaultValue="2026-02-12"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="flex-1 h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
                 <input
                   type="date"
-                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  defaultValue="2026-02-12"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="flex-1 h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
             </div>
-
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">User</label>
-              <select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Users</option>
-                <option value="sarah">Sarah Johnson</option>
-                <option value="mike">Mike Davis</option>
-                <option value="jennifer">Jennifer Smith</option>
-                <option value="robert">Robert Taylor</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Event Type
-              </label>
-              <select
-                value={selectedEventType}
-                onChange={(e) => setSelectedEventType(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Events</option>
-                <option value="consent">Consent Actions</option>
-                <option value="disclosure">Disclosures</option>
-                <option value="login">Login/Logout</option>
-                <option value="resident">Resident Actions</option>
-                <option value="baa">BAA Actions</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
                 Resource Type
               </label>
               <select
                 value={selectedResourceType}
                 onChange={(e) => setSelectedResourceType(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
                 <option value="">All Resources</option>
                 <option value="consent">Consent</option>
                 <option value="resident">Resident</option>
                 <option value="disclosure">Disclosure</option>
-                <option value="baa">BAA</option>
+                <option value="user">User</option>
+                <option value="invoice">Invoice</option>
+                <option value="payment">Payment</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
                 Sensitivity
               </label>
               <select
                 value={selectedSensitivity}
-                onChange={(e) => setSelectedSensitivity(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => setSelectedSensitivity(e.target.value as SensitivityLevel | "")}
+                className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
                 <option value="">All Levels</option>
-                <option value="part2">42 CFR Part 2</option>
-                <option value="phi">PHI</option>
-                <option value="pii">PII</option>
-                <option value="operational">Operational</option>
+                <option value="part2_protected">42 CFR Part 2</option>
+                <option value="confidential">Confidential</option>
+                <option value="internal">Internal</option>
+                <option value="public">Public</option>
               </select>
             </div>
-          </div>
-
-          <div className="mt-3">
-            <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
-              <Search className="h-4 w-4 inline-block mr-2" />
-              Search
-            </button>
+            <div className="flex items-end pb-1">
+              <p className="text-sm text-zinc-500">
+                {isLoading ? "Loading..." : `${entries.length} entries`}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Timestamp
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  User
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Action
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Resource
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Resource ID
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  Sensitivity
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700">
-                  IP Address
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockAuditEntries.map((entry) => (
-                <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="py-3 px-4 text-sm text-slate-600">
-                    {new Date(entry.timestamp).toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-900">{entry.user}</td>
-                  <td className="py-3 px-4">
-                    <span className="text-sm font-mono text-slate-700">{entry.action}</span>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{entry.resource}</td>
-                  <td className="py-3 px-4">
-                    <span className="text-sm font-mono text-slate-700">{entry.resourceId}</span>
-                  </td>
-                  <td className="py-3 px-4">{getSensitivityBadge(entry.sensitivity)}</td>
-                  <td className="py-3 px-4">
-                    <span className="text-sm font-mono text-slate-600">{entry.ipAddress}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="px-4 pb-4"><SkeletonTable rows={8} columns={6} /></div>
+          ) : entries.length === 0 ? (
+            <div className="px-4 pb-4">
+              <EmptyState
+                iconType="document"
+                title="No audit logs found"
+                description="Try adjusting your date range or filters."
+              />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Timestamp</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">User</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Action</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resource</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Description</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Sensitivity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((entry) => {
+                    const sc = sensitivityConfig[entry.sensitivity_level] ?? sensitivityConfig.public;
+                    return (
+                      <tr key={entry.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                        <td className="py-3 px-4 text-sm text-zinc-400 whitespace-nowrap">
+                          {new Date(entry.created_at).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                          {formatActorName(entry)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm font-mono text-zinc-300">{entry.action}</span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-zinc-400">
+                          {entry.resource_type}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-zinc-400 max-w-xs truncate">
+                          {entry.description || "—"}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge variant={sc.variant}>{sc.label}</Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
-        <div className="p-4 border-t border-slate-200 flex items-center justify-between">
-          <p className="text-sm text-slate-600">Showing 8 of 342 entries</p>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50">
-              Previous
-            </button>
-            <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded">1</button>
-            <button className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50">
-              2
-            </button>
-            <button className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50">
-              3
-            </button>
-            <button className="px-3 py-1 text-sm border border-slate-300 rounded hover:bg-slate-50">
-              Next
-            </button>
+        {data && entries.length > 0 && (
+          <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+            <p className="text-sm text-zinc-500">
+              Showing {entries.length} entries
+              {data.nextCursor && " (more available)"}
+            </p>
           </div>
-        </div>
-      </div>
-    </div>
+        )}
+      </Card>
+    </PageContainer>
   );
 }

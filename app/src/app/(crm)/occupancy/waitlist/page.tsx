@@ -5,11 +5,8 @@ import {
   ClipboardList,
   Plus,
   Search,
-  Filter,
   User,
-  Calendar,
   Home,
-  ChevronDown,
   MoreVertical,
   Phone,
   Mail,
@@ -20,6 +17,24 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  EmptyState,
+  ErrorState,
+  useToast,
+} from "@/components/ui";
+import { SkeletonStatCard } from "@/components/ui";
+import { cn } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 interface WaitlistEntry {
   id: string;
@@ -28,7 +43,7 @@ interface WaitlistEntry {
   status: string;
   priority: string;
   requested_move_in_date: string | null;
-  added_at: string;
+  added_at: Date;
   notes: string | null;
   resident_first_name: string;
   resident_last_name: string;
@@ -37,128 +52,50 @@ interface WaitlistEntry {
   email?: string;
 }
 
-// Mock data - will be replaced with tRPC query
-const mockWaitlist: WaitlistEntry[] = [
-  {
-    id: "1",
-    resident_id: "r1",
-    house_id: "h1",
-    status: "qualified",
-    priority: "urgent",
-    requested_move_in_date: "2026-02-20",
-    added_at: "2026-02-10",
-    notes: "Insurance pre-approval received. Ready for immediate placement.",
-    resident_first_name: "Marcus",
-    resident_last_name: "Rodriguez",
-    house_name: "Men's House A",
-    phone: "(512) 555-1234",
-    email: "mrodriguez@email.com",
-  },
-  {
-    id: "2",
-    resident_id: "r2",
-    house_id: null,
-    status: "contacted",
-    priority: "high",
-    requested_move_in_date: "2026-02-25",
-    added_at: "2026-02-08",
-    notes: "Referred by local treatment center. Completing detox program.",
-    resident_first_name: "Angela",
-    resident_last_name: "Thompson",
-    house_name: null,
-    phone: "(512) 555-2345",
-    email: "athompson@email.com",
-  },
-  {
-    id: "3",
-    resident_id: "r3",
-    house_id: "h2",
-    status: "new",
-    priority: "normal",
-    requested_move_in_date: "2026-03-01",
-    added_at: "2026-02-15",
-    notes: null,
-    resident_first_name: "Derek",
-    resident_last_name: "Mitchell",
-    house_name: "Men's House B",
-    phone: "(512) 555-3456",
-  },
-  {
-    id: "4",
-    resident_id: "r4",
-    house_id: "h3",
-    status: "touring",
-    priority: "normal",
-    requested_move_in_date: "2026-03-05",
-    added_at: "2026-02-12",
-    notes: "Scheduled tour for 2/18. Family will attend.",
-    resident_first_name: "Stephanie",
-    resident_last_name: "Garcia",
-    house_name: "Women's House",
-    phone: "(512) 555-4567",
-    email: "sgarcia@email.com",
-  },
-  {
-    id: "5",
-    resident_id: "r5",
-    house_id: null,
-    status: "applied",
-    priority: "low",
-    requested_move_in_date: "2026-03-15",
-    added_at: "2026-02-05",
-    notes: "Application received. Awaiting background check.",
-    resident_first_name: "Kevin",
-    resident_last_name: "Wilson",
-    house_name: null,
-    phone: "(512) 555-5678",
-  },
-];
-
-const statusConfig: Record<string, { color: string; label: string }> = {
-  new: { color: "bg-slate-100 text-slate-700", label: "New" },
-  contacted: { color: "bg-blue-100 text-blue-700", label: "Contacted" },
-  qualified: { color: "bg-green-100 text-green-700", label: "Qualified" },
-  touring: { color: "bg-purple-100 text-purple-700", label: "Touring" },
-  applied: { color: "bg-yellow-100 text-yellow-700", label: "Applied" },
-  accepted: { color: "bg-emerald-100 text-emerald-700", label: "Accepted" },
-  deposit_pending: { color: "bg-orange-100 text-orange-700", label: "Deposit Pending" },
-  converted: { color: "bg-teal-100 text-teal-700", label: "Converted" },
-  lost: { color: "bg-red-100 text-red-700", label: "Lost" },
+const statusBadge: Record<string, { variant: "default" | "info" | "success" | "warning" | "error"; label: string }> = {
+  new: { variant: "default", label: "New" },
+  contacted: { variant: "info", label: "Contacted" },
+  qualified: { variant: "success", label: "Qualified" },
+  touring: { variant: "info", label: "Touring" },
+  applied: { variant: "warning", label: "Applied" },
+  accepted: { variant: "success", label: "Accepted" },
+  deposit_pending: { variant: "warning", label: "Deposit Pending" },
+  converted: { variant: "success", label: "Converted" },
+  lost: { variant: "error", label: "Lost" },
 };
 
-const priorityConfig: Record<string, { color: string; label: string; icon: typeof ArrowUp }> = {
-  urgent: { color: "text-red-600", label: "Urgent", icon: ArrowUp },
-  high: { color: "text-orange-600", label: "High", icon: ArrowUp },
-  normal: { color: "text-slate-600", label: "Normal", icon: ArrowDown },
-  low: { color: "text-slate-400", label: "Low", icon: ArrowDown },
+const priorityConfig: Record<string, { color: string; label: string; direction: "up" | "down" }> = {
+  urgent: { color: "text-red-400", label: "Urgent", direction: "up" },
+  high: { color: "text-amber-400", label: "High", direction: "up" },
+  normal: { color: "text-zinc-500", label: "Normal", direction: "down" },
+  low: { color: "text-zinc-500", label: "Low", direction: "down" },
 };
 
 function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
   const [showMenu, setShowMenu] = useState(false);
-  const status = statusConfig[entry.status] || statusConfig.new;
-  const priority = priorityConfig[entry.priority] || priorityConfig.normal;
-  const daysOnList = Math.floor((Date.now() - new Date(entry.added_at).getTime()) / (1000 * 60 * 60 * 24));
+  const status = statusBadge[entry.status] ?? statusBadge.new;
+  const priority = priorityConfig[entry.priority] ?? priorityConfig.normal;
+  const daysOnList = Math.floor((Date.now() - new Date(entry.added_at).getTime()) / 86400000);
+  const PriorityIcon = priority.direction === "up" ? ArrowUp : ArrowDown;
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
-      <div className="p-4">
+    <Card hover className="h-full">
+      <CardContent>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-semibold text-slate-600">
+            <div className="w-10 h-10 bg-gradient-to-br from-zinc-800 to-zinc-700 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-semibold text-zinc-400">
                 {entry.resident_first_name[0]}{entry.resident_last_name[0]}
               </span>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-900">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-zinc-100">
                   {entry.resident_first_name} {entry.resident_last_name}
                 </h3>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${status.color}`}>
-                  {status.label}
-                </span>
+                <Badge variant={status.variant} dot>{status.label}</Badge>
               </div>
-              <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
+              <div className="flex items-center gap-3 mt-1 text-sm text-zinc-500">
                 {entry.phone && (
                   <div className="flex items-center gap-1">
                     <Phone className="h-3 w-3" />
@@ -174,37 +111,33 @@ function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1 ${priority.color}`}>
-              <priority.icon className="h-4 w-4" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className={cn("flex items-center gap-1", priority.color)}>
+              <PriorityIcon className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">{priority.label}</span>
             </div>
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors"
               >
-                <MoreVertical className="h-4 w-4 text-slate-500" />
+                <MoreVertical className="h-4 w-4 text-zinc-500" />
               </button>
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                      <User className="h-4 w-4" />
-                      View Profile
+                  <div className="absolute right-0 top-8 w-48 bg-zinc-900 rounded-xl shadow-lg border border-zinc-800 py-1 z-20">
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40">
+                      <User className="h-4 w-4" /> View Profile
                     </button>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-                      <Check className="h-4 w-4" />
-                      Update Status
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40">
+                      <Check className="h-4 w-4" /> Update Status
                     </button>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50">
-                      <Home className="h-4 w-4" />
-                      Assign Bed
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-400 hover:bg-green-500/10">
+                      <Home className="h-4 w-4" /> Assign Bed
                     </button>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-                      <X className="h-4 w-4" />
-                      Remove from List
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10">
+                      <X className="h-4 w-4" /> Remove
                     </button>
                   </div>
                 </>
@@ -213,141 +146,167 @@ function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
+        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-zinc-800/50">
           <div>
-            <p className="text-xs text-slate-500">Preferred House</p>
-            <p className="text-sm font-medium text-slate-900 mt-0.5">
-              {entry.house_name || "Any Available"}
-            </p>
+            <p className="text-xs text-zinc-500">Preferred House</p>
+            <p className="text-sm font-medium text-zinc-100 mt-0.5">{entry.house_name || "Any"}</p>
           </div>
           <div>
-            <p className="text-xs text-slate-500">Target Move-in</p>
-            <p className="text-sm font-medium text-slate-900 mt-0.5">
+            <p className="text-xs text-zinc-500">Target Move-in</p>
+            <p className="text-sm font-medium text-zinc-100 mt-0.5">
               {entry.requested_move_in_date
-                ? new Date(entry.requested_move_in_date).toLocaleDateString()
+                ? new Date(entry.requested_move_in_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                 : "Flexible"}
             </p>
           </div>
           <div>
-            <p className="text-xs text-slate-500">Days on List</p>
-            <p className="text-sm font-medium text-slate-900 mt-0.5 flex items-center gap-1">
-              <Clock className="h-3 w-3 text-slate-400" />
-              {daysOnList} days
+            <p className="text-xs text-zinc-500">Days on List</p>
+            <p className="text-sm font-medium text-zinc-100 mt-0.5 flex items-center gap-1">
+              <Clock className="h-3 w-3 text-zinc-500" />
+              {daysOnList}
             </p>
           </div>
         </div>
 
         {entry.notes && (
-          <div className="mt-3 p-3 bg-slate-50 rounded-lg">
-            <p className="text-xs text-slate-500 mb-1">Notes</p>
-            <p className="text-sm text-slate-700">{entry.notes}</p>
+          <div className="mt-3 p-3 bg-zinc-800/40 rounded-lg">
+            <p className="text-xs text-zinc-500 mb-0.5">Notes</p>
+            <p className="text-sm text-zinc-300">{entry.notes}</p>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
-interface AddToWaitlistModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+function AddToWaitlistModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { toast } = useToast();
+  const utils = trpc.useUtils();
+  const [residentId, setResidentId] = useState("");
+  const [wlHouseId, setWlHouseId] = useState("");
+  const [priority, setPriority] = useState<"low" | "normal" | "high" | "urgent">("normal");
+  const [moveInDate, setMoveInDate] = useState("");
+  const [notes, setNotes] = useState("");
 
-function AddToWaitlistModal({ isOpen, onClose }: AddToWaitlistModalProps) {
+  const { data: residents } = trpc.resident.list.useQuery(
+    { status: "all", limit: 100 },
+    { enabled: isOpen }
+  );
+  const { data: houseList } = trpc.property.listAllHouses.useQuery(undefined, {
+    enabled: isOpen,
+  });
+
+  const addMutation = trpc.occupancy.addToWaitlist.useMutation({
+    onSuccess: () => {
+      toast("success", "Added to waitlist");
+      utils.occupancy.listWaitlist.invalidate();
+      onClose();
+      setResidentId("");
+      setWlHouseId("");
+      setPriority("normal");
+      setMoveInDate("");
+      setNotes("");
+    },
+    onError: (err) => toast("error", "Failed to add to waitlist", err.message),
+  });
+
   if (!isOpen) return null;
+
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-xl font-semibold text-slate-900">Add to Waitlist</h2>
-          <p className="text-sm text-slate-600 mt-1">Add a prospective resident to the waitlist</p>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800">
+          <h2 className="text-xl font-semibold text-zinc-100">Add to Waitlist</h2>
+          <p className="text-sm text-zinc-500 mt-1">Select an existing resident to add to the waitlist</p>
         </div>
-        <form className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            addMutation.mutate({
+              residentId,
+              houseId: wlHouseId || undefined,
+              priority,
+              requestedMoveInDate: moveInDate || undefined,
+              notes: notes || undefined,
+            });
+          }}
+          className="p-6 space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              Resident <span className="text-red-400">*</span>
+            </label>
+            <select
+              required
+              value={residentId}
+              onChange={(e) => setResidentId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Select a resident</option>
+              {(residents?.items ?? []).map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.first_name} {r.last_name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-              <input
-                type="tel"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Preferred House</label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Preferred House</label>
+              <select
+                value={wlHouseId}
+                onChange={(e) => setWlHouseId(e.target.value)}
+                className={inputClass}
+              >
                 <option value="">Any Available</option>
-                <option value="h1">Men's House A</option>
-                <option value="h2">Men's House B</option>
-                <option value="h3">Women's House</option>
+                {(houseList ?? []).map((h: { id: string; name: string }) => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="normal">Normal</option>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Priority</label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as typeof priority)}
+                className={inputClass}
+              >
                 <option value="low">Low</option>
+                <option value="normal">Normal</option>
                 <option value="high">High</option>
                 <option value="urgent">Urgent</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Target Move-in Date</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Target Move-in Date</label>
             <input
               type="date"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={moveInDate}
+              onChange={(e) => setMoveInDate(e.target.value)}
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
             <textarea
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
               placeholder="Referral source, special requirements, etc."
             />
           </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={addMutation.isPending}>
+              {addMutation.isPending ? "Adding..." : "Add to Waitlist"}
+            </Button>
+          </div>
         </form>
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-slate-700 border border-slate-300 rounded-lg font-medium hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-          >
-            Add to Waitlist
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -356,124 +315,80 @@ function AddToWaitlistModal({ isOpen, onClose }: AddToWaitlistModalProps) {
 export default function WaitlistPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
-  const [filterPriority, setFilterPriority] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterPriority, setFilterPriority] = useState("");
 
-  // Filter entries
-  const filteredEntries = mockWaitlist.filter((entry) => {
+  const { data: waitlist, isLoading, error } = trpc.occupancy.listWaitlist.useQuery();
+
+  const filteredEntries = (waitlist || []).filter((entry) => {
     if (searchQuery) {
       const search = searchQuery.toLowerCase();
-      if (
-        !entry.resident_first_name.toLowerCase().includes(search) &&
-        !entry.resident_last_name.toLowerCase().includes(search)
-      ) {
-        return false;
-      }
+      if (!entry.resident_first_name.toLowerCase().includes(search) && !entry.resident_last_name.toLowerCase().includes(search)) return false;
     }
     if (filterStatus && entry.status !== filterStatus) return false;
     if (filterPriority && entry.priority !== filterPriority) return false;
     return true;
   });
 
-  // Stats
-  const urgentCount = mockWaitlist.filter((e) => e.priority === "urgent").length;
-  const highCount = mockWaitlist.filter((e) => e.priority === "high").length;
+  const totalCount = waitlist?.length ?? 0;
+  const urgentCount = waitlist?.filter((e) => e.priority === "urgent").length ?? 0;
+  const highCount = waitlist?.filter((e) => e.priority === "high").length ?? 0;
+  const readyCount = waitlist?.filter((e) => e.status === "qualified" || e.status === "accepted").length ?? 0;
+
+  if (error) {
+    return (
+      <PageContainer>
+        <Card><CardContent><ErrorState title="Failed to load waitlist" description={error.message} /></CardContent></Card>
+      </PageContainer>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Waitlist</h1>
-          <p className="text-slate-600 mt-1">Manage prospective residents waiting for placement</p>
-        </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-        >
-          <Plus className="h-5 w-5" />
-          Add to Waitlist
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Waitlist"
+        description="Manage prospective residents waiting for placement"
+        actions={
+          <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setShowAddModal(true)}>
+            Add to Waitlist
+          </Button>
+        }
+      />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <ClipboardList className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{mockWaitlist.length}</p>
-              <p className="text-sm text-slate-500">Total on List</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-50 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-red-600">{urgentCount}</p>
-              <p className="text-sm text-slate-500">Urgent Priority</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <ArrowUp className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-orange-600">{highCount}</p>
-              <p className="text-sm text-slate-500">High Priority</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <Check className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">
-                {mockWaitlist.filter((e) => e.status === "qualified" || e.status === "accepted").length}
-              </p>
-              <p className="text-sm text-slate-500">Ready to Place</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard title="Total on List" value={isLoading ? "—" : String(totalCount)} icon={<ClipboardList className="h-5 w-5" />} variant="info" loading={isLoading} />
+        <StatCard title="Urgent Priority" value={isLoading ? "—" : String(urgentCount)} icon={<AlertCircle className="h-5 w-5" />} variant={urgentCount > 0 ? "error" : "default"} loading={isLoading} />
+        <StatCard title="High Priority" value={isLoading ? "—" : String(highCount)} icon={<ArrowUp className="h-5 w-5" />} variant={highCount > 0 ? "warning" : "default"} loading={isLoading} />
+        <StatCard title="Ready to Place" value={isLoading ? "—" : String(readyCount)} icon={<Check className="h-5 w-5" />} variant="success" loading={isLoading} />
+      </StatCardGrid>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="flex-1 relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
             type="text"
             placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
           />
         </div>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="h-10 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
         >
           <option value="">All Statuses</option>
-          {Object.entries(statusConfig).map(([key, config]) => (
-            <option key={key} value={key}>
-              {config.label}
-            </option>
+          {Object.entries(statusBadge).map(([key, config]) => (
+            <option key={key} value={key}>{config.label}</option>
           ))}
         </select>
         <select
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="h-10 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
         >
           <option value="">All Priorities</option>
           <option value="urgent">Urgent</option>
@@ -483,26 +398,42 @@ export default function WaitlistPage() {
         </select>
       </div>
 
-      {/* Waitlist Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filteredEntries.map((entry) => (
-          <WaitlistCard key={entry.id} entry={entry} />
-        ))}
-      </div>
-
-      {filteredEntries.length === 0 && (
-        <div className="text-center py-12">
-          <ClipboardList className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-900">No entries found</h3>
-          <p className="text-slate-500 mt-1">
-            {searchQuery || filterStatus || filterPriority
-              ? "Try adjusting your filters"
-              : "Add someone to the waitlist to get started"}
-          </p>
+      {/* Loading */}
+      {isLoading && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SkeletonStatCard />
+          <SkeletonStatCard />
         </div>
       )}
 
+      {/* Grid */}
+      {!isLoading && filteredEntries.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {filteredEntries.map((entry) => (
+            <WaitlistCard key={entry.id} entry={entry as WaitlistEntry} />
+          ))}
+        </div>
+      )}
+
+      {/* Empty */}
+      {!isLoading && filteredEntries.length === 0 && (
+        <Card>
+          <CardContent>
+            <EmptyState
+              iconType="inbox"
+              title="No entries found"
+              description={searchQuery || filterStatus || filterPriority ? "Try adjusting your filters." : "Add someone to get started."}
+              action={
+                searchQuery || filterStatus || filterPriority
+                  ? { label: "Clear filters", onClick: () => { setSearchQuery(""); setFilterStatus(""); setFilterPriority(""); } }
+                  : { label: "Add to Waitlist", onClick: () => setShowAddModal(true) }
+              }
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <AddToWaitlistModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
-    </div>
+    </PageContainer>
   );
 }

@@ -6,7 +6,6 @@ import {
   UserPlus,
   Plus,
   Search,
-  Filter,
   Phone,
   Mail,
   Calendar,
@@ -16,9 +15,25 @@ import {
   TrendingUp,
   Users,
   CheckCircle,
-  XCircle,
+  Loader2,
   GripVertical,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@clerk/nextjs";
+import {
+  PageContainer,
+  PageHeader,
+  StatCard,
+  StatCardGrid,
+  Card,
+  CardContent,
+  Button,
+  EmptyState,
+  ErrorState,
+  useToast,
+} from "@/components/ui";
+
+export const dynamic = "force-dynamic";
 
 interface Lead {
   id: string;
@@ -32,13 +47,12 @@ interface Lead {
   house_preference_id: string | null;
   house_name: string | null;
   notes: string | null;
-  created_at: string;
+  created_at: string | Date;
 }
 
-// Pipeline stages configuration
 const PIPELINE_STAGES = [
-  { id: "new", label: "New", color: "bg-slate-500" },
-  { id: "contacted", label: "Contacted", color: "bg-blue-500" },
+  { id: "new", label: "New", color: "bg-zinc-800/400" },
+  { id: "contacted", label: "Contacted", color: "bg-indigo-500" },
   { id: "qualified", label: "Qualified", color: "bg-cyan-500" },
   { id: "touring", label: "Touring", color: "bg-purple-500" },
   { id: "applied", label: "Applied", color: "bg-yellow-500" },
@@ -46,146 +60,16 @@ const PIPELINE_STAGES = [
   { id: "deposit_pending", label: "Deposit Pending", color: "bg-orange-500" },
 ] as const;
 
-// Mock data - will be replaced with tRPC query
-const mockKanban: Record<string, Lead[]> = {
-  new: [
-    {
-      id: "1",
-      first_name: "Marcus",
-      last_name: "Rodriguez",
-      email: "mrodriguez@email.com",
-      phone: "(512) 555-1234",
-      status: "new",
-      source: "Website",
-      preferred_move_in_date: "2026-02-25",
-      house_preference_id: "h1",
-      house_name: "Men's House A",
-      notes: "Inquired via contact form",
-      created_at: "2026-02-15",
-    },
-    {
-      id: "2",
-      first_name: "Jennifer",
-      last_name: "Liu",
-      email: "jliu@email.com",
-      phone: "(512) 555-2345",
-      status: "new",
-      source: "Referral - Treatment Center",
-      preferred_move_in_date: null,
-      house_preference_id: null,
-      house_name: null,
-      notes: null,
-      created_at: "2026-02-16",
-    },
-  ],
-  contacted: [
-    {
-      id: "3",
-      first_name: "Derek",
-      last_name: "Mitchell",
-      email: "dmitchell@email.com",
-      phone: "(512) 555-3456",
-      status: "contacted",
-      source: "Google Ads",
-      preferred_move_in_date: "2026-03-01",
-      house_preference_id: "h2",
-      house_name: "Men's House B",
-      notes: "Left voicemail, waiting for callback",
-      created_at: "2026-02-10",
-    },
-  ],
-  qualified: [
-    {
-      id: "4",
-      first_name: "Angela",
-      last_name: "Thompson",
-      email: "athompson@email.com",
-      phone: "(512) 555-4567",
-      status: "qualified",
-      source: "Referral - AA/NA",
-      preferred_move_in_date: "2026-02-28",
-      house_preference_id: "h3",
-      house_name: "Women's House",
-      notes: "Insurance pre-approved. Good candidate.",
-      created_at: "2026-02-08",
-    },
-  ],
-  touring: [
-    {
-      id: "5",
-      first_name: "Robert",
-      last_name: "Chen",
-      email: "rchen@email.com",
-      phone: "(512) 555-5678",
-      status: "touring",
-      source: "Website",
-      preferred_move_in_date: "2026-03-05",
-      house_preference_id: "h1",
-      house_name: "Men's House A",
-      notes: "Tour scheduled for 2/18 at 2pm",
-      created_at: "2026-02-05",
-    },
-  ],
-  applied: [
-    {
-      id: "6",
-      first_name: "Stephanie",
-      last_name: "Garcia",
-      email: "sgarcia@email.com",
-      phone: "(512) 555-6789",
-      status: "applied",
-      source: "Referral - Hospital",
-      preferred_move_in_date: "2026-02-22",
-      house_preference_id: "h3",
-      house_name: "Women's House",
-      notes: "Application received. Background check in progress.",
-      created_at: "2026-02-01",
-    },
-  ],
-  accepted: [
-    {
-      id: "7",
-      first_name: "Kevin",
-      last_name: "Wilson",
-      email: "kwilson@email.com",
-      phone: "(512) 555-7890",
-      status: "accepted",
-      source: "Referral - Probation",
-      preferred_move_in_date: "2026-02-20",
-      house_preference_id: "h2",
-      house_name: "Men's House B",
-      notes: "Approved! Sending admission packet.",
-      created_at: "2026-01-25",
-    },
-  ],
-  deposit_pending: [
-    {
-      id: "8",
-      first_name: "Lisa",
-      last_name: "Park",
-      email: "lpark@email.com",
-      phone: "(512) 555-8901",
-      status: "deposit_pending",
-      source: "Website",
-      preferred_move_in_date: "2026-02-19",
-      house_preference_id: "h3",
-      house_name: "Women's House",
-      notes: "Deposit invoice sent. Family paying.",
-      created_at: "2026-01-20",
-    },
-  ],
-};
-
-function LeadCard({ lead }: { lead: Lead }) {
+function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (leadId: string, currentStatus: string) => void; onMarkLost?: (leadId: string) => void }) {
   const [showMenu, setShowMenu] = useState(false);
   const daysInPipeline = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+    <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <GripVertical className="h-4 w-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
-          <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-xs font-semibold text-slate-600">
+          <GripVertical className="h-4 w-4 text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
+          <div className="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-xs font-semibold text-zinc-400">
             {lead.first_name[0]}{lead.last_name[0]}
           </div>
         </div>
@@ -195,24 +79,38 @@ function LeadCard({ lead }: { lead: Lead }) {
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 hover:bg-slate-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 hover:bg-zinc-800 rounded opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <MoreVertical className="h-4 w-4 text-slate-500" />
+            <MoreVertical className="h-4 w-4 text-zinc-500" />
           </button>
           {showMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-6 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+              <div className="absolute right-0 top-6 w-40 bg-zinc-900 rounded-lg shadow-lg border border-zinc-800 py-1 z-20">
                 <Link
                   href={`/admissions/${lead.id}`}
-                  className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  className="block px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40"
                 >
                   View Details
                 </Link>
-                <button className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                <button
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    onMoveNext?.(lead.id, lead.status);
+                  }}
+                >
                   Move to Next Stage
                 </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+                <button
+                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                    onMarkLost?.(lead.id);
+                  }}
+                >
                   Mark as Lost
                 </button>
               </div>
@@ -222,20 +120,20 @@ function LeadCard({ lead }: { lead: Lead }) {
       </div>
 
       <Link href={`/admissions/${lead.id}`}>
-        <h4 className="font-medium text-slate-900 text-sm">
+        <h4 className="font-medium text-zinc-100 text-sm">
           {lead.first_name} {lead.last_name}
         </h4>
 
         {(lead.phone || lead.email) && (
           <div className="mt-1.5 space-y-1">
             {lead.phone && (
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-500">
                 <Phone className="h-3 w-3" />
                 <span>{lead.phone}</span>
               </div>
             )}
             {lead.email && (
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 truncate">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-500 truncate">
                 <Mail className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{lead.email}</span>
               </div>
@@ -245,13 +143,13 @@ function LeadCard({ lead }: { lead: Lead }) {
 
         <div className="mt-2 flex items-center gap-2 flex-wrap">
           {lead.house_name && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 text-xs rounded">
               <Home className="h-3 w-3" />
               {lead.house_name}
             </span>
           )}
           {lead.preferred_move_in_date && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 text-xs rounded">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 text-green-300 text-xs rounded">
               <Calendar className="h-3 w-3" />
               {new Date(lead.preferred_move_in_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
@@ -259,36 +157,41 @@ function LeadCard({ lead }: { lead: Lead }) {
         </div>
 
         {lead.source && (
-          <p className="mt-2 text-xs text-slate-400">{lead.source}</p>
+          <p className="mt-2 text-xs text-zinc-500">{lead.source}</p>
         )}
 
-        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-          <span className="text-slate-400">{daysInPipeline} days</span>
-          <ArrowRight className="h-3 w-3 text-slate-300" />
+        <div className="mt-2 pt-2 border-t border-zinc-800/50 flex items-center justify-between text-xs">
+          <span className="text-zinc-500">{daysInPipeline} days</span>
+          <ArrowRight className="h-3 w-3 text-zinc-600" />
         </div>
       </Link>
     </div>
   );
 }
 
-function PipelineColumn({ stage, leads }: { stage: typeof PIPELINE_STAGES[number]; leads: Lead[] }) {
+function PipelineColumn({ stage, leads, isLoading, onMoveNext, onMarkLost }: { stage: typeof PIPELINE_STAGES[number]; leads: Lead[]; isLoading?: boolean; onMoveNext?: (leadId: string, currentStatus: string) => void; onMarkLost?: (leadId: string) => void }) {
   return (
     <div className="flex-1 min-w-[280px] max-w-[320px]">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${stage.color}`} />
-          <h3 className="font-semibold text-slate-900 text-sm">{stage.label}</h3>
-          <span className="bg-slate-100 text-slate-600 text-xs font-medium px-2 py-0.5 rounded-full">
-            {leads.length}
+          <h3 className="font-semibold text-zinc-100 text-sm">{stage.label}</h3>
+          <span className="bg-zinc-800 text-zinc-400 text-xs font-medium px-2 py-0.5 rounded-full">
+            {isLoading ? "—" : leads.length}
           </span>
         </div>
       </div>
-      <div className="bg-slate-50 rounded-lg p-2 min-h-[200px] space-y-2">
-        {leads.map((lead) => (
-          <LeadCard key={lead.id} lead={lead} />
-        ))}
-        {leads.length === 0 && (
-          <div className="text-center py-8 text-slate-400 text-sm">No leads</div>
+      <div className="bg-zinc-800/40 rounded-lg p-2 min-h-[200px] space-y-2">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+          </div>
+        ) : leads.length === 0 ? (
+          <div className="text-center py-8 text-zinc-500 text-sm">No leads</div>
+        ) : (
+          leads.map((lead) => (
+            <LeadCard key={lead.id} lead={lead} onMoveNext={onMoveNext} onMarkLost={onMarkLost} />
+          ))
         )}
       </div>
     </div>
@@ -298,207 +201,236 @@ function PipelineColumn({ stage, leads }: { stage: typeof PIPELINE_STAGES[number
 interface CreateLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (data: { firstName: string; lastName: string; email?: string; phone?: string; source?: string; notes?: string }) => void;
+  isSubmitting?: boolean;
 }
 
-function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
+function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmitting }: CreateLeadModalProps) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [source, setSource] = useState("");
+  const [notes, setNotes] = useState("");
+
   if (!isOpen) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      firstName,
+      lastName,
+      email: email || undefined,
+      phone: phone || undefined,
+      source: source || undefined,
+      notes: notes || undefined,
+    });
+  };
+
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-        <div className="p-6 border-b border-slate-200">
-          <h2 className="text-xl font-semibold text-slate-900">Add New Lead</h2>
-          <p className="text-sm text-slate-600 mt-1">Enter information for a prospective resident</p>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800">
+          <h2 className="text-xl font-bold text-zinc-100">Add New Lead</h2>
+          <p className="text-sm text-zinc-500 mt-1">Enter information for a prospective resident</p>
         </div>
-        <form className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">First Name *</label>
-              <input
-                type="text"
-                required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name *</label>
+              <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Last Name *</label>
-              <input
-                type="text"
-                required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name *</label>
+              <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-              <input
-                type="tel"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Lead Source</label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Select source...</option>
-                <option value="website">Website</option>
-                <option value="google_ads">Google Ads</option>
-                <option value="referral_treatment">Referral - Treatment Center</option>
-                <option value="referral_aa_na">Referral - AA/NA</option>
-                <option value="referral_hospital">Referral - Hospital</option>
-                <option value="referral_probation">Referral - Probation/Court</option>
-                <option value="word_of_mouth">Word of Mouth</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">House Preference</label>
-              <select className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Any / No Preference</option>
-                <option value="h1">Men's House A</option>
-                <option value="h2">Men's House B</option>
-                <option value="h3">Women's House</option>
-              </select>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Preferred Move-in Date</label>
-            <input
-              type="date"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Lead Source</label>
+            <select value={source} onChange={(e) => setSource(e.target.value)} className={inputClass}>
+              <option value="">Select source...</option>
+              <option value="Website">Website</option>
+              <option value="Google Ads">Google Ads</option>
+              <option value="Referral - Treatment Center">Referral - Treatment Center</option>
+              <option value="Referral - AA/NA">Referral - AA/NA</option>
+              <option value="Referral - Hospital">Referral - Hospital</option>
+              <option value="Referral - Probation">Referral - Probation/Court</option>
+              <option value="Word of Mouth">Word of Mouth</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
             <textarea
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-3 py-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
               placeholder="Initial contact notes, special circumstances, etc."
             />
           </div>
+          <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={isSubmitting}>
+              {isSubmitting ? "Adding..." : "Add Lead"}
+            </Button>
+          </div>
         </form>
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-slate-700 border border-slate-300 rounded-lg font-medium hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-          >
-            Add Lead
-          </button>
-        </div>
       </div>
     </div>
   );
 }
 
+const STAGE_ORDER = ['new', 'contacted', 'qualified', 'touring', 'applied', 'accepted', 'deposit_pending', 'converted'] as const;
+
 export default function AdmissionsPage() {
+  const { toast } = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Calculate stats
-  const totalLeads = Object.values(mockKanban).flat().length;
-  const convertedThisMonth = 3; // Mock value
-  const conversionRate = 42; // Mock value
+  const { userId } = useAuth();
+
+  const { data: userData } = trpc.user.getCurrentUser.useQuery(undefined, {
+    enabled: !!userId,
+  });
+
+  const orgId = userData?.org_id;
+
+  const utils = trpc.useUtils();
+  const { data: kanbanData, isLoading, error } = trpc.lead.getKanban.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
+
+  const { data: statsData } = trpc.lead.getPipelineStats.useQuery(
+    { orgId: orgId! },
+    { enabled: !!orgId }
+  );
+
+  const createMutation = trpc.lead.create.useMutation({
+    onSuccess: () => {
+      setShowCreateModal(false);
+      toast("success", "Lead added");
+      utils.lead.getKanban.invalidate();
+      utils.lead.getPipelineStats.invalidate();
+    },
+    onError: (err) => toast("error", "Failed to add lead", err.message),
+  });
+
+  const updateStatusMutation = trpc.lead.updateStatus.useMutation({
+    onSuccess: () => {
+      toast("success", "Lead status updated");
+      utils.lead.getKanban.invalidate();
+      utils.lead.getPipelineStats.invalidate();
+    },
+    onError: (err) => toast("error", "Failed to update status", err.message),
+  });
+
+  const handleMoveNext = (leadId: string, currentStatus: string) => {
+    const idx = STAGE_ORDER.indexOf(currentStatus as typeof STAGE_ORDER[number]);
+    if (idx < 0 || idx >= STAGE_ORDER.length - 1) return;
+    const nextStatus = STAGE_ORDER[idx + 1]!;
+    updateStatusMutation.mutate({ leadId, status: nextStatus });
+  };
+
+  const [lostModal, setLostModal] = useState<{ leadId: string } | null>(null);
+  const [lostReason, setLostReason] = useState("");
+
+  const handleMarkLost = (leadId: string) => {
+    setLostModal({ leadId });
+  };
+
+  const handleCreateLead = (data: { firstName: string; lastName: string; email?: string; phone?: string; source?: string; notes?: string }) => {
+    if (!orgId) return;
+    createMutation.mutate({
+      orgId,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      source: data.source,
+      notes: data.notes,
+    });
+  };
+
+  const totalLeads = statsData?.total || 0;
+  const conversionRate = statsData?.conversionRate || 0;
+  const readyToAdmit = (kanbanData?.deposit_pending?.length || 0) + (kanbanData?.accepted?.length || 0);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admissions Pipeline</h1>
-          <p className="text-slate-600 mt-1">Track and manage prospective residents</p>
-        </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-        >
-          <Plus className="h-5 w-5" />
-          Add Lead
-        </button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Admissions Pipeline"
+        description="Track and manage prospective residents"
+        actions={
+          <Button
+            variant="primary"
+            icon={<Plus className="h-4 w-4" />}
+            onClick={() => setShowCreateModal(true)}
+          >
+            Add Lead
+          </Button>
+        }
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-900">{totalLeads}</p>
-              <p className="text-sm text-slate-500">Active Leads</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">{convertedThisMonth}</p>
-              <p className="text-sm text-slate-500">Converted (Month)</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-purple-600">{conversionRate}%</p>
-              <p className="text-sm text-slate-500">Conversion Rate</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <UserPlus className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-orange-600">
-                {mockKanban.deposit_pending?.length || 0}
-              </p>
-              <p className="text-sm text-slate-500">Ready to Admit</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {error && (
+        <Card><CardContent><ErrorState title="Error loading pipeline" description={error.message} /></CardContent></Card>
+      )}
+
+      <StatCardGrid columns={4}>
+        <StatCard
+          title="Active Leads"
+          value={isLoading ? "—" : String(totalLeads)}
+          icon={<Users className="h-5 w-5" />}
+          loading={isLoading}
+        />
+        <StatCard
+          title="Converted (Total)"
+          value={isLoading ? "—" : String(statsData?.stages?.converted || 0)}
+          variant="success"
+          icon={<CheckCircle className="h-5 w-5" />}
+          loading={isLoading}
+        />
+        <StatCard
+          title="Conversion Rate"
+          value={isLoading ? "—" : `${conversionRate}%`}
+          icon={<TrendingUp className="h-5 w-5" />}
+          loading={isLoading}
+        />
+        <StatCard
+          title="Ready to Admit"
+          value={isLoading ? "—" : String(readyToAdmit)}
+          variant="warning"
+          icon={<UserPlus className="h-5 w-5" />}
+          loading={isLoading}
+        />
+      </StatCardGrid>
 
       {/* Search */}
       <div className="flex items-center gap-4">
         <div className="flex-1 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
             type="text"
             placeholder="Search leads..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
-          <Filter className="h-4 w-4" />
-          Filters
-        </button>
       </div>
 
       {/* Kanban Board */}
@@ -508,13 +440,65 @@ export default function AdmissionsPage() {
             <PipelineColumn
               key={stage.id}
               stage={stage}
-              leads={mockKanban[stage.id] || []}
+              leads={(kanbanData?.[stage.id] || []) as Lead[]}
+              isLoading={isLoading}
+              onMoveNext={handleMoveNext}
+              onMarkLost={handleMarkLost}
             />
           ))}
         </div>
       </div>
 
-      <CreateLeadModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
-    </div>
+      <CreateLeadModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateLead}
+        isSubmitting={createMutation.isPending}
+      />
+
+      {/* Mark Lost Modal */}
+      {lostModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setLostModal(null); setLostReason(""); }} />
+          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-lg font-bold text-zinc-100">Mark Lead as Lost</h2>
+              <p className="text-sm text-zinc-500 mt-1">This lead will be removed from the pipeline</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  Reason <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={lostReason}
+                  onChange={(e) => setLostReason(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  placeholder="Why was this lead lost? (e.g., chose another facility, no response, not a fit)"
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" onClick={() => { setLostModal(null); setLostReason(""); }}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (lostReason.trim()) {
+                      updateStatusMutation.mutate({ leadId: lostModal.leadId, status: "lost", lostReason: lostReason.trim() });
+                      setLostModal(null);
+                      setLostReason("");
+                    }
+                  }}
+                  disabled={!lostReason.trim() || updateStatusMutation.isPending}
+                >
+                  {updateStatusMutation.isPending ? "Saving..." : "Mark as Lost"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </PageContainer>
   );
 }

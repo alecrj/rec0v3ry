@@ -216,6 +216,76 @@ export const disclosureRouter = router({
     }),
 
   /**
+   * List all org disclosures (CRM admin view)
+   * Does not require residentId — returns all disclosures for the org
+   */
+  listAll: protectedProcedure
+    .input(z.object({
+      dateFrom: z.string().datetime().optional(),
+      dateTo: z.string().datetime().optional(),
+      purpose: z.enum([
+        'treatment',
+        'payment',
+        'healthcare_operations',
+        'research',
+        'audit',
+        'court_order',
+        'medical_emergency',
+        'crime_on_premises',
+        'other',
+      ]).optional(),
+      search: z.string().optional(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().int().min(0).default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      const orgId = (ctx as any).orgId as string;
+
+      const conditions = [
+        eq(consentDisclosures.org_id, orgId),
+      ];
+
+      if (input.dateFrom) {
+        conditions.push(gte(consentDisclosures.disclosed_at, new Date(input.dateFrom)));
+      }
+      if (input.dateTo) {
+        conditions.push(lte(consentDisclosures.disclosed_at, new Date(input.dateTo)));
+      }
+      if (input.purpose) {
+        conditions.push(eq(consentDisclosures.disclosure_purpose, input.purpose));
+      }
+
+      const items = await ctx.db.query.consentDisclosures.findMany({
+        where: and(...conditions),
+        orderBy: [desc(consentDisclosures.disclosed_at)],
+        limit: input.limit,
+        offset: input.offset,
+        with: {
+          consent: true,
+          discloser: {
+            columns: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      // Get total count
+      const [countResult] = await ctx.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(consentDisclosures)
+        .where(and(...conditions));
+
+      return {
+        items,
+        total: countResult?.count ?? 0,
+      };
+    }),
+
+  /**
    * Generate accounting report for a resident
    * Returns all disclosures within date range
    */

@@ -1,20 +1,25 @@
 /**
  * Tenant Middleware
  *
- * Resolves organization ID and sets PostgreSQL RLS context.
+ * Resolves organization ID from the authenticated user's session
+ * and passes it into ctx for use by all downstream queries.
+ *
+ * Note: We do NOT use SET LOCAL for RLS because Neon's HTTP driver
+ * is stateless (each query is a separate HTTP request, no persistent
+ * connection/transaction). Instead, all routers filter by org_id
+ * explicitly via `eq(table.org_id, ctx.orgId)`.
+ *
  * Source: docs/02_ARCHITECTURE.md Section 8 (Multi-Tenancy)
  */
 
 import { TRPCError } from '@trpc/server';
 import { middleware } from '../trpc-init';
-import { sql } from 'drizzle-orm';
 
 /**
  * Tenant middleware
- * Resolves org_id from user session and sets RLS context
+ * Resolves org_id from user session and passes it into context
  */
 export const tenantMiddleware = middleware(async ({ ctx, next }) => {
-  // User must be authenticated (enforced by authMiddleware)
   if (!ctx.user) {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
@@ -22,7 +27,6 @@ export const tenantMiddleware = middleware(async ({ ctx, next }) => {
     });
   }
 
-  // Extract org_id from user metadata
   const orgId = ctx.user.orgId;
 
   if (!orgId) {
@@ -32,21 +36,6 @@ export const tenantMiddleware = middleware(async ({ ctx, next }) => {
     });
   }
 
-  // Set PostgreSQL RLS context for this session
-  // This ensures all queries are automatically filtered by org_id
-  try {
-    await ctx.db.execute(
-      sql`SET LOCAL app.current_org_id = ${orgId}`
-    );
-  } catch (error) {
-    console.error('Failed to set RLS context:', error);
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Failed to initialize database session',
-    });
-  }
-
-  // Pass org_id to next middleware
   return next({
     ctx: {
       ...ctx,
