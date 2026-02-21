@@ -10,7 +10,6 @@ import {
   Eye,
   X,
   ExternalLink,
-  FileText,
   XCircle,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -38,8 +37,9 @@ const statusMap: Record<string, "pending_signature" | "signed" | "voided" | unde
   voided: "voided",
 };
 
-// ── Send for Signature Modal ───────────────────────────────
-function SendForSignatureModal({
+// ── Send from Template Modal ───────────────────────────────
+// Primary flow: operator picks a DocuSign template + resident → envelope sent
+function SendFromTemplateModal({
   isOpen,
   onClose,
 }: {
@@ -48,72 +48,66 @@ function SendForSignatureModal({
 }) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
-  const [documentIds, setDocumentIds] = useState<string[]>([]);
-  const [signerEmail, setSignerEmail] = useState("");
-  const [signerName, setSignerName] = useState("");
+  const [templateId, setTemplateId] = useState("");
+  const [templateName, setTemplateName] = useState("");
   const [residentId, setResidentId] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
-  const [emailBody, setEmailBody] = useState("");
 
-  const { data: draftDocs } = trpc.document.list.useQuery(
-    { status: "draft", limit: 100 },
+  const { data: templates, isLoading: templatesLoading } = trpc.esign.listTemplates.useQuery(
+    undefined,
     { enabled: isOpen }
   );
 
-  const { data: residents } = trpc.resident.list.useQuery(
+  const { data: residentsData } = trpc.resident.list.useQuery(
     { limit: 200 },
     { enabled: isOpen }
   );
 
-  const createEnvelope = trpc.esign.createEnvelope.useMutation({
-    onSuccess: () => {
-      toast("success", "Sent for signature", "The signing request has been created.");
+  const sendFromTemplate = trpc.esign.sendFromTemplate.useMutation({
+    onSuccess: (data) => {
+      toast("success", "Sent for signature", `Envelope sent to ${data.signerEmail}`);
       utils.document.list.invalidate();
-      utils.esign.listPending.invalidate();
       resetAndClose();
     },
     onError: (err) => toast("error", "Failed to send", err.message),
   });
 
   function resetAndClose() {
-    setDocumentIds([]);
-    setSignerEmail("");
-    setSignerName("");
+    setTemplateId("");
+    setTemplateName("");
     setResidentId("");
     setEmailSubject("");
-    setEmailBody("");
     onClose();
   }
 
-  function handleResidentChange(id: string) {
-    setResidentId(id);
-    const resident = (residents?.items ?? []).find((r) => r.id === id);
-    if (resident) {
-      setSignerName(`${resident.first_name} ${resident.last_name}`);
-      if (resident.email) {
-        setSignerEmail(resident.email);
-      }
-    }
-  }
-
-  function toggleDocument(docId: string) {
-    setDocumentIds((prev) =>
-      prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
-    );
+  function handleTemplateChange(id: string) {
+    setTemplateId(id);
+    const tmpl = (templates ?? []).find((t) => t.templateId === id);
+    if (tmpl) setTemplateName(tmpl.name);
   }
 
   if (!isOpen) return null;
 
-  const documents = draftDocs?.items ?? [];
+  const residentList = residentsData?.items ?? [];
+
+  // Fallback built-in templates when no DocuSign templates configured yet
+  const builtInTemplates = [
+    { templateId: "house-rules", name: "House Rules Agreement" },
+    { templateId: "move-in", name: "Move-In Agreement" },
+    { templateId: "financial", name: "Financial Agreement" },
+    { templateId: "emergency", name: "Emergency Contact Form" },
+    { templateId: "drug-testing", name: "Drug Testing Consent" },
+  ];
+  const templateList = templates && templates.length > 0 ? templates : builtInTemplates;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800 max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between sticky top-0 bg-zinc-900 z-10">
+      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
+        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-zinc-100">Send for Signature</h2>
-            <p className="text-sm text-zinc-500 mt-1">Send document(s) for e-signature via DocuSign</p>
+            <p className="text-sm text-zinc-500 mt-1">Choose a template and resident to send via DocuSign</p>
           </div>
           <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-300">
             <X className="h-5 w-5" />
@@ -122,118 +116,70 @@ function SendForSignatureModal({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            createEnvelope.mutate({
-              documentIds,
-              signers: [{
-                email: signerEmail,
-                name: signerName,
-                residentId: residentId || undefined,
-              }],
+            sendFromTemplate.mutate({
+              templateId,
+              templateName,
+              residentId,
               emailSubject: emailSubject || undefined,
-              emailBody: emailBody || undefined,
             });
           }}
           className="p-6 space-y-4"
         >
-          {/* Document Selection */}
+          {/* Template Selection */}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Document(s) <span className="text-red-400">*</span>
+              Document Template <span className="text-red-400">*</span>
             </label>
-            {documents.length === 0 ? (
-              <p className="text-xs text-zinc-500 py-2">No draft documents available. Create a document first.</p>
-            ) : (
-              <div className="space-y-1 max-h-40 overflow-y-auto border border-zinc-800 rounded-lg p-2">
-                {documents.map((doc) => (
-                  <label
-                    key={doc.id}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
-                      documentIds.includes(doc.id)
-                        ? "bg-indigo-500/10 text-indigo-300"
-                        : "hover:bg-zinc-800/60 text-zinc-400"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={documentIds.includes(doc.id)}
-                      onChange={() => toggleDocument(doc.id)}
-                      className="rounded border-zinc-600 text-indigo-500 focus:ring-indigo-500/20 bg-zinc-800"
-                    />
-                    <FileText className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="text-sm truncate">{doc.title}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-            {documentIds.length > 0 && (
-              <p className="text-xs text-zinc-500 mt-1">{documentIds.length} document(s) selected</p>
+            <select
+              required
+              value={templateId}
+              onChange={(e) => handleTemplateChange(e.target.value)}
+              className={inputClass}
+              disabled={templatesLoading}
+            >
+              <option value="">{templatesLoading ? "Loading templates..." : "Select a template..."}</option>
+              {templateList.map((t) => (
+                <option key={t.templateId} value={t.templateId}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            {templates && templates.length === 0 && (
+              <p className="text-xs text-zinc-500 mt-1">
+                No DocuSign templates found — using built-in list. Configure templates in your DocuSign account.
+              </p>
             )}
           </div>
 
-          {/* Recipient */}
+          {/* Resident Selection */}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Recipient (Resident)
+              Resident <span className="text-red-400">*</span>
             </label>
             <select
+              required
               value={residentId}
-              onChange={(e) => handleResidentChange(e.target.value)}
+              onChange={(e) => setResidentId(e.target.value)}
               className={inputClass}
             >
               <option value="">Select a resident...</option>
-              {(residents?.items ?? []).map((r) => (
+              {residentList.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.first_name} {r.last_name}
+                  {r.email ? ` — ${r.email}` : " (no email — add email first)"}
                 </option>
               ))}
             </select>
           </div>
 
+          {/* Optional subject override */}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Signer Name <span className="text-red-400">*</span>
-            </label>
-            <input
-              required
-              value={signerName}
-              onChange={(e) => setSignerName(e.target.value)}
-              className={inputClass}
-              placeholder="Full name of the signer"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Signer Email <span className="text-red-400">*</span>
-            </label>
-            <input
-              required
-              type="email"
-              value={signerEmail}
-              onChange={(e) => setSignerEmail(e.target.value)}
-              className={inputClass}
-              placeholder="signer@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Subject Line</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email Subject (Optional)</label>
             <input
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
               className={inputClass}
-              placeholder="Please sign this document"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Message (Optional)</label>
-            <textarea
-              rows={2}
-              value={emailBody}
-              onChange={(e) => setEmailBody(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
-              placeholder="Optional message..."
+              placeholder={templateName ? `Please sign: ${templateName}` : "Please sign this document"}
             />
           </div>
 
@@ -243,9 +189,9 @@ function SendForSignatureModal({
               type="submit"
               variant="primary"
               icon={<Send className="h-4 w-4" />}
-              disabled={documentIds.length === 0 || !signerEmail || !signerName || createEnvelope.isPending}
+              disabled={!templateId || !residentId || sendFromTemplate.isPending}
             >
-              {createEnvelope.isPending ? "Sending..." : "Send for Signature"}
+              {sendFromTemplate.isPending ? "Sending..." : "Send for Signature"}
             </Button>
           </div>
         </form>
@@ -569,7 +515,7 @@ export default function SignatureTrackerPage() {
         </div>
       )}
 
-      <SendForSignatureModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} />
+      <SendFromTemplateModal isOpen={showSendModal} onClose={() => setShowSendModal(false)} />
       <ViewDocModal isOpen={!!viewingDoc} onClose={() => setViewingDoc(null)} doc={viewingDoc} />
     </PageContainer>
   );

@@ -140,7 +140,7 @@ export default function ResidentMaintenancePage() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g., Leaking faucet"
-                className="w-full px-3 py-2 border border-zinc-700 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
@@ -153,7 +153,7 @@ export default function ResidentMaintenancePage() {
                 onChange={(e) => setNewDescription(e.target.value)}
                 placeholder="Provide more details..."
                 rows={3}
-                className="w-full px-3 py-2 border border-zinc-700 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
@@ -166,7 +166,7 @@ export default function ResidentMaintenancePage() {
                 value={newLocation}
                 onChange={(e) => setNewLocation(e.target.value)}
                 placeholder="e.g., Kitchen, Bathroom, My Room"
-                className="w-full px-3 py-2 border border-zinc-700 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 

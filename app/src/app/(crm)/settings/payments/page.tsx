@@ -123,19 +123,20 @@ export default function PaymentSettingsPage() {
     onError: (err) => toast("error", "Failed to save settings", err.message),
   });
 
-  const createConnectedAccount = trpc.stripe.createConnectedAccount.useMutation({
-    onSuccess: () => {
-      toast("success", "Stripe account created", "Complete onboarding to start accepting payments");
-      utils.stripe.getFeeConfig.invalidate();
-    },
-    onError: (err) => toast("error", "Failed to create Stripe account", err.message),
-  });
-
   const createAccountLink = trpc.stripe.createAccountLink.useMutation({
     onSuccess: (data) => {
-      window.open(data.url, "_blank");
+      // Redirect to Stripe onboarding (same tab so return URL works)
+      window.location.href = data.url;
     },
     onError: (err) => toast("error", "Failed to open Stripe onboarding", err.message),
+  });
+
+  const createConnectedAccount = trpc.stripe.createConnectedAccount.useMutation({
+    onSuccess: () => {
+      // Immediately redirect to Stripe onboarding after account creation
+      createAccountLink.mutate();
+    },
+    onError: (err) => toast("error", "Failed to create Stripe account", err.message),
   });
 
   const isLoading = feeLoading || settingsLoading;
@@ -183,9 +184,11 @@ export default function PaymentSettingsPage() {
                 <Button
                   variant="primary"
                   onClick={() => createConnectedAccount.mutate()}
-                  disabled={createConnectedAccount.isPending}
+                  disabled={createConnectedAccount.isPending || createAccountLink.isPending}
                 >
-                  {createConnectedAccount.isPending ? "Setting up..." : "Connect Stripe Account"}
+                  {createConnectedAccount.isPending || createAccountLink.isPending
+                    ? "Redirecting to Stripe..."
+                    : "Connect Stripe Account"}
                 </Button>
               </div>
             ) : !chargesEnabled ? (
@@ -204,7 +207,7 @@ export default function PaymentSettingsPage() {
                   onClick={() => createAccountLink.mutate()}
                   disabled={createAccountLink.isPending}
                 >
-                  {createAccountLink.isPending ? "Opening..." : "Complete Stripe Setup"}
+                  {createAccountLink.isPending ? "Redirecting..." : "Complete Stripe Setup"}
                   <ExternalLink className="h-4 w-4 ml-1" />
                 </Button>
               </div>

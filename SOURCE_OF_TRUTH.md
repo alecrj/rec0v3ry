@@ -6,10 +6,10 @@
 
 ## Current State
 - **Phase**: PRODUCT RESET — Operator-first, money-first rebuild
-- **Execution Plan**: `docs/11_PRODUCT_RESET_PLAN.md` — 92 checkboxes, Phases A-J
-- **Status**: Phases A-G COMPLETE (71 boxes). NEW Phase G2: Web App Perfection (28 boxes) inserted before mobile. All API credentials configured. Next: Phase G2 — make every flow work end-to-end.
-- **Safety Commit**: `4725b95` — full Phase 5-6 build snapshot before overhaul
-- **Blocking Issues**: None — all credentials (Stripe test, Plaid sandbox, DocuSign dev) configured in .env.local
+- **Execution Plan**: `docs/11_PRODUCT_RESET_PLAN.md` — 92+ checkboxes, Phases A-J
+- **Status**: Phases A-G2 COMPLETE (103 boxes). Web app fully functional end-to-end. Remaining: mobile (H), messaging polish (I), final ship (J) — 44 boxes.
+- **Safety Commit**: `5fea1cc` — Phase G2 Wave 1 (pending new commit for Wave 2)
+- **Blocking Issues**: None
 - **Last Updated**: 2026-02-21
 - **Design System**: "Obsidian" — Geist font, zinc dark (#09090B), indigo accent (#6366F1). See globals.css for tokens.
 - **THE RULE**: Nothing gets checked off until it works with real data. No mock data. No faking it.
@@ -19,7 +19,7 @@
 - **Mobile-first**: Operators run business from phone. Web CRM for deep work/reports.
 - **Money is the scoreboard**: Dashboard shows revenue, expenses, profit per house.
 - **Automations are the killer feature**: Internal cron system (zero external dependency), presented as simple on/off toggles.
-- **Build order**: Web features first (Phases A-G DONE), then React Native (Phase H next).
+- **Build order**: Web app perfection first (G2), then React Native mobile (H), then polish + ship (I/J).
 - **10-minute onboarding**: House name → bed count → rent amount → first resident → done.
 
 ## Execution Phases (from docs/11_PRODUCT_RESET_PLAN.md)
@@ -32,7 +32,7 @@
 | E | Automations (11 pre-built, internal cron, toggle UI) | COMPLETE |
 | F | Referrals & Admissions (shareable intake link, referral tracking) | COMPLETE |
 | G | DocuSign Integration (real e-signatures) | COMPLETE |
-| G2 | Web App Perfection (end-to-end flows, real integrations) | **NEXT** |
+| G2 | Web App Perfection (end-to-end flows, real integrations) | **COMPLETE** — Wave 1 (G2-1 to G2-17) + Wave 2 (G2-18 to G2-32) |
 | H | React Native Mobile App (Expo, operator + resident, App Store) | NOT STARTED |
 | I | Messaging Polish (iMessage-style, push notifications) | NOT STARTED |
 | J | Final Polish & Ship (E2E testing, app store submission) | NOT STARTED |
@@ -363,8 +363,80 @@ Non-blocking findings from compliance-reviewer to address during relevant sprint
 
 **Build verified:** `tsc --noEmit` clean, `next build` clean
 
+### Phase G2 Wave 1 (COMPLETE — 2026-02-21)
+
+**G2-1/G2-2 — Lead Conversion + Invite:**
+- Enhanced `lead.convertToResident` — one-click: creates resident, assigns bed, generates invoice, sends welcome message
+- `lead.sendInvite` — generates crypto invite token, builds `/register?invite=<token>` link
+- Admissions detail page rewritten with ConvertToResidentModal (house/bed picker, invoice toggle, doc toggle)
+
+**G2-3 to G2-6 — Shareable Intake Links:**
+- Property slug auto-generation on create (`generateSlug` + `uniquePropertySlug`)
+- `GET /api/public/org/[slug]` — public org lookup with properties
+- `POST /api/public/apply` — public application endpoint (creates lead)
+- `/apply/[slug]` — branded intake form with org name/logo, property selector
+- `/apply/[slug]/[propertySlug]` — property-specific intake form
+- `IntakeLinkCard` component — copy link, QR code (PNG download), website embed snippet
+- Property detail page shows intake link + QR
+
+**G2-7 to G2-12 — Dashboard Command Center:**
+- RecordPaymentModal — resident picker, amount pre-fill, payment method, reference number
+- AddResidentModal — quick-add from dashboard (uses `lead.quickCreate`)
+- OutstandingBreakdown — drill-down showing who owes what, per-row "Record Payment"
+- Action items with inline buttons (send reminder, review, etc.)
+- EmptyStateChecklist — guided 4-step onboarding for new orgs
+- `reporting.getActiveResidents` + `reporting.getOutstandingByResident` procedures
+
+**G2-13 to G2-17 — Expense Tracking + Plaid:**
+- PlaidLinkButton component (react-plaid-link), Plaid settings page
+- Card-to-house mapping (`default_house_id` on plaid_items, auto-assigns during sync)
+- Auto-categorization engine (`src/lib/auto-categorize.ts` — merchant→category rules)
+- P&L per house page with date range picker, per-house cards, category breakdowns
+- Manual expense entry with category/house/vendor/date
+
+**Build verified:** `tsc --noEmit` clean (commit `5fea1cc`)
+
+### Phase G2 Wave 2 (COMPLETE — 2026-02-21)
+
+**Agent Team: g2-final** (5 Sonnet agents + Opus orchestrator)
+
+**G2-18 to G2-20 — Stripe Payments End-to-End:**
+- Resident Pay Now → Stripe Checkout (card + ACH + Apple Pay + Google Pay) → webhook → payment + ledger + invoice update
+- Stripe Connect Express onboarding with complete/refresh return pages
+- Fee config: absorb mode (platform takes fee from operator) vs pass-through (convenience fee added to resident)
+
+**G2-21 to G2-23 — DocuSign End-to-End:**
+- Send from template: operator picks template + resident → envelope created via DocuSign API
+- Embedded signing: resident signs in-app with signing-complete return page (handles all event types)
+- Webhook completion: downloads signed PDF → uploads to S3 (SSE-KMS) → updates document records
+
+**G2-24 to G2-28 — Automation Crons (all 5 verified):**
+- Chore auto-rotation (weekly, per-house round-robin)
+- Random drug test selection (Fisher-Yates shuffle, 42 CFR Part 2 aware)
+- Empty bed alert (calculates lost revenue, notifies waitlist)
+- Auto-invoice generation (monthly, deduped by resident+period)
+- Weekly P&L digest (revenue - expenses per house, system message to operators)
+
+**NEW — Resident Wellness Check-in:**
+- `wellness_check_ins` table + `wellness` tRPC router (checkIn, getDailyStatus, getMyHistory, getHouseSummary)
+- Resident app: "How are you feeling today?" with 5 emoji tap targets, optional note, once per day
+- Mood sparkline on resident home (14-day history)
+- Operator dashboard: per-house satisfaction averages (low mood highlighted)
+
+**NEW — Operator Dashboard Redesign (95% screen):**
+- Money row: Revenue MTD, Collected, Outstanding (drill-down), Profit
+- Beds + Leads: occupancy %, empty bed cost, pipeline counts, share intake link/QR
+- Quick actions: Record Payment, Add Resident, Announce (broadcast), Log Expense
+- Action items sorted by $ impact with inline action buttons
+- House satisfaction from wellness data
+- Messages preview with unread count
+
+**UI/UX Polish:**
+- 10 surgical fixes across CRM + PWA pages (text-white→zinc-100, invalid Tailwind classes, form input consistency, Next.js 15+ params types)
+
+**Build verified:** `tsc --noEmit` clean, `next build` clean
+
 ### Future Features (NOT blocking V1.0)
-- Stripe Connect (real payment processing) — currently uses manual recording
 - Real-time messaging (WebSocket/SSE)
 - Push notifications (service worker / Twilio)
 - Public application form (shareable link)

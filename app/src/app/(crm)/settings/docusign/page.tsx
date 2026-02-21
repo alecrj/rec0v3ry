@@ -10,6 +10,7 @@ import {
   Shield,
   Settings2,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import {
   PageContainer,
@@ -17,44 +18,32 @@ import {
   Badge,
   Button,
 } from "@/components/ui";
+import { trpc } from "@/lib/trpc";
 
 export const dynamic = "force-dynamic";
 
-/**
- * DocuSign configuration check.
- * Since env vars are server-side only, we show connection guidance
- * and link to the admin panel for managing templates.
- * The actual connection status is determined by whether the env vars
- * are set (checked server-side when envelopes are created).
- */
-
-const configItems = [
-  {
-    key: "DOCUSIGN_INTEGRATION_KEY",
+const configItemLabels: Record<string, { label: string; description: string }> = {
+  integrationKey: {
     label: "Integration Key",
     description: "OAuth integration key from DocuSign admin",
   },
-  {
-    key: "DOCUSIGN_ACCOUNT_ID",
+  accountId: {
     label: "Account ID",
     description: "DocuSign account identifier",
   },
-  {
-    key: "DOCUSIGN_USER_ID",
+  userId: {
     label: "User ID",
     description: "API user ID for JWT authentication",
   },
-  {
-    key: "DOCUSIGN_RSA_PRIVATE_KEY",
+  rsaPrivateKey: {
     label: "RSA Private Key",
     description: "Private key for JWT token signing",
   },
-  {
-    key: "DOCUSIGN_WEBHOOK_SECRET",
+  webhookSecret: {
     label: "Webhook Secret",
     description: "HMAC secret for webhook signature verification",
   },
-];
+};
 
 const templateGuides = [
   {
@@ -85,6 +74,8 @@ const templateGuides = [
 ];
 
 export default function DocuSignSettingsPage() {
+  const { data: connection, isLoading } = trpc.esign.checkConnection.useQuery();
+
   return (
     <PageContainer>
       <PageHeader
@@ -106,42 +97,89 @@ export default function DocuSignSettingsPage() {
           <div className="p-2.5 bg-indigo-500/10 rounded-lg">
             <PenTool className="h-5 w-5 text-indigo-400" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-lg font-semibold text-zinc-100">Connection Status</h2>
             <p className="text-sm text-zinc-500">
               DocuSign e-signature integration for document signing workflows
             </p>
           </div>
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 text-zinc-500 animate-spin" />
+          ) : connection?.isConfigured ? (
+            <Badge variant="success">
+              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              {connection.isDemo ? "Connected (Demo)" : "Connected (Live)"}
+            </Badge>
+          ) : (
+            <Badge variant="warning">
+              <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+              Not Configured
+            </Badge>
+          )}
         </div>
 
-        <div className="bg-zinc-800/30 rounded-lg p-4 space-y-3">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-zinc-400">
-              DocuSign connection requires server-side environment variables.
-              Contact your administrator to configure the integration.
-              Once configured, envelopes will be sent via the DocuSign API automatically.
-            </p>
+        {!isLoading && !connection?.isConfigured && (
+          <div className="bg-zinc-800/30 rounded-lg p-4 space-y-2">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-zinc-400">
+                DocuSign connection requires server-side environment variables.
+                Configure the missing variables below to enable e-signature functionality.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
+
+        {!isLoading && connection?.isConfigured && connection.isDemo && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-blue-300">
+                Connected to DocuSign Demo environment ({connection.baseUrl}).
+                Envelopes sent here are for testing only. Switch to production env vars to go live.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
             Required Configuration
           </h3>
           <div className="space-y-2">
-            {configItems.map((item) => (
-              <div
-                key={item.key}
-                className="flex items-center justify-between py-2 px-3 bg-zinc-800/20 rounded-lg"
-              >
-                <div>
-                  <p className="text-sm font-medium text-zinc-300">{item.label}</p>
-                  <p className="text-xs text-zinc-500">{item.description}</p>
+            {Object.entries(connection?.envVars ?? {
+              integrationKey: false,
+              accountId: false,
+              userId: false,
+              rsaPrivateKey: false,
+              webhookSecret: false,
+            }).map(([key, isSet]) => {
+              const meta = configItemLabels[key];
+              if (!meta) return null;
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between py-2 px-3 bg-zinc-800/20 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 text-zinc-600 animate-spin" />
+                    ) : isSet ? (
+                      <CheckCircle className="h-4 w-4 text-green-400" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-400" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-zinc-300">{meta.label}</p>
+                      <p className="text-xs text-zinc-500">{meta.description}</p>
+                    </div>
+                  </div>
+                  <Badge variant={isSet ? "success" : "error"} size="sm">
+                    {isSet ? "Set" : "Missing"}
+                  </Badge>
                 </div>
-                <code className="text-xs text-zinc-600 font-mono">{item.key}</code>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

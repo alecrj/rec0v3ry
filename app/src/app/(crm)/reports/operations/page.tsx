@@ -232,7 +232,7 @@ export default function OperationsReportPage() {
                       style={{ width: `${house.completionRate}%` }}
                     >
                       {house.completionRate > 20 && (
-                        <span className="text-xs font-medium text-white">
+                        <span className="text-xs font-medium text-zinc-100">
                           {house.completionRate}%
                         </span>
                       )}

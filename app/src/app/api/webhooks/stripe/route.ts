@@ -21,7 +21,7 @@ import { organizations } from '@/server/db/schema/orgs';
 import { payments, invoices } from '@/server/db/schema/payments';
 import { refunds } from '@/server/db/schema/payment-extended';
 import { residents } from '@/server/db/schema/residents';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { sendPaymentReceiptEmail } from '@/lib/email';
 
 // Track processed events for idempotency
@@ -110,14 +110,17 @@ export async function POST(req: Request) {
 
 /**
  * Handle checkout.session.completed (D2)
- * Stripe Checkout flow completed — payment handled by payment_intent.succeeded
+ * Payment recording is handled by payment_intent.succeeded which fires after this.
+ * This handler logs completion and can be used for additional checkout-specific logic.
  */
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log(`[Stripe Webhook] Checkout completed: ${session.id}`);
-  // Payment recording is handled by payment_intent.succeeded which fires separately.
-  // This handler logs the checkout completion for tracking.
   const metadata = session.metadata || {};
-  console.log(`[Stripe Webhook] Checkout for org=${metadata.org_id} resident=${metadata.resident_id} invoice=${metadata.invoice_id}`);
+  console.log(
+    `[Stripe Webhook] Checkout for org=${metadata.org_id} ` +
+    `resident=${metadata.resident_id} invoices=${metadata.invoice_ids || metadata.invoice_id}`
+  );
+  // payment_intent.succeeded fires next and handles payment recording + ledger entries
 }
 
 /**
@@ -165,7 +168,7 @@ async function handleAccountUpdated(account: Stripe.Account) {
 
 /**
  * Handle payment_intent.succeeded
- * Create payment record + ledger entries
+ * Create payment record + ledger entries + update invoice(s)
  */
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   console.log(`[Stripe Webhook] Payment succeeded: ${paymentIntent.id}`);
@@ -174,6 +177,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   const orgId = metadata.org_id;
   const payerConfigId = metadata.recoveryos_payer_id;
   const invoiceId = metadata.invoice_id;
+  const invoiceIds = metadata.invoice_ids
+    ? metadata.invoice_ids.split(',').filter(Boolean)
+    : invoiceId ? [invoiceId] : [];
   const residentId = metadata.resident_id;
 
   if (!orgId || !residentId) {
@@ -186,7 +192,10 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     ? paymentIntent.latest_charge
     : paymentIntent.latest_charge?.id || null;
 
-  // Create payment record
+  // Determine payment method type from PaymentIntent
+  const pmType = paymentIntent.payment_method_types?.[0] === 'us_bank_account' ? 'ach' : 'card';
+
+  // Create payment record (linked to primary invoice)
   const [payment] = await db
     .insert(payments)
     .values({
@@ -194,13 +203,13 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       invoice_id: invoiceId || null,
       resident_id: residentId,
       payer_config_id: payerConfigId || null,
-      amount: (paymentIntent.amount / 100).toFixed(2), // Convert cents to dollars
-      payment_method_type: 'card',
+      amount: (paymentIntent.amount / 100).toFixed(2),
+      payment_method_type: pmType,
       status: 'succeeded',
       payment_date: new Date(),
       stripe_payment_intent_id: paymentIntent.id,
       stripe_charge_id: chargeId,
-      receipt_url: null, // Receipt URL will be available via Stripe API if needed
+      receipt_url: null,
       created_by: 'system',
       updated_by: 'system',
     })
@@ -208,35 +217,13 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
   console.log(`[Stripe Webhook] Created payment record: ${payment.id}`);
 
-  // Send receipt email (fire-and-forget)
-  if (residentId) {
-    const resident = await db.query.residents.findFirst({
-      where: eq(residents.id, residentId),
-      columns: { first_name: true, last_name: true, email: true },
-    });
-    const org = await db.query.organizations.findFirst({
-      where: eq(organizations.id, orgId),
-      columns: { name: true },
-    });
-    if (resident?.email && org) {
-      sendPaymentReceiptEmail({
-        to: resident.email,
-        recipientName: `${resident.first_name} ${resident.last_name}`,
-        amount: (paymentIntent.amount / 100).toFixed(2),
-        paymentDate: new Date().toLocaleDateString(),
-        invoiceNumber: invoiceId ? undefined : undefined,
-        orgName: org.name,
-      }).catch((err) => console.error('[Stripe Webhook] Receipt email failed:', err));
-    }
-  }
-
   // Create ledger entries: DR Cash-Stripe (1100), CR Accounts Receivable (1000)
   const transactionId = await createLedgerEntryPair({
     orgId,
     debitAccountCode: '1100', // Cash - Stripe
     creditAccountCode: '1000', // Accounts Receivable
     amountCents: paymentIntent.amount,
-    description: `Payment received - ${paymentIntent.description || 'Payment'}`,
+    description: `Stripe payment received`,
     referenceType: 'payment',
     referenceId: payment.id,
     createdBy: 'system',
@@ -244,32 +231,60 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
   console.log(`[Stripe Webhook] Created ledger entries: ${transactionId}`);
 
-  // Update invoice if applicable
-  if (invoiceId) {
-    const [invoice] = await db
+  // Update all invoices covered by this payment
+  if (invoiceIds.length > 0) {
+    // Fetch all invoices to determine amounts due
+    const invoiceRecords = await db
       .select()
       .from(invoices)
-      .where(eq(invoices.id, invoiceId))
-      .limit(1);
+      .where(and(
+        eq(invoices.org_id, orgId),
+        inArray(invoices.id, invoiceIds)
+      ));
 
-    if (invoice) {
-      const amountPaid = Number(invoice.amount_paid || 0) + paymentIntent.amount / 100;
-      const amountDue = Number(invoice.total) - amountPaid;
+    let remaining = paymentIntent.amount / 100; // dollars remaining to apply
 
-      const newStatus = amountDue <= 0 ? 'paid' : 'partially_paid';
+    for (const invoice of invoiceRecords) {
+      if (remaining <= 0) break;
+      const amountDue = Math.max(0, Number(invoice.amount_due || invoice.total));
+      const applyAmount = Math.min(remaining, amountDue);
+      remaining -= applyAmount;
+
+      const newAmountPaid = Number(invoice.amount_paid || 0) + applyAmount;
+      const newAmountDue = Math.max(0, Number(invoice.total) - newAmountPaid);
+      const newStatus = newAmountDue <= 0.005 ? 'paid' : 'partially_paid';
 
       await db
         .update(invoices)
         .set({
-          amount_paid: amountPaid.toFixed(2),
-          amount_due: amountDue.toFixed(2),
+          amount_paid: newAmountPaid.toFixed(2),
+          amount_due: newAmountDue.toFixed(2),
           status: newStatus,
           updated_at: new Date(),
         })
-        .where(eq(invoices.id, invoiceId));
+        .where(eq(invoices.id, invoice.id));
 
-      console.log(`[Stripe Webhook] Updated invoice ${invoiceId} status to ${newStatus}`);
+      console.log(`[Stripe Webhook] Updated invoice ${invoice.id} → ${newStatus}`);
     }
+  }
+
+  // Send receipt email (fire-and-forget)
+  const resident = await db.query.residents.findFirst({
+    where: eq(residents.id, residentId),
+    columns: { first_name: true, last_name: true, email: true },
+  });
+  const org = await db.query.organizations.findFirst({
+    where: eq(organizations.id, orgId),
+    columns: { name: true },
+  });
+  if (resident?.email && org) {
+    sendPaymentReceiptEmail({
+      to: resident.email,
+      recipientName: `${resident.first_name} ${resident.last_name}`,
+      amount: (paymentIntent.amount / 100).toFixed(2),
+      paymentDate: new Date().toLocaleDateString(),
+      orgName: org.name,
+    }).catch((err) => console.error('[Stripe Webhook] Receipt email failed:', err));
   }
 }
 

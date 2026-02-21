@@ -168,6 +168,31 @@ export async function objectExists(key: string): Promise<boolean> {
 }
 
 /**
+ * Upload a Buffer directly to S3 (used for server-side uploads like signed PDFs from DocuSign)
+ */
+export async function uploadBuffer(params: {
+  key: string;
+  body: Buffer;
+  contentType: string;
+}): Promise<{ key: string; url: string }> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: params.key,
+    Body: params.body,
+    ContentType: params.contentType,
+    ServerSideEncryption: 'aws:kms',
+  });
+
+  await getS3().send(command);
+
+  // Return an S3 path URL (pre-signed URLs generated separately on demand)
+  return {
+    key: params.key,
+    url: `s3://${BUCKET}/${params.key}`,
+  };
+}
+
+/**
  * Get object metadata (size, content type, etc.)
  */
 export async function getObjectMetadata(key: string): Promise<{

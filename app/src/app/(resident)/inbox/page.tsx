@@ -246,7 +246,7 @@ export default function ResidentMessagesPage() {
                 announcements.map((ann) => (
                   <div
                     key={ann.id}
-                    className={`p-4 ${!ann.isRead ? "bg-indigo-500/10/50" : ""}`}
+                    className={`p-4 ${!ann.isRead ? "bg-indigo-500/10" : ""}`}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`p-2 rounded-lg ${

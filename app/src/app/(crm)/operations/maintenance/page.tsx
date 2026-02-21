@@ -36,7 +36,7 @@ export const dynamic = "force-dynamic";
 const priorityBadge: Record<string, { variant: "info" | "warning" | "error" | "default"; label: string }> = {
   low: { variant: "default", label: "Low" },
   medium: { variant: "warning", label: "Medium" },
-  high: { variant: "warning", label: "High" },
+  high: { variant: "error", label: "High" },
   urgent: { variant: "error", label: "Urgent" },
 };
 

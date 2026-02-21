@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -25,26 +25,27 @@ export const dynamic = "force-dynamic";
 export default function ConversationPage({
   params,
 }: {
-  params: { conversationId: string };
+  params: Promise<{ conversationId: string }>;
 }) {
+  const { conversationId } = use(params);
   const [newMessage, setNewMessage] = useState("");
   const [showMembers, setShowMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
   const { data: conversation, isLoading: convLoading } =
-    trpc.conversation.getById.useQuery({ conversationId: params.conversationId });
+    trpc.conversation.getById.useQuery({ conversationId });
 
   const { data: messagesData, isLoading: msgsLoading } =
     trpc.message.list.useQuery(
-      { conversationId: params.conversationId, limit: 50 },
+      { conversationId, limit: 50 },
       { enabled: !!conversation }
     );
 
   const sendMutation = trpc.message.send.useMutation({
     onSuccess: () => {
       setNewMessage("");
-      utils.message.list.invalidate({ conversationId: params.conversationId });
+      utils.message.list.invalidate({ conversationId });
     },
   });
 
@@ -83,7 +84,7 @@ export default function ConversationPage({
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     sendMutation.mutate({
-      conversationId: params.conversationId,
+      conversationId,
       content: newMessage.trim(),
     });
   };

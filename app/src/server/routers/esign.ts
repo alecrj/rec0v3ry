@@ -9,8 +9,16 @@ import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
 import { db } from '../db/client';
 import { documents, signatures } from '../db/schema/documents';
-import { eq, and, isNull, desc, sql } from 'drizzle-orm';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 import { NotFoundError, InvalidInputError } from '@/lib/errors';
+import {
+  createDocuSignEnvelope,
+  createEnvelopeFromTemplate,
+  listDocuSignTemplates,
+  getDocuSignSigningUrl,
+  voidDocuSignEnvelope,
+} from '@/lib/docusign';
+import { residents } from '../db/schema/residents';
 
 // ============================================================
 // INPUT SCHEMAS
@@ -92,26 +100,33 @@ export const esignRouter = router({
         })
       );
 
-      // TODO: Replace with actual DocuSign API call via src/lib/docusign.ts
-      // const envelope = await createDocuSignEnvelope({
-      //   orgId,
-      //   documents: docs.map((d, i) => ({
-      //     documentId: String(i + 1),
-      //     name: d.title,
-      //     content: d.file_url || '',
-      //   })),
-      //   signers: input.signers.map((s, i) => ({
-      //     email: s.email,
-      //     name: s.name,
-      //     recipientId: String(i + 1),
-      //     clientUserId: s.residentId || s.userId,
-      //   })),
-      //   ccRecipients: input.ccRecipients,
-      //   webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/docusign`,
-      //   emailSubject: input.emailSubject,
-      // });
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const webhookUrl = `${appUrl}/api/webhooks/docusign`;
 
-      const envelopeId = `env_${crypto.randomUUID()}`; // Placeholder until DocuSign integration
+      // Call DocuSign API to create envelope
+      const envelope = await createDocuSignEnvelope({
+        orgId,
+        documents: docs.map((d, i) => ({
+          documentId: String(i + 1),
+          name: d.title,
+          fileUrl: d.file_url || '',
+          // documentBase64 is optional — DocuSign will use file_url if provided
+          // For now we send empty and rely on DocuSign templates or upload separately
+          documentBase64: '',
+        })),
+        signers: input.signers.map((s, i) => ({
+          email: s.email,
+          name: s.name,
+          recipientId: String(i + 1),
+          clientUserId: s.residentId || s.userId || s.email,
+        })),
+        ccRecipients: input.ccRecipients,
+        webhookUrl,
+        emailSubject: input.emailSubject,
+        emailBody: input.emailBody,
+      });
+
+      const envelopeId = envelope.envelopeId;
 
       // Update documents with envelope info and status
       await Promise.all(
@@ -175,17 +190,20 @@ export const esignRouter = router({
         throw new InvalidInputError('Document does not have an active signing envelope');
       }
 
-      // TODO: Replace with actual DocuSign signing URL via src/lib/docusign.ts
-      // const { signingUrl } = await getDocuSignSigningUrl({
-      //   envelopeId: doc.docusign_envelope_id,
-      //   signerEmail: input.signerEmail,
-      //   signerName: input.signerName,
-      //   clientUserId: ctx.user!.id,
-      //   returnUrl: input.returnUrl || `${process.env.NEXT_PUBLIC_APP_URL}/documents`,
-      // });
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const returnUrl = input.returnUrl || `${appUrl}/documents/signatures`;
+
+      // Call DocuSign API to get embedded signing URL
+      const { signingUrl } = await getDocuSignSigningUrl({
+        envelopeId: doc.docusign_envelope_id,
+        signerEmail: input.signerEmail,
+        signerName: input.signerName,
+        clientUserId: ctx.user!.id,
+        returnUrl,
+      });
 
       return {
-        signingUrl: `/sign/${doc.docusign_envelope_id}`, // Placeholder
+        signingUrl,
         envelopeId: doc.docusign_envelope_id,
         expiresIn: 300, // 5 minutes
       };
@@ -352,8 +370,29 @@ export const esignRouter = router({
         })
       );
 
-      // TODO: Replace with actual DocuSign bulk envelope via src/lib/docusign.ts
-      const envelopeId = `env_bulk_${crypto.randomUUID()}`;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const webhookUrl = `${appUrl}/api/webhooks/docusign`;
+
+      // Call DocuSign API to create bulk envelope
+      const envelope = await createDocuSignEnvelope({
+        orgId,
+        documents: docs.map((d, i) => ({
+          documentId: String(i + 1),
+          name: d.title,
+          fileUrl: d.file_url || '',
+          documentBase64: '',
+        })),
+        signers: [{
+          email: input.signerEmail,
+          name: input.signerName,
+          recipientId: '1',
+          clientUserId: input.signerResidentId || input.signerUserId || input.signerEmail,
+        }],
+        webhookUrl,
+        emailSubject: input.emailSubject,
+      });
+
+      const envelopeId = envelope.envelopeId;
 
       // Update all documents and create signature records
       await db.transaction(async (tx) => {
@@ -380,10 +419,49 @@ export const esignRouter = router({
         }
       });
 
+      // Get embedded signing URL for the bulk envelope
+      const returnUrl = `${appUrl}/documents/signatures`;
+      const { signingUrl } = await getDocuSignSigningUrl({
+        envelopeId,
+        signerEmail: input.signerEmail,
+        signerName: input.signerName,
+        clientUserId: input.signerResidentId || input.signerUserId || input.signerEmail,
+        returnUrl,
+      });
+
       return {
         envelopeId,
         documentCount: docs.length,
-        signingUrl: `/sign/${envelopeId}`, // Placeholder
+        signingUrl,
+      };
+    }),
+
+  /**
+   * Check DocuSign connection status
+   * Verifies that env vars are configured and the JWT auth works
+   */
+  checkConnection: protectedProcedure
+    .meta({ permission: 'document:read', resource: 'esign' })
+    .query(async () => {
+      const hasIntegrationKey = !!process.env.DOCUSIGN_INTEGRATION_KEY;
+      const hasAccountId = !!process.env.DOCUSIGN_ACCOUNT_ID;
+      const hasUserId = !!process.env.DOCUSIGN_USER_ID;
+      const hasPrivateKey = !!process.env.DOCUSIGN_RSA_PRIVATE_KEY;
+      const hasWebhookSecret = !!process.env.DOCUSIGN_WEBHOOK_SECRET;
+      const baseUrl = process.env.DOCUSIGN_BASE_URL || 'https://demo.docusign.net/restapi';
+      const isConfigured = hasIntegrationKey && hasAccountId && hasUserId && hasPrivateKey;
+
+      return {
+        isConfigured,
+        isDemo: baseUrl.includes('demo.docusign.net'),
+        baseUrl,
+        envVars: {
+          integrationKey: hasIntegrationKey,
+          accountId: hasAccountId,
+          userId: hasUserId,
+          rsaPrivateKey: hasPrivateKey,
+          webhookSecret: hasWebhookSecret,
+        },
       };
     }),
 
@@ -420,8 +498,8 @@ export const esignRouter = router({
         throw new InvalidInputError('Cannot void a signed document');
       }
 
-      // TODO: Call DocuSign API to void envelope
-      // await voidDocuSignEnvelope(doc.docusign_envelope_id, input.reason);
+      // Call DocuSign API to void the envelope
+      await voidDocuSignEnvelope(doc.docusign_envelope_id, input.reason);
 
       const [updated] = await db
         .update(documents)
@@ -434,5 +512,126 @@ export const esignRouter = router({
         .returning();
 
       return updated;
+    }),
+
+  /**
+   * List DocuSign templates available in the account.
+   * Used to populate the "Send from Template" dropdown.
+   */
+  listTemplates: protectedProcedure
+    .meta({ permission: 'document:read', resource: 'esign' })
+    .query(async () => {
+      return listDocuSignTemplates();
+    }),
+
+  /**
+   * Send a document for signature using a DocuSign template.
+   *
+   * G2-21: Operator selects template + resident → envelope sent via DocuSign
+   * A document record is created in DB to track signature status.
+   */
+  sendFromTemplate: protectedProcedure
+    .meta({ permission: 'document:update', resource: 'esign' })
+    .input(z.object({
+      templateId: z.string().min(1, 'Template ID required'),
+      templateName: z.string().min(1),
+      residentId: z.string().uuid(),
+      emailSubject: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const orgId = (ctx as any).orgId as string;
+      const userId = ctx.user!.id;
+
+      // Look up resident to get name + email
+      const resident = await db.query.residents.findFirst({
+        where: and(
+          eq(residents.id, input.residentId),
+          eq(residents.org_id, orgId)
+        ),
+      });
+
+      if (!resident) {
+        throw new NotFoundError('Resident', input.residentId);
+      }
+
+      if (!resident.email) {
+        throw new InvalidInputError('Resident does not have an email address');
+      }
+
+      const signerName = `${resident.first_name} ${resident.last_name}`;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const webhookUrl = `${appUrl}/api/webhooks/docusign`;
+
+      // Send via DocuSign template API
+      const envelope = await createEnvelopeFromTemplate({
+        templateId: input.templateId,
+        signer: {
+          email: resident.email,
+          name: signerName,
+          recipientId: '1',
+          clientUserId: resident.id, // enables embedded signing
+          roleName: 'Signer',
+        },
+        webhookUrl,
+        emailSubject: input.emailSubject || `Please sign: ${input.templateName}`,
+        mergeFields: {
+          ResidentName: signerName,
+        },
+      });
+
+      const envelopeId = envelope.envelopeId;
+
+      // Determine document_type from template name (best-effort mapping)
+      // Valid values: intake_form, resident_agreement, house_rules, consent_form,
+      //               release_of_info, financial_agreement, treatment_plan,
+      //               discharge_summary, incident_report, other
+      const docTypeMap: Record<string, string> = {
+        'house rules': 'house_rules',
+        'move-in': 'resident_agreement',
+        'move in': 'resident_agreement',
+        'financial': 'financial_agreement',
+        'emergency': 'consent_form',
+        'drug test': 'consent_form',
+        'drug testing': 'consent_form',
+        'intake': 'intake_form',
+        'consent': 'consent_form',
+        'release': 'release_of_info',
+      };
+      const nameLower = input.templateName.toLowerCase();
+      const docType = Object.entries(docTypeMap).find(([k]) => nameLower.includes(k))?.[1] ?? 'other';
+
+      // Create a document record to track this envelope
+      const [doc] = await db
+        .insert(documents)
+        .values({
+          org_id: orgId,
+          resident_id: resident.id,
+          document_type: docType as any,
+          status: 'pending_signature',
+          title: input.templateName,
+          docusign_envelope_id: envelopeId,
+          docusign_status: 'sent',
+          sensitivity_level: 'confidential',
+          created_by: userId,
+          updated_by: userId,
+        })
+        .returning();
+
+      // Create signature record for the resident
+      await db.insert(signatures).values({
+        org_id: orgId,
+        document_id: doc.id,
+        signer_resident_id: resident.id,
+        signer_name: signerName,
+        signer_email: resident.email,
+        signature_method: 'electronic',
+      });
+
+      return {
+        envelopeId,
+        documentId: doc.id,
+        signerName,
+        signerEmail: resident.email,
+      };
     }),
 });

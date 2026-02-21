@@ -169,7 +169,7 @@ export default function ResidentSchedulePage() {
                   key={i}
                   className={`py-2 rounded-lg text-sm ${
                     isToday
-                      ? "bg-indigo-500 text-white font-bold"
+                      ? "bg-indigo-500 text-zinc-100 font-bold"
                       : "text-zinc-300"
                   }`}
                 >

@@ -254,7 +254,7 @@ export default function BreakGlassPage() {
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value as EmergencyType | "")}
-                  className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                  className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                 >
                   <option value="">Select reason</option>
                   <option value="medical">Medical Emergency</option>
@@ -272,7 +272,7 @@ export default function BreakGlassPage() {
                   required
                   value={residentId}
                   onChange={(e) => setResidentId(e.target.value)}
-                  className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="">Select resident</option>
                   {(residents?.items ?? []).map((r) => (
@@ -294,7 +294,7 @@ export default function BreakGlassPage() {
                   value={justification}
                   onChange={(e) => setJustification(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  className="w-full px-4 py-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                   placeholder="Provide detailed justification for this emergency access (minimum 10 characters)"
                 />
                 <p className="text-xs text-zinc-500 mt-1.5">

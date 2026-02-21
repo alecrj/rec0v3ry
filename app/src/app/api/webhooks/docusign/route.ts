@@ -17,6 +17,8 @@ import { db } from '@/server/db/client';
 import { documents, signatures } from '@/server/db/schema/documents';
 import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
+import { downloadDocuSignEnvelopeDocuments } from '@/lib/docusign';
+import { uploadBuffer } from '@/lib/s3';
 
 // ============================================================
 // HMAC SIGNATURE VERIFICATION
@@ -27,13 +29,18 @@ function verifyDocuSignSignature(
   signature: string,
   secret: string
 ): boolean {
-  const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(payload);
-  const computed = hmac.digest('base64');
-  return crypto.timingSafeEqual(
-    Buffer.from(computed),
-    Buffer.from(signature)
-  );
+  try {
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(payload);
+    const computed = hmac.digest('base64');
+    // Pad to same length if needed for timingSafeEqual
+    const computedBuf = Buffer.from(computed);
+    const sigBuf = Buffer.from(signature);
+    if (computedBuf.length !== sigBuf.length) return false;
+    return crypto.timingSafeEqual(computedBuf, sigBuf);
+  } catch {
+    return false;
+  }
 }
 
 // ============================================================
@@ -144,7 +151,12 @@ async function handleEnvelopeCompleted(payload: DocuSignWebhookPayload) {
 
   console.log(`[DocuSign Webhook] Envelope completed: ${envelopeId}`);
 
-  // Find all documents with this envelope ID and mark as signed
+  // Find all documents with this envelope ID
+  const affectedDocs = await db.query.documents.findMany({
+    where: eq(documents.docusign_envelope_id, envelopeId),
+  });
+
+  // Mark all documents as signed
   await db
     .update(documents)
     .set({
@@ -153,6 +165,43 @@ async function handleEnvelopeCompleted(payload: DocuSignWebhookPayload) {
       updated_by: 'system',
     })
     .where(eq(documents.docusign_envelope_id, envelopeId));
+
+  // Download signed PDF from DocuSign and store in S3
+  if (affectedDocs.length > 0) {
+    try {
+      const pdfBuffer = await downloadDocuSignEnvelopeDocuments(envelopeId);
+
+      // Upload to S3 using the org_id of the first affected document
+      // Key pattern: {org_id}/signed/{envelopeId}/combined.pdf
+      const firstDoc = affectedDocs[0]!;
+      const s3Key = `${firstDoc.org_id}/signed/${envelopeId}/combined.pdf`;
+
+      const { url: s3Url } = await uploadBuffer({
+        key: s3Key,
+        body: pdfBuffer,
+        contentType: 'application/pdf',
+      });
+
+      console.log(`[DocuSign Webhook] Uploaded signed PDF to S3: ${s3Key} (${pdfBuffer.length} bytes)`);
+
+      // Update file_url for all documents in this envelope
+      await db
+        .update(documents)
+        .set({
+          file_url: s3Url,
+          updated_by: 'system',
+        })
+        .where(eq(documents.docusign_envelope_id, envelopeId));
+
+      console.log(`[DocuSign Webhook] Updated file_url for ${affectedDocs.length} document(s)`);
+    } catch (downloadError) {
+      // Don't fail the webhook — status is already updated above
+      console.error(
+        `[DocuSign Webhook] Failed to download/upload signed document for envelope ${envelopeId}:`,
+        downloadError
+      );
+    }
+  }
 }
 
 async function handleRecipientCompleted(payload: DocuSignWebhookPayload) {
@@ -188,6 +237,20 @@ async function handleRecipientCompleted(payload: DocuSignWebhookPayload) {
           })
           .where(eq(signatures.id, sig.id));
       }
+    }
+
+    // If no existing signature record, create one (in case webhook arrives before UI action)
+    if (existingSigs.length === 0 && recipientEmail) {
+      await db.insert(signatures).values({
+        org_id: doc.org_id,
+        document_id: doc.id,
+        signer_name: recipientName || recipientEmail,
+        signer_email: recipientEmail,
+        signature_method: 'electronic',
+        signed_at: new Date(),
+        is_verified: true,
+        ip_address: payload.data?.recipientIpAddress || null,
+      });
     }
   }
 }

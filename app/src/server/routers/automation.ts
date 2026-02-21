@@ -248,6 +248,11 @@ export const automationRouter = router({
         rent_reminders: '/api/cron/send-reminders',
         late_payment_escalation: '/api/cron/apply-late-fees',
         daily_digest: '/api/cron/daily-digest',
+        chore_rotation: '/api/cron/chore-rotation',
+        random_drug_test: '/api/cron/drug-test-selection',
+        empty_bed_alert: '/api/cron/empty-bed-alert',
+        weekly_pnl: '/api/cron/weekly-pnl',
+        invoice_generation: '/api/cron/generate-invoices',
       };
 
       const cronPath = cronMap[input.key];

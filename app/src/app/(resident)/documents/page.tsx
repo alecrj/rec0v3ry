@@ -145,10 +145,14 @@ export default function ResidentDocumentsPage() {
       toast("error", "Email required", "Your account does not have an email address.");
       return;
     }
+    const returnUrl = typeof window !== "undefined"
+      ? `${window.location.origin}/documents/signing-complete`
+      : "/documents/signing-complete";
     getSigningUrl.mutate({
       documentId: docId,
       signerEmail: userEmailAddr,
       signerName: userName,
+      returnUrl,
     });
   };
 

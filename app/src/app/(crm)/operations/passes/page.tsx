@@ -267,7 +267,7 @@ export default function PassesPage() {
           {/* Pending Requests */}
           {pendingPasses.length > 0 && (
             <Card>
-              <CardHeader className="bg-amber-500/10/50 rounded-t-xl">
+              <CardHeader>
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-amber-400" />
                   <CardTitle>Pending Requests ({pendingPasses.length})</CardTitle>
@@ -344,7 +344,7 @@ export default function PassesPage() {
           {/* Active Passes */}
           {activePasses.length > 0 && (
             <Card>
-              <CardHeader className="bg-green-500/10/50 rounded-t-xl">
+              <CardHeader>
                 <div className="flex items-center gap-2">
                   <BadgeCheck className="h-5 w-5 text-green-400" />
                   <CardTitle>Currently Out ({activePasses.length})</CardTitle>

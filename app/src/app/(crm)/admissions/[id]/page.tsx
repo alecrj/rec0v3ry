@@ -171,7 +171,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-lg mx-4">
         <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-xl font-semibold text-white">Approve and Move In</h2>
+          <h2 className="text-xl font-semibold text-zinc-100">Approve and Move In</h2>
           <p className="text-sm text-zinc-400 mt-1">
             One-click admission for {lead.first_name} {lead.last_name}
           </p>
@@ -204,7 +204,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                   setBedId("");
                 }}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">Select house...</option>
                 {housesData?.map((h) => (
@@ -222,7 +222,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                 value={bedId}
                 onChange={(e) => setBedId(e.target.value)}
                 disabled={!houseId}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
               >
                 <option value="">Assign later...</option>
                 {availableBeds?.map((b) => (
@@ -244,7 +244,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                 value={admissionDate}
                 onChange={(e) => setAdmissionDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
@@ -256,7 +256,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -388,7 +388,7 @@ function SendInviteModal({ isOpen, onClose, residentId, residentName }: InviteMo
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-lg font-semibold text-white">Send App Invite</h2>
+          <h2 className="text-lg font-semibold text-zinc-100">Send App Invite</h2>
           <p className="text-sm text-zinc-400 mt-1">
             Generate a sign-up link for {residentName}
           </p>
@@ -526,7 +526,7 @@ export default function LeadDetailPage() {
               {lead.last_name[0]}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold text-zinc-100">
                 {lead.first_name} {lead.last_name}
               </h1>
               <div className="flex items-center gap-4 mt-2 text-sm text-zinc-400">
@@ -617,7 +617,7 @@ export default function LeadDetailPage() {
           {/* Lead Details */}
           <div className="bg-zinc-900 rounded-lg border border-zinc-800">
             <div className="p-4 border-b border-zinc-800">
-              <h3 className="font-semibold text-white">Lead Information</h3>
+              <h3 className="font-semibold text-zinc-100">Lead Information</h3>
             </div>
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -671,7 +671,7 @@ export default function LeadDetailPage() {
           {(canConvert || isConverted) && (
             <div className="bg-zinc-900 rounded-lg border border-zinc-800">
               <div className="p-4 border-b border-zinc-800">
-                <h3 className="font-semibold text-white">Intake Checklist</h3>
+                <h3 className="font-semibold text-zinc-100">Intake Checklist</h3>
               </div>
               <div className="p-4">
                 <div className="space-y-2">
@@ -717,7 +717,7 @@ export default function LeadDetailPage() {
           {/* Quick Actions */}
           <div className="bg-zinc-900 rounded-lg border border-zinc-800">
             <div className="p-4 border-b border-zinc-800">
-              <h3 className="font-semibold text-white">Quick Actions</h3>
+              <h3 className="font-semibold text-zinc-100">Quick Actions</h3>
             </div>
             <div className="p-2">
               {canConvert && (
@@ -756,7 +756,7 @@ export default function LeadDetailPage() {
           {/* Lead Stats */}
           <div className="bg-zinc-900 rounded-lg border border-zinc-800">
             <div className="p-4 border-b border-zinc-800">
-              <h3 className="font-semibold text-white">Details</h3>
+              <h3 className="font-semibold text-zinc-100">Details</h3>
             </div>
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between text-sm">

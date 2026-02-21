@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   CreditCard,
@@ -9,105 +10,28 @@ import {
   DollarSign,
   Lock,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
-import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui";
-import { StripeProvider } from "@/components/stripe-provider";
 
 export const dynamic = "force-dynamic";
-
-// ── Checkout Form (inside Stripe Elements) ──────────────
-function CheckoutForm({
-  amount,
-  invoiceCount,
-  onSuccess,
-}: {
-  amount: number;
-  invoiceCount: number;
-  onSuccess: () => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { toast } = useToast();
-  const [processing, setProcessing] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setProcessing(true);
-
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/payments`,
-      },
-      redirect: "if_required",
-    });
-
-    if (error) {
-      toast("error", "Payment failed", error.message ?? "An unexpected error occurred");
-      setProcessing(false);
-    } else {
-      onSuccess();
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100 mb-4">Payment Details</h2>
-        <PaymentElement />
-      </div>
-
-      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100 mb-4">Summary</h2>
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-zinc-400">Invoices</span>
-            <span className="text-zinc-100">{invoiceCount} selected</span>
-          </div>
-          <div className="pt-3 border-t border-zinc-800 flex justify-between">
-            <span className="font-semibold text-zinc-100">Total</span>
-            <span className="text-xl font-bold text-zinc-100">${amount.toFixed(2)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <button
-          type="submit"
-          disabled={!stripe || processing}
-          className={`w-full px-4 py-4 rounded-lg font-semibold flex items-center justify-center gap-2 text-lg ${
-            stripe && !processing
-              ? "bg-indigo-500 text-white hover:bg-indigo-400"
-              : "bg-zinc-700 text-zinc-500 cursor-not-allowed"
-          }`}
-        >
-          {processing ? (
-            <Loader2 className="h-6 w-6 animate-spin" />
-          ) : (
-            <DollarSign className="h-6 w-6" />
-          )}
-          {processing ? "Processing..." : `Pay $${amount.toFixed(2)}`}
-        </button>
-        <p className="text-xs text-center text-zinc-400 flex items-center justify-center gap-1">
-          <Lock className="h-3 w-3" />
-          Secure payment powered by Stripe
-        </p>
-      </div>
-    </form>
-  );
-}
 
 // ── Main Page ───────────────────────────────────────────
 export default function MakePaymentPage() {
   const { toast } = useToast();
-  const [paymentComplete, setPaymentComplete] = useState(false);
+  const searchParams = useSearchParams();
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [connectedAccountId, setConnectedAccountId] = useState<string | null>(null);
+
+  // Handle return from Stripe Checkout
+  const checkoutSuccess = searchParams.get("checkout") === "success";
+  const checkoutCanceled = searchParams.get("checkout") === "canceled";
+
+  useEffect(() => {
+    if (checkoutCanceled) {
+      toast("info", "Payment canceled", "Your payment was not processed.");
+    }
+  }, [checkoutCanceled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: userData } = trpc.user.getCurrentUser.useQuery();
   const residentId = userData?.scope_type === "resident" ? userData.scope_id : undefined;
@@ -117,10 +41,11 @@ export default function MakePaymentPage() {
     { enabled: !!residentId }
   );
 
-  const createPaymentIntent = trpc.stripe.createPaymentIntent.useMutation({
+  const createCheckoutSession = trpc.stripe.createCheckoutSession.useMutation({
     onSuccess: (data) => {
-      setClientSecret(data.clientSecret);
-      setConnectedAccountId(data.connectedAccountId);
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
     },
     onError: (error) => {
       toast("error", "Payment setup failed", error.message);
@@ -141,10 +66,11 @@ export default function MakePaymentPage() {
 
   const handleProceedToPayment = () => {
     if (!residentId || selectedInvoices.length === 0) return;
-    createPaymentIntent.mutate({
+    createCheckoutSession.mutate({
+      invoiceId: selectedInvoices[0]!,
       invoiceIds: selectedInvoices,
-      amountCents: Math.round(selectedTotal * 100),
       residentId,
+      amountCents: Math.round(selectedTotal * 100),
     });
   };
 
@@ -156,7 +82,8 @@ export default function MakePaymentPage() {
     );
   }
 
-  if (paymentComplete) {
+  // Success state (returned from Stripe Checkout)
+  if (checkoutSuccess) {
     return (
       <div className="p-4 space-y-6">
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -164,24 +91,9 @@ export default function MakePaymentPage() {
             <div className="w-20 h-20 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="h-12 w-12 text-green-400" />
             </div>
-            <h1 className="text-2xl font-bold text-zinc-100 mb-2">Payment Complete</h1>
-            <p className="text-zinc-400 mb-1">Your payment has been processed</p>
-            <p className="text-sm text-zinc-500 mb-6">A receipt will be sent to your email</p>
-
-            <div className="bg-zinc-800/40 rounded-lg p-6 mb-6 text-left">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm text-zinc-400">Amount</span>
-                <span className="text-lg font-bold text-zinc-100">${selectedTotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span className="text-sm text-zinc-400">Invoices</span>
-                <span className="text-sm text-zinc-100">{selectedInvoices.length} selected</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-zinc-400">Date</span>
-                <span className="text-sm text-zinc-100">{new Date().toLocaleDateString()}</span>
-              </div>
-            </div>
+            <h1 className="text-2xl font-bold text-zinc-100 mb-2">Payment Processing</h1>
+            <p className="text-zinc-400 mb-1">Your payment is being processed</p>
+            <p className="text-sm text-zinc-500 mb-6">A receipt will be sent to your email once confirmed</p>
 
             <Link
               href="/payments"
@@ -191,34 +103,6 @@ export default function MakePaymentPage() {
             </Link>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // Show Stripe checkout form once PaymentIntent is created
-  if (clientSecret && connectedAccountId) {
-    return (
-      <div className="p-4 space-y-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => { setClientSecret(null); setConnectedAccountId(null); }}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-zinc-400" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-100">Complete Payment</h1>
-            <p className="text-zinc-400 mt-1">Enter your payment details</p>
-          </div>
-        </div>
-
-        <StripeProvider clientSecret={clientSecret} connectedAccountId={connectedAccountId}>
-          <CheckoutForm
-            amount={selectedTotal}
-            invoiceCount={selectedInvoices.length}
-            onSuccess={() => setPaymentComplete(true)}
-          />
-        </StripeProvider>
       </div>
     );
   }
@@ -234,6 +118,13 @@ export default function MakePaymentPage() {
           <p className="text-zinc-400 mt-1">Pay your outstanding balance</p>
         </div>
       </div>
+
+      {checkoutCanceled && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-400 flex-shrink-0" />
+          <p className="text-sm text-zinc-300">Payment was canceled. Please try again.</p>
+        </div>
+      )}
 
       {invoices.length === 0 ? (
         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6 text-center">
@@ -287,8 +178,8 @@ export default function MakePaymentPage() {
                 <CreditCard className="h-5 w-5 text-indigo-400" />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-zinc-100">Pay with Card</p>
-                <p className="text-sm text-zinc-400">Secure payment via Stripe</p>
+                <p className="font-medium text-zinc-100">Card, ACH, Apple Pay, Google Pay</p>
+                <p className="text-sm text-zinc-400">Secure checkout powered by Stripe</p>
               </div>
             </div>
           </div>
@@ -309,23 +200,23 @@ export default function MakePaymentPage() {
           <div className="space-y-3">
             <button
               onClick={handleProceedToPayment}
-              disabled={selectedInvoices.length === 0 || createPaymentIntent.isPending}
+              disabled={selectedInvoices.length === 0 || createCheckoutSession.isPending}
               className={`w-full px-4 py-4 rounded-lg font-semibold flex items-center justify-center gap-2 text-lg ${
-                selectedInvoices.length > 0 && !createPaymentIntent.isPending
+                selectedInvoices.length > 0 && !createCheckoutSession.isPending
                   ? "bg-indigo-500 text-white hover:bg-indigo-400"
                   : "bg-zinc-700 text-zinc-500 cursor-not-allowed"
               }`}
             >
-              {createPaymentIntent.isPending ? (
+              {createCheckoutSession.isPending ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 <DollarSign className="h-6 w-6" />
               )}
-              {createPaymentIntent.isPending ? "Setting up..." : `Pay $${selectedTotal.toFixed(2)}`}
+              {createCheckoutSession.isPending ? "Redirecting to checkout..." : `Pay $${selectedTotal.toFixed(2)}`}
             </button>
             <p className="text-xs text-center text-zinc-400 flex items-center justify-center gap-1">
               <Lock className="h-3 w-3" />
-              Secure payment powered by Stripe
+              Secure payment powered by Stripe. You will be redirected to complete payment.
             </p>
           </div>
         </>

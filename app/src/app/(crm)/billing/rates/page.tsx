@@ -188,7 +188,7 @@ export default function RatesPage() {
                     Property
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     value={rateForm.propertyId}
                     onChange={(e) => setRateForm({ ...rateForm, propertyId: e.target.value, houseId: "" })}
                   >
@@ -203,7 +203,7 @@ export default function RatesPage() {
                     House
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     value={rateForm.houseId}
                     onChange={(e) => setRateForm({ ...rateForm, houseId: e.target.value })}
                     disabled={!rateForm.propertyId}
@@ -219,7 +219,7 @@ export default function RatesPage() {
                     Payment Type <span className="text-red-400">*</span>
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     required
                     value={rateForm.paymentType}
                     onChange={(e) => setRateForm({ ...rateForm, paymentType: e.target.value })}
@@ -238,7 +238,7 @@ export default function RatesPage() {
                     type="text"
                     placeholder="e.g., Weekly Rent"
                     required
-                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     value={rateForm.rateName}
                     onChange={(e) => setRateForm({ ...rateForm, rateName: e.target.value })}
                   />
@@ -255,7 +255,7 @@ export default function RatesPage() {
                       step="0.01"
                       placeholder="0.00"
                       required
-                      className="w-full h-12 pl-8 pr-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-12 pl-8 pr-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                       value={rateForm.amount}
                       onChange={(e) => setRateForm({ ...rateForm, amount: e.target.value })}
                     />
@@ -266,7 +266,7 @@ export default function RatesPage() {
                     Billing Frequency <span className="text-red-400">*</span>
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     required
                     value={rateForm.billingFrequency}
                     onChange={(e) => setRateForm({ ...rateForm, billingFrequency: e.target.value })}
@@ -284,7 +284,7 @@ export default function RatesPage() {
                   <input
                     type="date"
                     required
-                    className="w-full h-12 px-4 text-sm border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     value={rateForm.effectiveFrom}
                     onChange={(e) => setRateForm({ ...rateForm, effectiveFrom: e.target.value })}
                   />

@@ -121,6 +121,7 @@ export const stripeRouter = router({
       .update(organizations)
       .set({
         settings: updatedSettings,
+        stripe_account_id: account.id, // Also store in dedicated column for webhook lookup
         updated_at: new Date(),
         updated_by: ctx.user!.id,
       })
@@ -351,12 +352,14 @@ export const stripeRouter = router({
     .input(
       z.object({
         invoiceId: z.string().uuid(),
+        invoiceIds: z.array(z.string().uuid()).optional(), // All selected invoices
         residentId: z.string().uuid(),
         amountCents: z.number().int().positive(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const orgId = (ctx as any).orgId as string;
+      const allInvoiceIds = input.invoiceIds ?? [input.invoiceId];
 
       const [org] = await db
         .select()
@@ -377,12 +380,15 @@ export const stripeRouter = router({
       const feeMode = stripeSettings.feeMode || 'absorb'; // 'absorb' | 'pass_through'
       let checkoutAmount = input.amountCents;
       if (feeMode === 'pass_through') {
-        // Add ~3% convenience fee for card, ~1% for ACH
+        // Add ~3% convenience fee
         const convenienceFee = Math.round(input.amountCents * 0.03 + 30);
         checkoutAmount = input.amountCents + convenienceFee;
       }
 
-      const platformFee = Math.round(input.amountCents * ((stripeSettings.platformFeePercent || 2.5) / 100) + (stripeSettings.platformFeeFixedCents || 30));
+      const platformFee = Math.round(
+        input.amountCents * ((stripeSettings.platformFeePercent || 2.5) / 100) +
+        (stripeSettings.platformFeeFixedCents || 30)
+      );
 
       const session = await stripe.checkout.sessions.create(
         {
@@ -393,7 +399,9 @@ export const stripeRouter = router({
                 currency: 'usd',
                 product_data: {
                   name: 'Rent Payment',
-                  description: `Invoice payment`,
+                  description: allInvoiceIds.length > 1
+                    ? `Payment for ${allInvoiceIds.length} invoices`
+                    : 'Invoice payment',
                 },
                 unit_amount: checkoutAmount,
               },
@@ -407,15 +415,17 @@ export const stripeRouter = router({
               org_id: orgId,
               resident_id: input.residentId,
               invoice_id: input.invoiceId,
+              invoice_ids: allInvoiceIds.join(','),
               source: 'checkout',
             },
           },
-          success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/pay?success=true`,
-          cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/pay?canceled=true`,
+          success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/pay?checkout=success`,
+          cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/pay?checkout=canceled`,
           metadata: {
             org_id: orgId,
             resident_id: input.residentId,
             invoice_id: input.invoiceId,
+            invoice_ids: allInvoiceIds.join(','),
           },
         },
         {
@@ -521,6 +531,7 @@ export const stripeRouter = router({
         {
           amount: input.amountCents,
           currency: 'usd',
+          automatic_payment_methods: { enabled: true },
           application_fee_amount: platformFee,
           metadata: {
             org_id: orgId,

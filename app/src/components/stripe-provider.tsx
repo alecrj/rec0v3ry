@@ -2,11 +2,7 @@
 
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import { type ReactNode } from "react";
-
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
+import { useMemo, type ReactNode } from "react";
 
 export function StripeProvider({
   children,
@@ -17,6 +13,15 @@ export function StripeProvider({
   clientSecret: string;
   connectedAccountId: string;
 }) {
+  // Load Stripe with stripeAccount so payments go to the connected account
+  const stripePromise = useMemo(
+    () =>
+      loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!, {
+        stripeAccount: connectedAccountId,
+      }),
+    [connectedAccountId]
+  );
+
   return (
     <Elements
       stripe={stripePromise}

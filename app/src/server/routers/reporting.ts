@@ -22,7 +22,8 @@ import { invoices, payments, ledgerEntries, ledgerAccounts } from '../db/schema/
 import { chores, choreAssignments, meetings, meetingAttendance, drugTests, incidents, passes } from '../db/schema/operations';
 import { consents, consentDisclosures, breachIncidents } from '../db/schema/compliance';
 import { auditLogs } from '../db/schema/audit';
-import { eq, and, desc, gte, lte, sql, count, sum, isNull, isNotNull, inArray, ne, or } from 'drizzle-orm';
+import { wellnessCheckIns } from '../db/schema/operations-extended';
+import { eq, and, desc, gte, lte, sql, count, sum, isNull, isNotNull, inArray, ne, or, avg } from 'drizzle-orm';
 
 /**
  * Date range input schema (reusable)
@@ -1361,6 +1362,149 @@ This record is protected by federal confidentiality rules (42 CFR Part 2). The f
         data: output,
         recordCount: (data as unknown[]).length,
         includesRedisclosureNotice: includeRedisclosureNotice,
+      };
+    }),
+
+  // ============================================================
+  // LEADS PIPELINE SUMMARY (for dashboard)
+  // ============================================================
+
+  /**
+   * Get lead pipeline counts by stage (new, screening, ready)
+   */
+  getLeadsSummary: protectedProcedure
+    .meta({ permission: 'report:read', resource: 'report' })
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+
+      const stats = await ctx.db
+        .select({
+          status: leads.status,
+          count: count(),
+        })
+        .from(leads)
+        .where(and(eq(leads.org_id, orgId), isNull(leads.deleted_at)))
+        .groupBy(leads.status);
+
+      const counts: Record<string, number> = {};
+      for (const row of stats) {
+        counts[row.status] = Number(row.count);
+      }
+
+      return {
+        new: (counts['new'] || 0),
+        contacted: (counts['contacted'] || 0),
+        qualified: (counts['qualified'] || 0),
+        touring: (counts['touring'] || 0),
+        applied: (counts['applied'] || 0),
+        accepted: (counts['accepted'] || 0),
+        depositPending: (counts['deposit_pending'] || 0),
+        // "Screening" = new + contacted + qualified
+        screening: (counts['new'] || 0) + (counts['contacted'] || 0) + (counts['qualified'] || 0),
+        // "Ready" = accepted + deposit_pending
+        ready: (counts['accepted'] || 0) + (counts['deposit_pending'] || 0),
+        total: stats.reduce((s, r) => s + Number(r.count), 0),
+      };
+    }),
+
+  // ============================================================
+  // HOUSE SATISFACTION (wellness data for dashboard)
+  // ============================================================
+
+  /**
+   * Get per-house average mood from wellness check-ins (last 7 days)
+   * Joins through admissions since wellness_check_ins has no house_id column
+   */
+  getHouseSatisfaction: protectedProcedure
+    .meta({ permission: 'report:read', resource: 'report' })
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const fromDate = sevenDaysAgo.toISOString().split('T')[0]!;
+
+      // Get active admissions to map resident -> house
+      const activeAdmissions = await ctx.db.query.admissions.findMany({
+        where: and(
+          eq(admissions.org_id, orgId),
+          eq(admissions.status, 'active'),
+          isNull(admissions.deleted_at),
+        ),
+        columns: { resident_id: true, house_id: true },
+      });
+
+      const residentToHouse = new Map(
+        activeAdmissions.map((a) => [a.resident_id, a.house_id])
+      );
+
+      // Get wellness check-ins from last 7 days
+      const recentCheckIns = await ctx.db.query.wellnessCheckIns.findMany({
+        where: and(
+          eq(wellnessCheckIns.org_id, orgId),
+          gte(wellnessCheckIns.check_in_date, fromDate),
+        ),
+      });
+
+      // Group by house
+      const houseStats = new Map<string, { total: number; count: number }>();
+      for (const checkIn of recentCheckIns) {
+        if (checkIn.mood_rating === null) continue;
+        const houseId = residentToHouse.get(checkIn.resident_id);
+        if (!houseId) continue;
+        const existing = houseStats.get(houseId) || { total: 0, count: 0 };
+        existing.total += checkIn.mood_rating;
+        existing.count++;
+        houseStats.set(houseId, existing);
+      }
+
+      const allHouses = await ctx.db.query.houses.findMany({
+        where: and(eq(houses.org_id, orgId), isNull(houses.deleted_at)),
+        columns: { id: true, name: true },
+      });
+      const houseNameMap = new Map(allHouses.map((h) => [h.id, h.name]));
+
+      return Array.from(houseStats.entries()).map(([houseId, data]) => {
+        const avgMood = data.count > 0 ? Math.round((data.total / data.count) * 10) / 10 : null;
+        return {
+          houseId,
+          houseName: houseNameMap.get(houseId) ?? 'Unknown House',
+          avgMood,
+          checkInCount: data.count,
+          isLow: avgMood !== null && avgMood < 2.5,
+        };
+      });
+    }),
+
+  // ============================================================
+  // PROFIT CALCULATION (Revenue - Expenses MTD)
+  // ============================================================
+
+  /**
+   * Get MTD profit (revenue collected - expenses)
+   */
+  getMTDProfit: protectedProcedure
+    .meta({ permission: 'report:read', resource: 'report' })
+    .query(async ({ ctx }) => {
+      const orgId = (ctx as unknown as { orgId: string }).orgId;
+      const now = new Date();
+      const mtdStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Revenue MTD
+      const mtdPayments = await ctx.db.query.payments.findMany({
+        where: and(
+          eq(payments.org_id, orgId),
+          isNull(payments.deleted_at),
+          eq(payments.status, 'succeeded'),
+          gte(payments.payment_date, mtdStart)
+        ),
+      });
+      const revenueMTD = mtdPayments.reduce((s, p) => s + parseFloat(p.amount), 0);
+
+      return {
+        revenueMTD: Math.round(revenueMTD * 100) / 100,
+        // Expenses would come from expense router — return 0 for now if not queried
+        expensesMTD: 0,
+        profitMTD: Math.round(revenueMTD * 100) / 100,
       };
     }),
 });

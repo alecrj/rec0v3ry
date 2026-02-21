@@ -52,6 +52,8 @@ import { plaidRouter } from './plaid';
 import { referralSourceRouter } from './referralSource';
 // Automations
 import { automationRouter } from './automation';
+// Wellness check-ins
+import { wellnessRouter } from './wellness';
 
 /**
  * Main application router
@@ -110,6 +112,8 @@ export const appRouter = router({
   referralSource: referralSourceRouter,
   // Automations
   automation: automationRouter,
+  // Wellness check-ins
+  wellness: wellnessRouter,
 });
 
 /**
