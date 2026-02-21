@@ -680,7 +680,6 @@ export default function DashboardPage() {
 
   const isEmpty = !isLoading && data && data.occupancy.total === 0 && data.revenueMTD === 0;
   const emptyBeds = (data?.occupancy.total || 0) - (data?.occupancy.occupied || 0);
-  const lostRevenue = emptyBeds * 700; // rough estimate per bed/mo
 
   return (
     <div className="p-6 space-y-6 bg-zinc-950 min-h-screen">
@@ -817,7 +816,7 @@ export default function DashboardPage() {
               )}
               {emptyBeds > 0 && (
                 <p className="text-sm text-amber-400 mt-1 font-medium">
-                  {emptyBeds} empty = ~{formatCurrency(lostRevenue)}/mo lost
+                  {emptyBeds} empty
                 </p>
               )}
             </div>
