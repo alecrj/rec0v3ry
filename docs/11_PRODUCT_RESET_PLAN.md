@@ -215,46 +215,57 @@ One app for sober home operators and residents. Operators open their phone and i
   - Auto-linked to their resident profile (scopeType=resident, scopeId=residentId)
   - Sees resident experience on login
 
+**Shareable intake links (fill beds faster):**
+- [ ] G2-3. **Auto-generate intake URLs per property** — when property is created, auto-generate:
+  - Org-wide: `recoveryos.app/apply/[org-slug]` (applicant picks property)
+  - Per-property: `recoveryos.app/apply/[org-slug]/[property-slug]` (pre-selected)
+- [ ] G2-4. **Dashboard "Share Intake Link" card** — prominent section with:
+  - Copy link button (one tap)
+  - QR code (treatment centers print/scan)
+  - "Embed on website" code snippet (iframe or styled button)
+- [ ] G2-5. **Branded intake form** — org name + logo at top, property pre-selected if property-specific link, mobile-optimized
+- [ ] G2-6. **Property detail page** shows that property's specific intake link + QR
+
 **Dashboard as command center:**
-- [ ] G2-3. **Record Payment inline modal** — opens from dashboard, not page navigation
-- [ ] G2-4. **Add Resident inline modal** — quick-add from dashboard
-- [ ] G2-5. **Outstanding balance drill-down** — tap outstanding amount → see who owes what → tap resident → record payment
-- [ ] G2-6. **Action items that DO things** — each action item has an inline action button, not just a link
-- [ ] G2-7. **Remove all hardcoded/mock data** — every number comes from real queries
-- [ ] G2-8. **Empty state that guides** — new org sees "Add your first house" → "Add your first resident" → "Create first invoice" progression
+- [ ] G2-7. **Record Payment inline modal** — opens from dashboard, not page navigation
+- [ ] G2-8. **Add Resident inline modal** — quick-add from dashboard
+- [ ] G2-9. **Outstanding balance drill-down** — tap outstanding amount → see who owes what → tap resident → record payment
+- [ ] G2-10. **Action items that DO things** — each action item has an inline action button, not just a link
+- [ ] G2-11. **Remove all hardcoded/mock data** — every number comes from real queries
+- [ ] G2-12. **Empty state that guides** — new org sees "Add your first house" → "Add your first resident" → "Create first invoice" progression
 
 **Expense tracking (multi-card, per-house):**
-- [ ] G2-9. **Plaid Link end-to-end** — operator connects bank account, sees transactions
-- [ ] G2-10. **Card-to-house mapping** — each linked account/card can be assigned to a house (or "all houses")
+- [ ] G2-13. **Plaid Link end-to-end** — operator connects bank account, sees transactions
+- [ ] G2-14. **Card-to-house mapping** — each linked account/card can be assigned to a house (or "all houses")
   - One card per house (e.g., Home Depot card → Hope House)
   - Multiple cards per house (e.g., owner personal card + house card → both map to Hope House)
   - Unassigned cards → transactions need manual house assignment
-- [ ] G2-11. **Auto-categorization** — transactions auto-categorized (Maintenance, Supplies, Utilities, Food, etc.)
-- [ ] G2-12. **P&L per house** — Revenue (rent collected) - Expenses (categorized) = Profit, per house, per month
-- [ ] G2-13. **Manual expense entry** — for cash purchases, receipts, etc.
+- [ ] G2-15. **Auto-categorization** — transactions auto-categorized (Maintenance, Supplies, Utilities, Food, etc.)
+- [ ] G2-16. **P&L per house** — Revenue (rent collected) - Expenses (categorized) = Profit, per house, per month
+- [ ] G2-17. **Manual expense entry** — for cash purchases, receipts, etc.
 
 **Stripe payments end-to-end:**
-- [ ] G2-14. **Resident "Pay Now" flow** — resident taps Pay → Stripe Checkout → card/Apple Pay/Google Pay → webhook → payment recorded → ledger updated → dashboard updated
-- [ ] G2-15. **Stripe Connect onboarding** — operator connects Stripe account (for receiving payouts)
-- [ ] G2-16. **Fee configuration tested** — absorb fees vs pass to resident, verify math
+- [ ] G2-18. **Resident "Pay Now" flow** — resident taps Pay → Stripe Checkout → card/Apple Pay/Google Pay → webhook → payment recorded → ledger updated → dashboard updated
+- [ ] G2-19. **Stripe Connect onboarding** — operator connects Stripe account (for receiving payouts)
+- [ ] G2-20. **Fee configuration tested** — absorb fees vs pass to resident, verify math
 
 **DocuSign end-to-end:**
-- [ ] G2-17. **Send envelope from template** — owner picks template + resident → DocuSign sends
-- [ ] G2-18. **Embedded signing** — resident signs in-app (iframe)
-- [ ] G2-19. **Webhook completion** — signed doc saved, status updated, linked to resident profile
+- [ ] G2-21. **Send envelope from template** — owner picks template + resident → DocuSign sends
+- [ ] G2-22. **Embedded signing** — resident signs in-app (iframe)
+- [ ] G2-23. **Webhook completion** — signed doc saved, status updated, linked to resident profile
 
 **Automation crons (make them actually work):**
-- [ ] G2-20. **Chore auto-rotation cron** — weekly rotation, residents notified
-- [ ] G2-21. **Random drug test selection cron** — picks residents per settings, notifies owner
-- [ ] G2-22. **Empty bed alert** — when bed vacated, calculate lost revenue, notify waitlist
-- [ ] G2-23. **Auto-invoice generation** — monthly invoice cron tested with real data
-- [ ] G2-24. **Weekly P&L digest** — automated report to owner
+- [ ] G2-24. **Chore auto-rotation cron** — weekly rotation, residents notified
+- [ ] G2-25. **Random drug test selection cron** — picks residents per settings, notifies owner
+- [ ] G2-26. **Empty bed alert** — when bed vacated, calculate lost revenue, notify waitlist
+- [ ] G2-27. **Auto-invoice generation** — monthly invoice cron tested with real data
+- [ ] G2-28. **Weekly P&L digest** — automated report to owner
 
 **Integration testing:**
-- [ ] G2-25. **Full operator flow** — signup → setup org → add house → add resident → collect rent → track expenses → view P&L
-- [ ] G2-26. **Full applicant→resident flow** — public form → lead → approve → documents → bed → paying resident
-- [ ] G2-27. **Full resident flow** — login → pay rent → view chores → message manager → sign document
-- [ ] G2-28. Clean build + all crons tested
+- [ ] G2-29. **Full operator flow** — signup → setup org → add house → add resident → collect rent → track expenses → view P&L
+- [ ] G2-30. **Full applicant→resident flow** — public form → lead → approve → documents → bed → paying resident
+- [ ] G2-31. **Full resident flow** — login → pay rent → view chores → message manager → sign document
+- [ ] G2-32. Clean build + all crons tested
 
 ### Phase H: React Native Mobile App
 **Goal**: One native app, operator runs entire business from phone, residents pay and communicate
