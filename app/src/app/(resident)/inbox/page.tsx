@@ -42,14 +42,14 @@ interface Announcement {
 
 function ListSkeleton() {
   return (
-    <div className="divide-y divide-zinc-800/50 bg-zinc-900">
+    <div className="divide-y divide-zinc-200/50 bg-white">
       {[1, 2, 3].map((i) => (
         <div key={i} className="p-4 animate-pulse">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-zinc-700 rounded-full"></div>
+            <div className="w-9 h-9 bg-zinc-200 rounded-full"></div>
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-32 bg-zinc-700 rounded"></div>
-              <div className="h-3 w-48 bg-zinc-700 rounded"></div>
+              <div className="h-4 w-32 bg-zinc-200 rounded"></div>
+              <div className="h-3 w-48 bg-zinc-200 rounded"></div>
             </div>
           </div>
         </div>
@@ -109,37 +109,37 @@ export default function ResidentMessagesPage() {
   // List View
   if (view === "list") {
     return (
-      <div className="flex flex-col h-full bg-zinc-800/40">
+      <div className="flex flex-col h-full bg-zinc-100">
         {/* Header */}
-        <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-3">
-          <h1 className="text-xl font-bold text-zinc-100">Messages</h1>
+        <div className="bg-white border-b border-zinc-200 px-4 py-3">
+          <h1 className="text-xl font-bold text-zinc-800">Messages</h1>
         </div>
 
         {/* Tabs */}
-        <div className="bg-zinc-900 border-b border-zinc-800 flex">
+        <div className="bg-white border-b border-zinc-200 flex">
           <button
             onClick={() => setActiveTab("messages")}
             className={`flex-1 py-3 text-sm font-medium relative ${
-              activeTab === "messages" ? "text-indigo-400" : "text-zinc-400"
+              activeTab === "messages" ? "text-[#0d9488]" : "text-zinc-400"
             }`}
           >
             <div className="flex items-center justify-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Messages
               {totalUnread > 0 && (
-                <span className="px-1.5 py-0.5 bg-indigo-500 text-white text-xs rounded-full">
+                <span className="px-1.5 py-0.5 bg-[#0d9488] text-white text-xs rounded-full">
                   {totalUnread}
                 </span>
               )}
             </div>
             {activeTab === "messages" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0d9488]" />
             )}
           </button>
           <button
             onClick={() => setActiveTab("announcements")}
             className={`flex-1 py-3 text-sm font-medium relative ${
-              activeTab === "announcements" ? "text-indigo-400" : "text-zinc-400"
+              activeTab === "announcements" ? "text-[#0d9488]" : "text-zinc-400"
             }`}
           >
             <div className="flex items-center justify-center gap-2">
@@ -152,13 +152,13 @@ export default function ResidentMessagesPage() {
               )}
             </div>
             {activeTab === "announcements" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0d9488]" />
             )}
           </button>
         </div>
 
         {/* Search */}
-        <div className="p-4 bg-zinc-900 border-b border-zinc-800">
+        <div className="p-4 bg-white border-b border-zinc-200">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <input
@@ -166,7 +166,7 @@ export default function ResidentMessagesPage() {
               placeholder={`Search ${activeTab}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-zinc-800 border-0 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2 bg-zinc-100 border-0 rounded-lg text-sm focus:ring-2 focus:ring-[#0d9488]"
             />
           </div>
         </div>
@@ -184,11 +184,11 @@ export default function ResidentMessagesPage() {
           {isLoading ? (
             <ListSkeleton />
           ) : activeTab === "messages" ? (
-            <div className="divide-y divide-zinc-800/50 bg-zinc-900">
+            <div className="divide-y divide-zinc-200/50 bg-white">
               {!conversations || conversations.length === 0 ? (
                 <div className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 mx-auto text-zinc-600 mb-4" />
-                  <p className="font-medium text-zinc-100">No messages yet</p>
+                  <p className="font-medium text-zinc-800">No messages yet</p>
                   <p className="text-sm text-zinc-500 mt-1">Your conversations will appear here</p>
                 </div>
               ) : (
@@ -199,18 +199,18 @@ export default function ResidentMessagesPage() {
                       setSelectedConversationId(conv.id);
                       setView("conversation");
                     }}
-                    className="w-full flex items-center gap-3 p-4 hover:bg-zinc-800/40 text-left"
+                    className="w-full flex items-center gap-3 p-4 hover:bg-zinc-100/40 text-left"
                   >
-                    <div className="p-2 bg-zinc-800 rounded-full">
+                    <div className="p-2 bg-zinc-100 rounded-full">
                       {conv.conversation_type === "direct" ? (
                         <User className="h-5 w-5 text-zinc-400" />
                       ) : (
-                        <Users className="h-5 w-5 text-indigo-400" />
+                        <Users className="h-5 w-5 text-[#0d9488]" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className={`font-medium ${conv.unreadCount > 0 ? "text-zinc-100" : "text-zinc-300"}`}>
+                        <h3 className={`font-medium ${conv.unreadCount > 0 ? "text-zinc-800" : "text-zinc-600"}`}>
                           {conv.displayTitle}
                         </h3>
                         {conv.lastMessage && (
@@ -220,12 +220,12 @@ export default function ResidentMessagesPage() {
                           </span>
                         )}
                       </div>
-                      <p className={`text-sm truncate ${conv.unreadCount > 0 ? "text-zinc-300 font-medium" : "text-zinc-500"}`}>
+                      <p className={`text-sm truncate ${conv.unreadCount > 0 ? "text-zinc-600 font-medium" : "text-zinc-500"}`}>
                         {conv.lastMessage?.content ?? "No messages yet"}
                       </p>
                     </div>
                     {conv.unreadCount > 0 && (
-                      <span className="px-2 py-0.5 bg-indigo-500 text-white text-xs font-medium rounded-full">
+                      <span className="px-2 py-0.5 bg-[#0d9488] text-white text-xs font-medium rounded-full">
                         {conv.unreadCount}
                       </span>
                     )}
@@ -235,23 +235,23 @@ export default function ResidentMessagesPage() {
               )}
             </div>
           ) : (
-            <div className="divide-y divide-zinc-800/50 bg-zinc-900">
+            <div className="divide-y divide-zinc-200/50 bg-white">
               {!announcements || announcements.length === 0 ? (
                 <div className="p-8 text-center">
                   <Bell className="h-12 w-12 mx-auto text-zinc-600 mb-4" />
-                  <p className="font-medium text-zinc-100">No announcements</p>
+                  <p className="font-medium text-zinc-800">No announcements</p>
                   <p className="text-sm text-zinc-500 mt-1">Announcements from your house will appear here</p>
                 </div>
               ) : (
                 announcements.map((ann) => (
                   <div
                     key={ann.id}
-                    className={`p-4 ${!ann.isRead ? "bg-indigo-500/10" : ""}`}
+                    className={`p-4 ${!ann.isRead ? "bg-[#0d9488]/10" : ""}`}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`p-2 rounded-lg ${
                         ann.priority === "urgent" ? "bg-red-500/15" :
-                        ann.priority === "high" ? "bg-amber-500/15" : "bg-zinc-800"
+                        ann.priority === "high" ? "bg-amber-500/15" : "bg-zinc-100"
                       }`}>
                         <Bell className={`h-5 w-5 ${
                           ann.priority === "urgent" ? "text-red-400" :
@@ -260,11 +260,11 @@ export default function ResidentMessagesPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className={`font-medium ${!ann.isRead ? "text-zinc-100" : "text-zinc-300"}`}>
+                          <h3 className={`font-medium ${!ann.isRead ? "text-zinc-800" : "text-zinc-600"}`}>
                             {ann.title}
                           </h3>
                           {!ann.isRead && (
-                            <span className="w-2 h-2 bg-indigo-500 rounded-full" />
+                            <span className="w-2 h-2 bg-[#0d9488] rounded-full" />
                           )}
                         </div>
                         <p className="text-sm text-zinc-400 mb-2">{ann.content}</p>
@@ -285,24 +285,24 @@ export default function ResidentMessagesPage() {
   const messages = messagesData?.messages ?? [];
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900">
+    <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center gap-3">
+      <div className="bg-white border-b border-zinc-200 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => setView("list")}
-          className="p-1 hover:bg-zinc-800 rounded"
+          className="p-1 hover:bg-zinc-100 rounded"
         >
           <ArrowLeft className="h-5 w-5 text-zinc-400" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-zinc-800 rounded-full">
+          <div className="p-1.5 bg-zinc-100 rounded-full">
             {selectedConversation?.conversation_type === "direct" ? (
               <User className="h-4 w-4 text-zinc-400" />
             ) : (
-              <Users className="h-4 w-4 text-indigo-400" />
+              <Users className="h-4 w-4 text-[#0d9488]" />
             )}
           </div>
-          <h1 className="font-semibold text-zinc-100">
+          <h1 className="font-semibold text-zinc-800">
             {selectedConversation?.title ?? "Conversation"}
           </h1>
         </div>
@@ -325,12 +325,12 @@ export default function ResidentMessagesPage() {
               <div
                 className={`max-w-[80%] px-4 py-2 rounded-2xl ${
                   msg.isOwnMessage
-                    ? "bg-indigo-500 text-white rounded-br-md"
-                    : "bg-zinc-800 text-zinc-100 rounded-bl-md"
+                    ? "bg-[#0d9488] text-white rounded-br-md"
+                    : "bg-zinc-100 text-zinc-800 rounded-bl-md"
                 }`}
               >
                 <p className="text-sm">{msg.content}</p>
-                <p className={`text-xs mt-1 ${msg.isOwnMessage ? "text-indigo-600" : "text-zinc-500"}`}>
+                <p className={`text-xs mt-1 ${msg.isOwnMessage ? "text-white/60" : "text-zinc-500"}`}>
                   {formatTime(msg.sentAt)}
                 </p>
               </div>
@@ -340,7 +340,7 @@ export default function ResidentMessagesPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-zinc-800 p-4 bg-zinc-900">
+      <div className="border-t border-zinc-200 p-4 bg-white">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -353,7 +353,7 @@ export default function ResidentMessagesPage() {
                 sendMessage.mutate({ conversationId: selectedConversationId, content: newMessage.trim() });
               }
             }}
-            className="flex-1 px-4 py-2 bg-zinc-800 border-0 rounded-full text-sm focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-4 py-2 bg-zinc-100 border-0 rounded-full text-sm focus:ring-2 focus:ring-[#0d9488]"
           />
           <button
             disabled={!newMessage.trim() || sendMessage.isPending}
@@ -366,8 +366,8 @@ export default function ResidentMessagesPage() {
             }}
             className={`p-2 rounded-full ${
               newMessage.trim() && !sendMessage.isPending
-                ? "bg-indigo-500 text-white"
-                : "bg-zinc-800 text-zinc-500"
+                ? "bg-[#0d9488] text-white"
+                : "bg-zinc-100 text-zinc-500"
             }`}
           >
             {sendMessage.isPending ? (

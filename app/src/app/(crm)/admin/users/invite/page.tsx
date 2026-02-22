@@ -73,19 +73,19 @@ export default function InviteUserPage() {
     });
   };
 
-  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
   return (
     <PageContainer>
       <div>
         <Link
           href="/admin/users"
-          className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-100 mb-4"
+          className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-800 mb-4"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Users
         </Link>
-        <h1 className="text-2xl font-bold text-zinc-100">Invite User</h1>
+        <h1 className="text-2xl font-bold text-zinc-800">Invite User</h1>
         <p className="text-zinc-500 mt-1">Send an invitation to a new user</p>
       </div>
 
@@ -93,7 +93,7 @@ export default function InviteUserPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Email Address <span className="text-red-400">*</span>
               </label>
               <input
@@ -111,7 +111,7 @@ export default function InviteUserPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">First Name</label>
                 <input
                   type="text"
                   value={firstName}
@@ -121,7 +121,7 @@ export default function InviteUserPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Last Name</label>
                 <input
                   type="text"
                   value={lastName}
@@ -133,7 +133,7 @@ export default function InviteUserPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Role <span className="text-red-400">*</span>
               </label>
               <select
@@ -161,10 +161,10 @@ export default function InviteUserPage() {
             {showScopeSelector && (
               <Card variant="outlined" className="border-indigo-500/30 bg-indigo-500/10">
                 <CardContent>
-                  <h3 className="text-sm font-semibold text-indigo-100 mb-3">Access Scope</h3>
+                  <h3 className="text-sm font-semibold text-indigo-800 mb-3">Access Scope</h3>
 
                   <div>
-                    <label className="block text-sm font-medium text-indigo-100 mb-1.5">
+                    <label className="block text-sm font-medium text-indigo-800 mb-1.5">
                       Property <span className="text-red-400">*</span>
                     </label>
                     <select
@@ -182,7 +182,7 @@ export default function InviteUserPage() {
                       ))}
                     </select>
                     {role === "property_manager" && (
-                      <p className="text-xs text-indigo-200 mt-1.5">
+                      <p className="text-xs text-indigo-700 mt-1.5">
                         This user will manage all houses under this property
                       </p>
                     )}
@@ -190,7 +190,7 @@ export default function InviteUserPage() {
 
                   {role === "house_manager" && propertyId && (
                     <div className="mt-4">
-                      <label className="block text-sm font-medium text-indigo-100 mb-1.5">
+                      <label className="block text-sm font-medium text-indigo-800 mb-1.5">
                         House <span className="text-red-400">*</span>
                       </label>
                       <select
@@ -204,7 +204,7 @@ export default function InviteUserPage() {
                           <option key={h.id} value={h.id}>{h.name}</option>
                         ))}
                       </select>
-                      <p className="text-xs text-indigo-200 mt-1.5">
+                      <p className="text-xs text-indigo-700 mt-1.5">
                         This user will manage only this specific house
                       </p>
                     </div>
@@ -213,7 +213,7 @@ export default function InviteUserPage() {
               </Card>
             )}
 
-            <div className="flex items-center gap-3 pt-4 border-t border-zinc-800">
+            <div className="flex items-center gap-3 pt-4 border-t border-zinc-200">
               <Button type="submit" variant="primary" disabled={inviteMutation.isPending}>
                 {inviteMutation.isPending ? "Sending..." : "Send Invitation"}
               </Button>
@@ -225,13 +225,13 @@ export default function InviteUserPage() {
         </CardContent>
       </Card>
 
-      <Card variant="outlined" className="border-zinc-800 bg-zinc-800/40 max-w-2xl">
+      <Card variant="outlined" className="border-zinc-200 bg-zinc-100 max-w-2xl">
         <CardContent>
           <div className="flex items-start gap-3">
             <Info className="h-5 w-5 text-zinc-500 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100 mb-2">What happens next?</h3>
-              <ul className="text-sm text-zinc-300 space-y-1 list-disc list-inside">
+              <h3 className="text-sm font-semibold text-zinc-800 mb-2">What happens next?</h3>
+              <ul className="text-sm text-zinc-600 space-y-1 list-disc list-inside">
                 <li>The user will receive an email invitation at the provided address</li>
                 <li>They will click a secure link to create their password</li>
                 <li>Their account will be activated with the selected role and permissions</li>

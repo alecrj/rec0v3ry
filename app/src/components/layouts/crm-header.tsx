@@ -33,7 +33,7 @@ export function CrmHeader() {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="h-14 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6">
+    <header className="h-14 bg-white border-b border-zinc-200 flex items-center justify-between px-6">
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-1 text-sm">
         {breadcrumbs.length > 0 ? (
@@ -41,7 +41,7 @@ export function CrmHeader() {
             <div key={index} className="flex items-center">
               {index > 0 && <ChevronRight className="h-4 w-4 text-zinc-600 mx-1" />}
               {index === breadcrumbs.length - 1 ? (
-                <span className="font-semibold text-zinc-100">{crumb.label}</span>
+                <span className="font-semibold text-zinc-800">{crumb.label}</span>
               ) : (
                 <Link
                   href={crumb.href}
@@ -53,24 +53,24 @@ export function CrmHeader() {
             </div>
           ))
         ) : (
-          <span className="font-semibold text-zinc-100">Dashboard</span>
+          <span className="font-semibold text-zinc-800">Dashboard</span>
         )}
       </nav>
 
       {/* Actions */}
       <div className="flex items-center gap-2">
-        <button className="relative p-2 rounded-md hover:bg-zinc-800 transition-colors group">
+        <button className="relative p-2 rounded-md hover:bg-zinc-100 transition-colors group">
           <Bell className="h-5 w-5 text-zinc-500 group-hover:text-zinc-400 transition-colors" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-zinc-900" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
         </button>
 
-        <div className="h-6 w-px bg-zinc-800 mx-1" />
+        <div className="h-6 w-px bg-zinc-100 mx-1" />
 
         <UserButton
           appearance={{
             elements: {
               avatarBox: "w-8 h-8 ring-2 ring-zinc-800",
-              userButtonTrigger: "rounded-md hover:bg-zinc-800 p-0.5 transition-colors",
+              userButtonTrigger: "rounded-md hover:bg-zinc-100 p-0.5 transition-colors",
             },
           }}
         />

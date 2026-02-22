@@ -97,12 +97,12 @@ function AddExpenseModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-6 border-b border-zinc-700">
-          <h2 className="text-lg font-semibold text-white">Add Expense</h2>
+      <div className="bg-white border border-zinc-200 rounded-xl w-full max-w-lg">
+        <div className="flex items-center justify-between p-6 border-b border-zinc-200">
+          <h2 className="text-lg font-semibold text-zinc-900">Add Expense</h2>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white transition-colors"
+            className="text-zinc-400 hover:text-zinc-900 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -125,7 +125,7 @@ function AddExpenseModal({
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   required
-                  className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg pl-7 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg pl-7 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -138,7 +138,7 @@ function AddExpenseModal({
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
-                className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -152,7 +152,7 @@ function AddExpenseModal({
               onChange={(e) => { setVendorName(e.target.value); setSuggestedCategory(null); }}
               onBlur={handleVendorBlur}
               placeholder="e.g. Home Depot, Walmart"
-              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -164,7 +164,7 @@ function AddExpenseModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What was this expense for?"
-              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -181,7 +181,7 @@ function AddExpenseModal({
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">Select category...</option>
               {categories.map((c) => (
@@ -198,7 +198,7 @@ function AddExpenseModal({
             <select
               value={houseId}
               onChange={(e) => setHouseId(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">No specific house</option>
               {houses.map((h) => (
@@ -217,7 +217,7 @@ function AddExpenseModal({
               value={receiptUrl}
               onChange={(e) => setReceiptUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -232,7 +232,7 @@ function AddExpenseModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+              className="flex-1 px-4 py-2 border border-zinc-300 text-zinc-600 rounded-lg text-sm hover:bg-zinc-100 transition-colors"
             >
               Cancel
             </button>
@@ -320,20 +320,20 @@ export default function ExpensesPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Expenses</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Expenses</h1>
           <p className="text-zinc-400 mt-1">Track and categorize house operating expenses</p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             href="/billing/expenses/pnl"
-            className="flex items-center gap-2 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-zinc-300 text-zinc-600 rounded-lg text-sm hover:bg-zinc-100 transition-colors"
           >
             <TrendingDown className="h-4 w-4" />
             P&amp;L View
           </Link>
           <Link
             href="/settings/plaid"
-            className="flex items-center gap-2 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg text-sm hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-zinc-300 text-zinc-600 rounded-lg text-sm hover:bg-zinc-100 transition-colors"
           >
             <LinkIcon className="h-4 w-4" />
             Bank Connections
@@ -358,17 +358,17 @@ export default function ExpensesPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+        <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <p className="text-zinc-400 text-sm">Total Expenses</p>
-          <p className="text-2xl font-bold text-white mt-1">${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-zinc-900 mt-1">${totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+        <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <p className="text-zinc-400 text-sm">Total Entries</p>
-          <p className="text-2xl font-bold text-white mt-1">{expenses.length}</p>
+          <p className="text-2xl font-bold text-zinc-900 mt-1">{expenses.length}</p>
         </div>
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+        <div className="bg-white border border-zinc-200 rounded-xl p-4">
           <p className="text-zinc-400 text-sm">Uncategorized</p>
-          <p className="text-2xl font-bold text-white mt-1">
+          <p className="text-2xl font-bold text-zinc-900 mt-1">
             {expenses.filter((e) => !e.category_id).length}
           </p>
         </div>
@@ -380,7 +380,7 @@ export default function ExpensesPage() {
         <select
           value={filterHouse}
           onChange={(e) => setFilterHouse(e.target.value)}
-          className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="bg-white border border-zinc-200 text-zinc-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Houses</option>
           {houses.map((h) => (
@@ -390,7 +390,7 @@ export default function ExpensesPage() {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="bg-white border border-zinc-200 text-zinc-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Categories</option>
           {categories.map((c) => (
@@ -400,7 +400,7 @@ export default function ExpensesPage() {
       </div>
 
       {/* Expenses Table */}
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden">
+      <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -409,7 +409,7 @@ export default function ExpensesPage() {
         ) : expenses.length === 0 ? (
           <div className="text-center py-16">
             <Receipt className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
-            <p className="text-white font-semibold mb-1">No expenses found</p>
+            <p className="text-zinc-900 font-semibold mb-1">No expenses found</p>
             <p className="text-zinc-400 text-sm mb-6">
               Add a manual expense or connect a bank account to import transactions.
             </p>
@@ -425,7 +425,7 @@ export default function ExpensesPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-700 bg-zinc-800/50">
+                <tr className="border-b border-zinc-200 bg-zinc-100">
                   <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Date</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Vendor</th>
                   <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Description</th>
@@ -439,12 +439,12 @@ export default function ExpensesPage() {
                 {expenses.map((expense) => (
                   <tr
                     key={expense.id}
-                    className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors"
+                    className="border-b border-zinc-200 hover:bg-zinc-100 transition-colors"
                   >
-                    <td className="py-3 px-4 text-sm text-zinc-300 whitespace-nowrap">
+                    <td className="py-3 px-4 text-sm text-zinc-600 whitespace-nowrap">
                       {expense.expense_date}
                     </td>
-                    <td className="py-3 px-4 text-sm text-white font-medium">
+                    <td className="py-3 px-4 text-sm text-zinc-900 font-medium">
                       {expense.vendor ?? "—"}
                     </td>
                     <td className="py-3 px-4 text-sm text-zinc-400 max-w-xs truncate">
@@ -458,7 +458,7 @@ export default function ExpensesPage() {
                     </td>
                     <td className="py-3 px-4 text-sm">
                       {expense.house_name ? (
-                        <span className="flex items-center gap-1 text-zinc-300">
+                        <span className="flex items-center gap-1 text-zinc-600">
                           <Home className="h-3 w-3 text-zinc-500" />
                           {expense.house_name}
                         </span>
@@ -466,7 +466,7 @@ export default function ExpensesPage() {
                         <span className="text-zinc-600">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-semibold text-white whitespace-nowrap">
+                    <td className="py-3 px-4 text-right text-sm font-semibold text-zinc-900 whitespace-nowrap">
                       ${parseFloat(expense.amount ?? "0").toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-3 px-4">

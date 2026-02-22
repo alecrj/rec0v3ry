@@ -115,10 +115,10 @@ export default function BreakGlassPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-red-300">
+              <h3 className="text-sm font-semibold text-red-600">
                 Critical: Emergency Access Only
               </h3>
-              <p className="text-sm text-red-300 mt-1">
+              <p className="text-sm text-red-600 mt-1">
                 Break-glass access bypasses normal consent controls and should only be used in
                 genuine emergencies (medical emergency, patient safety, legal requirement). All
                 actions are elevated-logged, time-limited, and subject to mandatory review by the
@@ -175,7 +175,7 @@ export default function BreakGlassPage() {
             <div className="overflow-x-auto -mx-6">
               <table className="w-full">
                 <thead>
-                  <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                  <tr className="border-y border-zinc-200/50 bg-zinc-100">
                     <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Date</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">User</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Emergency Type</th>
@@ -188,11 +188,11 @@ export default function BreakGlassPage() {
                   {events.map((event) => {
                     const ec = emergencyBadge[event.emergency_type] ?? emergencyBadge.other;
                     return (
-                      <tr key={event.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                      <tr key={event.id} className="border-b border-zinc-200/50 hover:bg-zinc-100 transition-colors">
                         <td className="py-3 px-6 text-sm text-zinc-400 whitespace-nowrap">
                           {new Date(event.created_at).toLocaleString()}
                         </td>
-                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-800">
                           {event.user
                             ? `${event.user.first_name} ${event.user.last_name}`
                             : "Unknown"}
@@ -200,7 +200,7 @@ export default function BreakGlassPage() {
                         <td className="py-3 px-4">
                           <Badge variant={ec.variant}>{ec.label}</Badge>
                         </td>
-                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-800">
                           {event.resident
                             ? `${event.resident.first_name} ${event.resident.last_name}`
                             : "—"}
@@ -230,9 +230,9 @@ export default function BreakGlassPage() {
       {/* Break-Glass Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Activate Break-Glass Access</h2>
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Activate Break-Glass Access</h2>
               <p className="text-sm text-zinc-500 mt-1">
                 Emergency access to protected health information
               </p>
@@ -240,21 +240,21 @@ export default function BreakGlassPage() {
 
             <form onSubmit={handleActivate} className="p-6 space-y-6">
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                <p className="text-sm text-red-300">
+                <p className="text-sm text-red-600">
                   This action will be logged with elevated sensitivity and reviewed by the
                   compliance officer. Use only in genuine emergencies.
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Emergency Reason <span className="text-red-400">*</span>
                 </label>
                 <select
                   required
                   value={reason}
                   onChange={(e) => setReason(e.target.value as EmergencyType | "")}
-                  className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                  className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                 >
                   <option value="">Select reason</option>
                   <option value="medical">Medical Emergency</option>
@@ -265,14 +265,14 @@ export default function BreakGlassPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Resident <span className="text-red-400">*</span>
                 </label>
                 <select
                   required
                   value={residentId}
                   onChange={(e) => setResidentId(e.target.value)}
-                  className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="">Select resident</option>
                   {(residents?.items ?? []).map((r) => (
@@ -285,7 +285,7 @@ export default function BreakGlassPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Justification <span className="text-red-400">*</span>
                 </label>
                 <textarea
@@ -294,7 +294,7 @@ export default function BreakGlassPage() {
                   value={justification}
                   onChange={(e) => setJustification(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  className="w-full px-4 py-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                   placeholder="Provide detailed justification for this emergency access (minimum 10 characters)"
                 />
                 <p className="text-xs text-zinc-500 mt-1.5">
@@ -302,16 +302,16 @@ export default function BreakGlassPage() {
                 </p>
               </div>
 
-              <div className="bg-zinc-800/40 border border-zinc-800 rounded-lg p-4">
+              <div className="bg-zinc-100 border border-zinc-200 rounded-lg p-4">
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={acknowledged}
                     onChange={(e) => setAcknowledged(e.target.checked)}
-                    className="w-4 h-4 text-indigo-400 border-zinc-700 rounded focus:ring-indigo-500 mt-0.5"
+                    className="w-4 h-4 text-indigo-400 border-zinc-200 rounded focus:ring-indigo-500 mt-0.5"
                   />
                   <div>
-                    <p className="text-sm font-medium text-zinc-100">
+                    <p className="text-sm font-medium text-zinc-800">
                       I understand this action will be logged and reviewed
                     </p>
                     <p className="text-xs text-zinc-400 mt-1">
@@ -323,7 +323,7 @@ export default function BreakGlassPage() {
                 </label>
               </div>
 
-              <div className="flex items-center gap-3 pt-4 border-t border-zinc-800">
+              <div className="flex items-center gap-3 pt-4 border-t border-zinc-200">
                 <Button
                   type="submit"
                   variant="destructive"

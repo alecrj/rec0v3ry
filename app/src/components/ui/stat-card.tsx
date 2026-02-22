@@ -56,12 +56,12 @@ function StatCard({
       onClick={onClick}
     >
       <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{title}</p>
-      <p className="text-2xl font-semibold text-zinc-50 tabular-nums font-mono mt-0.5 tracking-tight">{value}</p>
+      <p className="text-2xl font-semibold text-zinc-900 tabular-nums mt-0.5 tracking-tight">{value}</p>
       {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
       {trend && (
         <div className="flex items-center gap-1 mt-1">
           <TrendIcon className={cn("h-3 w-3", trendColor)} />
-          <span className={cn("text-xs font-medium font-mono", trendColor)}>{trend.value}</span>
+          <span className={cn("text-xs font-medium tabular-nums", trendColor)}>{trend.value}</span>
           {trend.label && <span className="text-xs text-zinc-600">{trend.label}</span>}
         </div>
       )}

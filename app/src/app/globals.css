@@ -1,47 +1,53 @@
 @import "tailwindcss";
 
 /* =============================================================================
-   RecoveryOS Design System — "Obsidian"
-   Dark zinc. Indigo accent. Geist font. No cards. No boxes. Content IS the UI.
+   RecoveryOS Design System — "Swiss Clinical"
+   Maximum clarity, zero decoration. Clean white backgrounds, hairline borders,
+   uppercase labels. Outfit display + DM Sans body. Red operator / Teal resident.
    ============================================================================= */
 
 :root {
   /* Surface */
-  --bg: #09090B;
-  --surface-1: #18181B;
-  --surface-2: #27272A;
-  --surface-3: #3F3F46;
+  --bg: #fafafa;
+  --surface-1: #ffffff;
+  --surface-2: #f5f5f5;
+  --surface-3: #ebebeb;
 
   /* Borders */
-  --border: #27272A;
-  --border-strong: #3F3F46;
+  --border: #e5e5e5;
+  --border-strong: #d4d4d8;
 
   /* Text */
-  --text-primary: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-tertiary: #71717A;
-  --text-disabled: #52525B;
+  --text-primary: #0a0a0a;
+  --text-secondary: #525252;
+  --text-tertiary: #a3a3a3;
+  --text-disabled: #d4d4d8;
 
-  /* Accent — Indigo */
-  --accent: #6366F1;
-  --accent-hover: #818CF8;
-  --accent-muted: rgba(99, 102, 241, 0.10);
-  --accent-strong: rgba(99, 102, 241, 0.20);
+  /* Accent — Red (Operator CRM) */
+  --accent: #dc2626;
+  --accent-hover: #b91c1c;
+  --accent-muted: rgba(220, 38, 38, 0.04);
+  --accent-strong: rgba(220, 38, 38, 0.10);
+
+  /* Accent — Teal (Resident App) */
+  --accent-resident: #0d9488;
+  --accent-resident-hover: #0f766e;
+  --accent-resident-muted: rgba(13, 148, 136, 0.06);
 
   /* Status */
-  --success: #22C55E;
-  --success-muted: rgba(34, 197, 94, 0.12);
-  --warning: #EAB308;
-  --warning-muted: rgba(234, 179, 8, 0.12);
-  --error: #EF4444;
-  --error-muted: rgba(239, 68, 68, 0.12);
-  --info: #6366F1;
-  --info-muted: rgba(99, 102, 241, 0.12);
+  --success: #16a34a;
+  --success-muted: rgba(22, 163, 74, 0.08);
+  --warning: #ca8a04;
+  --warning-muted: rgba(202, 138, 4, 0.08);
+  --error: #dc2626;
+  --error-muted: rgba(220, 38, 38, 0.08);
+  --info: #2563eb;
+  --info-muted: rgba(37, 99, 235, 0.08);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  /* Shadows — Swiss: minimal, precise */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
 
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -53,58 +59,88 @@
   --sidebar-width: 240px;
   --sidebar-collapsed-width: 60px;
   --page-padding: 24px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
 }
 
-@theme inline {
+@theme {
   --color-background: var(--bg);
   --color-foreground: var(--text-primary);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Map to Tailwind — zinc dark palette */
-  --color-zinc-950: #09090B;
-  --color-zinc-900: #18181B;
-  --color-zinc-800: #27272A;
-  --color-zinc-700: #3F3F46;
-  --color-zinc-600: #52525B;
-  --color-zinc-500: #71717A;
-  --color-zinc-400: #A1A1AA;
-  --color-zinc-300: #D4D4D8;
-  --color-zinc-200: #E4E4E7;
-  --color-zinc-100: #F4F4F5;
-  --color-zinc-50: #FAFAFA;
+  /* Zinc → Pure neutral (remove Tailwind's blue tint for Swiss Clinical) */
+  --color-zinc-950: #0a0a0a;
+  --color-zinc-900: #0a0a0a;
+  --color-zinc-800: #262626;
+  --color-zinc-700: #404040;
+  --color-zinc-600: #525252;
+  --color-zinc-500: #737373;
+  --color-zinc-400: #a3a3a3;
+  --color-zinc-300: #d4d4d4;
+  --color-zinc-200: #e5e5e5;
+  --color-zinc-100: #f5f5f5;
+  --color-zinc-50: #fafafa;
 
-  --color-indigo-50: rgba(99, 102, 241, 0.06);
-  --color-indigo-100: rgba(99, 102, 241, 0.10);
-  --color-indigo-200: rgba(99, 102, 241, 0.15);
-  --color-indigo-300: rgba(99, 102, 241, 0.25);
-  --color-indigo-400: #818CF8;
-  --color-indigo-500: #6366F1;
-  --color-indigo-600: #4F46E5;
-  --color-indigo-700: #4338CA;
+  /* Indigo → Red (operator accent) */
+  --color-indigo-50: rgba(220, 38, 38, 0.04);
+  --color-indigo-100: rgba(220, 38, 38, 0.08);
+  --color-indigo-200: rgba(220, 38, 38, 0.12);
+  --color-indigo-300: rgba(220, 38, 38, 0.20);
+  --color-indigo-400: #ef4444;
+  --color-indigo-500: #dc2626;
+  --color-indigo-600: #b91c1c;
+  --color-indigo-700: #991b1b;
 
-  --color-green-400: #4ADE80;
-  --color-green-500: #22C55E;
-  --color-green-600: #16A34A;
+  /* Blue → Red (sidebar logo used bg-blue-600) */
+  --color-blue-400: #f87171;
+  --color-blue-500: #ef4444;
+  --color-blue-600: #dc2626;
+  --color-blue-700: #b91c1c;
 
-  --color-yellow-400: #FACC15;
-  --color-yellow-500: #EAB308;
-  --color-yellow-600: #CA8A04;
+  /* Green — slightly deeper for light bg contrast */
+  --color-green-400: #22c55e;
+  --color-green-500: #16a34a;
+  --color-green-600: #15803d;
 
-  --color-red-400: #F87171;
-  --color-red-500: #EF4444;
-  --color-red-600: #DC2626;
+  /* Yellow — slightly deeper for light bg contrast */
+  --color-yellow-400: #eab308;
+  --color-yellow-500: #ca8a04;
+  --color-yellow-600: #a16207;
+
+  /* Red stays red */
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+
+  /* Border radius — Swiss Clinical: sharp, 2px everywhere */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  /* --radius-full stays 9999px for avatars, dots, pills */
 }
+
+/* =============================================================================
+   BASE STYLES
+   ============================================================================= */
 
 body {
   background: var(--bg);
   color: var(--text-primary);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Swiss Clinical Typography — Outfit headings, uppercase, tracked */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 /* iOS PWA safe area */
@@ -112,22 +148,31 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Scrollbar — dark */
+/* =============================================================================
+   SCROLLBAR — Light
+   ============================================================================= */
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #52525B; }
+::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
 
 .scrollbar-thin::-webkit-scrollbar { width: 4px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(63, 63, 70, 0.5); border-radius: 2px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(212, 212, 216, 0.5); border-radius: 2px; }
 
-/* Focus — indigo ring */
+/* =============================================================================
+   FOCUS — Red ring (operator)
+   ============================================================================= */
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* Animations */
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -159,12 +204,15 @@ body {
 .animate-slide-in-up { animation: slideInUp 200ms var(--ease-out); }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, #18181B 25%, #27272A 50%, #18181B 75%);
+  background: linear-gradient(90deg, #f5f5f5 25%, #e5e5e5 50%, #f5f5f5 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
-/* Nav active indicator */
+/* =============================================================================
+   NAV — Swiss Clinical active indicator (red left bar)
+   ============================================================================= */
+
 .nav-active-indicator {
   position: relative;
 }
@@ -180,7 +228,10 @@ body {
   border-radius: 1px;
 }
 
-/* Tooltip (sidebar collapsed) */
+/* =============================================================================
+   TOOLTIP (sidebar collapsed)
+   ============================================================================= */
+
 .tooltip { position: relative; }
 .tooltip::after {
   content: attr(data-tooltip);
@@ -193,19 +244,35 @@ body {
   color: var(--text-primary);
   font-size: 12px;
   font-weight: 500;
-  border-radius: var(--radius-sm);
+  border-radius: 2px;
   border: 1px solid var(--border);
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
   transition: all 100ms var(--ease-out);
   z-index: 50;
+  box-shadow: var(--shadow-md);
 }
 .tooltip:hover::after { opacity: 1; visibility: visible; }
 
-/* Status dots */
+/* =============================================================================
+   STATUS DOTS
+   ============================================================================= */
+
 .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .status-dot-active { background: var(--success); }
 .status-dot-pending { background: var(--warning); }
 .status-dot-inactive { background: var(--text-tertiary); }
 .status-dot-error { background: var(--error); }
+
+/* =============================================================================
+   SWISS CLINICAL CARD — 3px colored top border
+   ============================================================================= */
+
+.card-accent {
+  border-top: 3px solid var(--accent);
+}
+
+.card-accent-resident {
+  border-top: 3px solid var(--accent-resident);
+}

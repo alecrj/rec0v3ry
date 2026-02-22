@@ -37,7 +37,7 @@ export function ResidentNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 safe-area-inset-bottom z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 safe-area-inset-bottom z-50">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -50,8 +50,8 @@ export function ResidentNav() {
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full transition-colors",
                 isActive
-                  ? "text-indigo-400"
-                  : "text-zinc-400 hover:text-zinc-100"
+                  ? "text-[#0d9488]"
+                  : "text-zinc-400 hover:text-zinc-800"
               )}
             >
               <Icon className={cn("h-6 w-6", isActive && "scale-110")} />

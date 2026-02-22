@@ -27,11 +27,11 @@ import { trpc } from "@/lib/trpc";
 export const dynamic = "force-dynamic";
 
 const statusConfig: Record<string, { color: string; label: string; bgColor: string }> = {
-  active: { color: "text-green-300", label: "Active", bgColor: "bg-green-500/15" },
-  pending: { color: "text-amber-300", label: "Pending Intake", bgColor: "bg-amber-500/15" },
-  completed: { color: "text-zinc-300", label: "Discharged", bgColor: "bg-zinc-800" },
-  terminated: { color: "text-red-300", label: "Terminated", bgColor: "bg-red-500/15" },
-  on_hold: { color: "text-amber-300", label: "On Hold", bgColor: "bg-amber-500/15" },
+  active: { color: "text-green-600", label: "Active", bgColor: "bg-green-50" },
+  pending: { color: "text-amber-600", label: "Pending Intake", bgColor: "bg-amber-50" },
+  completed: { color: "text-zinc-600", label: "Discharged", bgColor: "bg-zinc-100" },
+  terminated: { color: "text-red-600", label: "Terminated", bgColor: "bg-red-50" },
+  on_hold: { color: "text-amber-600", label: "On Hold", bgColor: "bg-amber-50" },
 };
 
 function InfoCard({
@@ -44,9 +44,9 @@ function InfoCard({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-800/40">
-        <h3 className="font-semibold text-zinc-100">{title}</h3>
+    <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-zinc-100">
+        <h3 className="font-semibold text-zinc-800">{title}</h3>
         {action}
       </div>
       <div className="p-4">{children}</div>
@@ -72,7 +72,7 @@ function InfoRow({
       )}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{label}</p>
-        <p className="text-sm text-zinc-100 mt-0.5">{value || <span className="text-zinc-500">Not provided</span>}</p>
+        <p className="text-sm text-zinc-800 mt-0.5">{value || <span className="text-zinc-500">Not provided</span>}</p>
       </div>
     </div>
   );
@@ -92,13 +92,13 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 p-3 rounded-lg border border-zinc-800 hover:bg-zinc-800/40 transition-colors group"
+      className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 hover:bg-zinc-100/40 transition-colors group"
     >
-      <div className="p-2 bg-zinc-800 rounded-lg group-hover:bg-indigo-500/15 transition-colors">
+      <div className="p-2 bg-zinc-100 rounded-lg group-hover:bg-indigo-500/15 transition-colors">
         <Icon className="h-5 w-5 text-zinc-400 group-hover:text-indigo-400" />
       </div>
       <div className="flex-1">
-        <p className="font-medium text-zinc-100">{label}</p>
+        <p className="font-medium text-zinc-800">{label}</p>
         <p className="text-xs text-zinc-500">{description}</p>
       </div>
       <ChevronRight className="h-4 w-4 text-zinc-500 group-hover:text-zinc-400" />
@@ -141,11 +141,11 @@ export default function ResidentDetailPage({
       <div className="p-6">
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-3" />
-          <p className="font-medium text-red-300">Error loading resident</p>
+          <p className="font-medium text-red-600">Error loading resident</p>
           <p className="text-sm text-red-400 mt-1">{error.message}</p>
           <Link
             href="/residents"
-            className="inline-flex items-center gap-2 mt-4 text-sm text-indigo-400 hover:text-indigo-300"
+            className="inline-flex items-center gap-2 mt-4 text-sm text-indigo-400 hover:text-indigo-600"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Residents
@@ -161,23 +161,23 @@ export default function ResidentDetailPage({
         {/* Header skeleton */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="h-8 w-8 bg-zinc-700 rounded"></div>
-            <div className="h-20 w-20 bg-zinc-700 rounded-full"></div>
+            <div className="h-8 w-8 bg-zinc-200 rounded"></div>
+            <div className="h-20 w-20 bg-zinc-200 rounded-full"></div>
             <div className="space-y-2">
-              <div className="h-6 w-48 bg-zinc-700 rounded"></div>
-              <div className="h-4 w-32 bg-zinc-700 rounded"></div>
+              <div className="h-6 w-48 bg-zinc-200 rounded"></div>
+              <div className="h-4 w-32 bg-zinc-200 rounded"></div>
             </div>
           </div>
         </div>
         {/* Content skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="h-48 bg-zinc-700 rounded-lg"></div>
-            <div className="h-64 bg-zinc-700 rounded-lg"></div>
+            <div className="h-48 bg-zinc-200 rounded-lg"></div>
+            <div className="h-64 bg-zinc-200 rounded-lg"></div>
           </div>
           <div className="space-y-6">
-            <div className="h-48 bg-zinc-700 rounded-lg"></div>
-            <div className="h-48 bg-zinc-700 rounded-lg"></div>
+            <div className="h-48 bg-zinc-200 rounded-lg"></div>
+            <div className="h-48 bg-zinc-200 rounded-lg"></div>
           </div>
         </div>
       </div>
@@ -187,12 +187,12 @@ export default function ResidentDetailPage({
   if (!resident) {
     return (
       <div className="p-6">
-        <div className="bg-zinc-800/40 border border-zinc-800 rounded-lg p-6 text-center">
+        <div className="bg-zinc-100 border border-zinc-200 rounded-lg p-6 text-center">
           <User className="h-12 w-12 text-zinc-500 mx-auto mb-3" />
-          <p className="font-medium text-zinc-300">Resident not found</p>
+          <p className="font-medium text-zinc-600">Resident not found</p>
           <Link
             href="/residents"
-            className="inline-flex items-center gap-2 mt-4 text-sm text-indigo-400 hover:text-indigo-300"
+            className="inline-flex items-center gap-2 mt-4 text-sm text-indigo-400 hover:text-indigo-600"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Residents
@@ -206,7 +206,7 @@ export default function ResidentDetailPage({
   const statusInfo = statusConfig[currentStatus] || {
     color: "text-zinc-400",
     label: "No Admission",
-    bgColor: "bg-zinc-800",
+    bgColor: "bg-zinc-100",
   };
 
   return (
@@ -216,11 +216,11 @@ export default function ResidentDetailPage({
         <div className="flex items-center gap-4">
           <Link
             href="/residents"
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-zinc-400" />
           </Link>
-          <div className="h-16 w-16 rounded-full bg-zinc-700 flex items-center justify-center overflow-hidden">
+          <div className="h-16 w-16 rounded-full bg-zinc-200 flex items-center justify-center overflow-hidden">
             {resident.profile_photo_url ? (
               <img
                 src={resident.profile_photo_url}
@@ -234,7 +234,7 @@ export default function ResidentDetailPage({
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-100">
+            <h1 className="text-2xl font-bold text-zinc-800">
               {resident.first_name} {resident.last_name}
             </h1>
             <div className="flex items-center gap-3 mt-1">
@@ -253,7 +253,7 @@ export default function ResidentDetailPage({
         </div>
         <Link
           href={`/residents/${resident.id}/edit`}
-          className="flex items-center gap-2 px-4 py-2 border border-zinc-700 rounded-lg text-zinc-300 font-medium hover:bg-zinc-800/40 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 border border-zinc-200 rounded-lg text-zinc-600 font-medium hover:bg-zinc-100/40 transition-colors"
         >
           <Edit2 className="h-4 w-4" />
           Edit
@@ -345,7 +345,7 @@ export default function ResidentDetailPage({
           <InfoCard
             title="Emergency Contacts"
             action={
-              <button className="text-sm text-indigo-400 hover:text-indigo-300 font-medium">
+              <button className="text-sm text-indigo-400 hover:text-indigo-600 font-medium">
                 Add Contact
               </button>
             }
@@ -355,18 +355,18 @@ export default function ResidentDetailPage({
                 {resident.contacts.map((contact) => (
                   <div
                     key={contact.id}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-800/40"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-zinc-100"
                   >
-                    <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-zinc-200 flex items-center justify-center">
                       <User className="h-5 w-5 text-zinc-500" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium text-zinc-100">
+                        <p className="font-medium text-zinc-800">
                           {contact.first_name} {contact.last_name}
                         </p>
                         {contact.is_emergency_contact && (
-                          <span className="px-1.5 py-0.5 bg-red-500/15 text-red-300 text-xs rounded">
+                          <span className="px-1.5 py-0.5 bg-red-500/15 text-red-600 text-xs rounded">
                             Emergency
                           </span>
                         )}
@@ -408,16 +408,16 @@ export default function ResidentDetailPage({
                     <div
                       key={admission.id}
                       className={`flex items-center justify-between p-3 rounded-lg ${
-                        index === 0 ? "bg-indigo-500/10 border border-indigo-500/30" : "bg-zinc-800/40"
+                        index === 0 ? "bg-indigo-500/10 border border-indigo-500/30" : "bg-zinc-100"
                       }`}
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-zinc-100">
+                          <p className="font-medium text-zinc-800">
                             {admission.house_name}
                           </p>
                           {index === 0 && (
-                            <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-300 text-xs rounded">
+                            <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-600 text-xs rounded">
                               Current
                             </span>
                           )}
@@ -483,7 +483,7 @@ export default function ResidentDetailPage({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-zinc-400">Active Consents</span>
-                <span className="font-semibold text-zinc-100">
+                <span className="font-semibold text-zinc-800">
                   {resident.activeConsentsCount}
                 </span>
               </div>
@@ -492,7 +492,7 @@ export default function ResidentDetailPage({
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-amber-300">
+                      <p className="text-sm font-medium text-amber-600">
                         No active consents
                       </p>
                       <p className="text-xs text-amber-400 mt-0.5">
@@ -504,7 +504,7 @@ export default function ResidentDetailPage({
               )}
               <Link
                 href={`/settings/compliance/consents?resident=${resident.id}`}
-                className="block text-center text-sm text-indigo-400 hover:text-indigo-300 font-medium py-2"
+                className="block text-center text-sm text-indigo-400 hover:text-indigo-600 font-medium py-2"
               >
                 Manage Consents
               </Link>
@@ -525,13 +525,13 @@ export default function ResidentDetailPage({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-zinc-500">Created</span>
-                <span className="text-zinc-100">
+                <span className="text-zinc-800">
                   {formatDate(resident.created_at.toString())}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">Last Updated</span>
-                <span className="text-zinc-100">
+                <span className="text-zinc-800">
                   {formatDate(resident.updated_at.toString())}
                 </span>
               </div>

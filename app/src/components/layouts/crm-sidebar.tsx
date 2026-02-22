@@ -169,24 +169,24 @@ function NavLink({ item, depth = 0 }: { item: NavItem; depth?: number }) {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+            "w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-colors",
             depth === 0
-              ? "text-slate-300 hover:text-white hover:bg-slate-700"
-              : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+              ? "text-[#525252] hover:text-[#0a0a0a] hover:bg-[#f5f5f5]"
+              : "text-[#737373] hover:text-[#525252] hover:bg-[#f5f5f5]"
           )}
         >
           <div className="flex items-center gap-3">
-            <item.icon className="h-5 w-5" />
+            <item.icon className="h-4 w-4" />
             <span>{item.label}</span>
           </div>
           {isOpen ? (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="h-3.5 w-3.5" />
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3.5 w-3.5" />
           )}
         </button>
         {isOpen && item.children && (
-          <div className="ml-4 mt-1 space-y-1">
+          <div className="ml-4 mt-0.5 space-y-0.5 border-l border-[#e5e5e5]">
             {item.children.map((child) => (
               <NavLink key={child.label} item={child} depth={depth + 1} />
             ))}
@@ -200,17 +200,17 @@ function NavLink({ item, depth = 0 }: { item: NavItem; depth?: number }) {
     <Link
       href={item.href!}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+        "flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors",
         depth === 0
           ? isActive
-            ? "bg-blue-600 text-white"
-            : "text-slate-300 hover:text-white hover:bg-slate-700"
+            ? "text-[#dc2626] bg-[rgba(220,38,38,0.04)] border-l-2 border-[#dc2626] -ml-px"
+            : "text-[#525252] hover:text-[#0a0a0a] hover:bg-[#f5f5f5]"
           : isActive
-          ? "bg-slate-700 text-white"
-          : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+          ? "text-[#dc2626] bg-[rgba(220,38,38,0.04)]"
+          : "text-[#737373] hover:text-[#525252] hover:bg-[#f5f5f5]"
       )}
     >
-      <item.icon className="h-5 w-5" />
+      <item.icon className="h-4 w-4" />
       <span>{item.label}</span>
     </Link>
   );
@@ -222,26 +222,26 @@ export function CrmSidebar() {
   return (
     <aside
       className={cn(
-        "bg-slate-800 border-r border-slate-700 flex flex-col transition-all duration-300",
+        "bg-white border-r border-[#e5e5e5] flex flex-col transition-all duration-300",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
-      <div className="p-4 border-b border-slate-700">
+      <div className="p-4 border-b border-[#e5e5e5]">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                <span className="text-lg font-bold text-white">R</span>
+              <div className="w-9 h-9 bg-[#dc2626] flex items-center justify-center">
+                <span className="text-base font-bold text-white">R</span>
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-white">RecoveryOS</h2>
-                <p className="text-xs text-slate-400">Operator CRM</p>
+                <h2 className="text-xs font-bold text-[#0a0a0a] tracking-[0.12em] uppercase">RecoveryOS</h2>
+                <p className="text-[11px] text-[#a3a3a3] tracking-wide uppercase">Operator CRM</p>
               </div>
             </div>
           )}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 hover:bg-[#f5f5f5] text-[#a3a3a3] hover:text-[#525252] transition-colors"
           >
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -253,16 +253,16 @@ export function CrmSidebar() {
       </div>
 
       {!isCollapsed && (
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
           {navigation.map((item) => (
             <NavLink key={item.label} item={item} />
           ))}
         </nav>
       )}
 
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Shield className="h-4 w-4" />
+      <div className="p-4 border-t border-[#e5e5e5]">
+        <div className="flex items-center gap-2 text-[11px] text-[#a3a3a3] tracking-wide uppercase">
+          <Shield className="h-3.5 w-3.5" />
           {!isCollapsed && <span>HIPAA Compliant</span>}
         </div>
       </div>

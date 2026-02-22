@@ -40,7 +40,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             htmlFor={inputId}
             className={cn(
               "block mb-1.5 text-sm font-medium",
-              error ? "text-red-400" : "text-zinc-300"
+              error ? "text-red-400" : "text-zinc-600"
             )}
           >
             {label}
@@ -67,14 +67,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               props.onBlur?.(e);
             }}
             className={cn(
-              "w-full h-10 px-3 text-sm text-zinc-100 bg-zinc-900",
+              "w-full h-10 px-3 text-sm text-zinc-800 bg-white",
               "border rounded-md transition-all duration-150",
-              "placeholder:text-zinc-600",
+              "placeholder:text-zinc-400",
               "focus:outline-none focus:ring-1",
-              !error && !success && "border-zinc-800 focus:border-zinc-600 focus:ring-indigo-500/30",
+              !error && !success && "border-zinc-200 focus:border-zinc-300 focus:ring-indigo-500/30",
               error && "border-red-500/50 focus:border-red-500 focus:ring-red-500/30",
               success && !error && "border-green-500/50 focus:border-green-500 focus:ring-green-500/30",
-              disabled && "bg-zinc-900/50 text-zinc-600 cursor-not-allowed",
+              disabled && "bg-white/50 text-zinc-600 cursor-not-allowed",
               icon && iconPosition === "left" && "pl-10",
               icon && iconPosition === "right" && "pr-10",
               isPassword && "pr-10",
@@ -87,7 +87,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-600 transition-colors"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -142,7 +142,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             htmlFor={textareaId}
             className={cn(
               "block mb-1.5 text-sm font-medium",
-              error ? "text-red-400" : "text-zinc-300"
+              error ? "text-red-400" : "text-zinc-600"
             )}
           >
             {label}
@@ -153,13 +153,13 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={textareaId}
           disabled={disabled}
           className={cn(
-            "w-full min-h-[100px] px-3 py-2.5 text-sm text-zinc-100 bg-zinc-900",
+            "w-full min-h-[100px] px-3 py-2.5 text-sm text-zinc-800 bg-white",
             "border rounded-md transition-all duration-150 resize-y",
-            "placeholder:text-zinc-600",
+            "placeholder:text-zinc-400",
             "focus:outline-none focus:ring-1 focus:ring-indigo-500/30",
-            !error && "border-zinc-800 focus:border-zinc-600",
+            !error && "border-zinc-200 focus:border-zinc-300",
             error && "border-red-500/50 focus:border-red-500 focus:ring-red-500/30",
-            disabled && "bg-zinc-900/50 text-zinc-600 cursor-not-allowed",
+            disabled && "bg-white/50 text-zinc-600 cursor-not-allowed",
             className
           )}
           {...props}
@@ -195,7 +195,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             htmlFor={selectId}
             className={cn(
               "block mb-1.5 text-sm font-medium",
-              error ? "text-red-400" : "text-zinc-300"
+              error ? "text-red-400" : "text-zinc-600"
             )}
           >
             {label}
@@ -206,15 +206,15 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={selectId}
           disabled={disabled}
           className={cn(
-            "w-full h-10 px-3 text-sm text-zinc-100 bg-zinc-900",
+            "w-full h-10 px-3 text-sm text-zinc-800 bg-white",
             "border rounded-md transition-all duration-150",
             "focus:outline-none focus:ring-1 focus:ring-indigo-500/30",
             "appearance-none cursor-pointer",
             "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2371717A%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]",
             "bg-[length:20px] bg-[right_12px_center] bg-no-repeat",
-            !error && "border-zinc-800 focus:border-zinc-600",
+            !error && "border-zinc-200 focus:border-zinc-300",
             error && "border-red-500/50 focus:border-red-500 focus:ring-red-500/30",
-            disabled && "bg-zinc-900/50 text-zinc-600 cursor-not-allowed",
+            disabled && "bg-white/50 text-zinc-600 cursor-not-allowed",
             className
           )}
           {...props}

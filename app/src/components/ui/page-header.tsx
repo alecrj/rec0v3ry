@@ -12,7 +12,7 @@ function PageHeader({ title, actions, badge, className }: PageHeaderProps) {
   return (
     <div className={cn("flex items-center justify-between gap-4 flex-wrap", className)}>
       <div className="flex items-center gap-3 flex-wrap">
-        <h1 className="text-xl font-semibold text-zinc-50 tracking-tight">{title}</h1>
+        <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">{title}</h1>
         {badge}
       </div>
       {actions && <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">{actions}</div>}

@@ -71,17 +71,17 @@ function HouseCard({
   const isPositive = profit >= 0;
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden">
+    <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
       {/* Summary row */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-4 p-5 hover:bg-zinc-800/50 transition-colors text-left"
+        className="w-full flex items-center gap-4 p-5 hover:bg-zinc-100 transition-colors text-left"
       >
-        <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
           <Home className="h-5 w-5 text-zinc-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold truncate">{house.house_name}</p>
+          <p className="text-zinc-900 font-semibold truncate">{house.house_name}</p>
         </div>
 
         {/* Stats */}
@@ -108,7 +108,7 @@ function HouseCard({
       </button>
 
       {/* Mobile stats */}
-      <div className="md:hidden grid grid-cols-3 gap-2 px-5 pb-4 border-t border-zinc-800">
+      <div className="md:hidden grid grid-cols-3 gap-2 px-5 pb-4 border-t border-zinc-200">
         <div className="text-center pt-3">
           <p className="text-zinc-500 text-xs">Revenue</p>
           <p className="text-emerald-400 font-semibold text-sm">{formatCurrency(house.revenue)}</p>
@@ -125,7 +125,7 @@ function HouseCard({
 
       {/* Category breakdown */}
       {expanded && house.categories.length > 0 && (
-        <div className="border-t border-zinc-700 p-5 space-y-3">
+        <div className="border-t border-zinc-200 p-5 space-y-3">
           <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wide">
             Expense Breakdown
           </p>
@@ -140,9 +140,9 @@ function HouseCard({
                     className="w-2 h-2 rounded-full shrink-0"
                     style={{ backgroundColor: cat.color ?? "#6366f1" }}
                   />
-                  <span className="text-sm text-zinc-300 flex-1">{cat.category}</span>
+                  <span className="text-sm text-zinc-600 flex-1">{cat.category}</span>
                   <div className="flex items-center gap-2">
-                    <div className="w-24 bg-zinc-800 rounded-full h-1.5">
+                    <div className="w-24 bg-zinc-100 rounded-full h-1.5">
                       <div
                         className="h-1.5 rounded-full"
                         style={{
@@ -162,7 +162,7 @@ function HouseCard({
         </div>
       )}
       {expanded && house.categories.length === 0 && (
-        <div className="border-t border-zinc-700 p-5 text-sm text-zinc-500">
+        <div className="border-t border-zinc-200 p-5 text-sm text-zinc-500">
           No categorized expenses in this period.
         </div>
       )}
@@ -193,12 +193,12 @@ export default function PnLPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/billing/expenses"
-          className="text-zinc-400 hover:text-white transition-colors"
+          className="text-zinc-400 hover:text-zinc-900 transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-white">Profit & Loss</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Profit & Loss</h1>
           <p className="text-zinc-400 mt-1">Revenue vs. expenses per house</p>
         </div>
       </div>
@@ -211,7 +211,7 @@ export default function PnLPage() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="bg-white border border-zinc-200 text-zinc-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         <div>
@@ -220,7 +220,7 @@ export default function PnLPage() {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="bg-white border border-zinc-200 text-zinc-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>
@@ -236,7 +236,7 @@ export default function PnLPage() {
         <>
           {/* Overall summary */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+            <div className="bg-white border border-zinc-200 rounded-xl p-5">
               <div className="flex items-center gap-2 text-zinc-400 text-sm mb-2">
                 <DollarSign className="h-4 w-4 text-emerald-400" />
                 Total Revenue
@@ -245,7 +245,7 @@ export default function PnLPage() {
                 {formatCurrency(data.overall.revenue)}
               </p>
             </div>
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+            <div className="bg-white border border-zinc-200 rounded-xl p-5">
               <div className="flex items-center gap-2 text-zinc-400 text-sm mb-2">
                 <TrendingDown className="h-4 w-4 text-red-400" />
                 Total Expenses
@@ -254,7 +254,7 @@ export default function PnLPage() {
                 {formatCurrency(data.overall.expenses)}
               </p>
             </div>
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+            <div className="bg-white border border-zinc-200 rounded-xl p-5">
               <div className="flex items-center gap-2 text-zinc-400 text-sm mb-2">
                 {parseFloat(data.overall.profit) >= 0 ? (
                   <TrendingUp className="h-4 w-4 text-indigo-400" />
@@ -277,15 +277,15 @@ export default function PnLPage() {
           {/* Per-house breakdown */}
           {data.houses.length > 0 ? (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">By House</h2>
+              <h2 className="text-lg font-semibold text-zinc-900">By House</h2>
               {data.houses.map((house) => (
                 <HouseCard key={house.house_id} house={house} />
               ))}
             </div>
           ) : (
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-12 text-center">
+            <div className="bg-white border border-zinc-200 rounded-xl p-12 text-center">
               <Home className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
-              <p className="text-white font-semibold mb-1">No houses found</p>
+              <p className="text-zinc-900 font-semibold mb-1">No houses found</p>
               <p className="text-zinc-400 text-sm">
                 Add properties and houses to see P&L breakdowns.
               </p>

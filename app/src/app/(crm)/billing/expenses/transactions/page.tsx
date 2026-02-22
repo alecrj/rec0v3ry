@@ -93,22 +93,22 @@ export default function TransactionReviewPage() {
       <div className="grid grid-cols-3 gap-4">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">Unassigned</p>
-          <p className="text-xl font-semibold font-mono text-amber-400">{unassignedCount}</p>
+          <p className="text-xl font-semibold tabular-nums text-amber-400">{unassignedCount}</p>
         </div>
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">Total Shown</p>
-          <p className="text-xl font-semibold font-mono text-zinc-200">{transactions.length}</p>
+          <p className="text-xl font-semibold tabular-nums text-zinc-700">{transactions.length}</p>
         </div>
         <div>
           <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">Total Amount</p>
-          <p className="text-xl font-semibold font-mono text-zinc-200">
+          <p className="text-xl font-semibold tabular-nums text-zinc-700">
             {formatCurrency(transactions.reduce((s, t) => s + parseFloat(t.amount), 0))}
           </p>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1 border-b border-zinc-800">
+      <div className="flex items-center gap-1 border-b border-zinc-200">
         {tabs.map((tab) => (
           <button
             key={tab.label}
@@ -116,7 +116,7 @@ export default function TransactionReviewPage() {
             className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
               statusFilter === tab.value
                 ? "text-indigo-400 border-indigo-500"
-                : "text-zinc-500 border-transparent hover:text-zinc-300"
+                : "text-zinc-500 border-transparent hover:text-zinc-600"
             }`}
           >
             {tab.label}
@@ -145,7 +145,7 @@ export default function TransactionReviewPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-800">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Date</th>
                   <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Merchant</th>
                   <th className="text-left py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Description</th>
@@ -156,18 +156,18 @@ export default function TransactionReviewPage() {
                   <th className="text-right py-3 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/50">
+              <tbody className="divide-y divide-zinc-200/50">
                 {transactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-zinc-800/30 transition-colors">
-                    <td className="py-3 px-4 text-sm text-zinc-400 font-mono">
+                  <tr key={tx.id} className="hover:bg-zinc-100/30 transition-colors">
+                    <td className="py-3 px-4 text-sm text-zinc-400 tabular-nums">
                       {new Date(tx.date + "T12:00:00").toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4">
-                      <p className="text-sm font-medium text-zinc-200">{tx.merchant_name || "—"}</p>
+                      <p className="text-sm font-medium text-zinc-700">{tx.merchant_name || "—"}</p>
                     </td>
                     <td className="py-3 px-4 text-sm text-zinc-400 max-w-[200px] truncate">{tx.name}</td>
                     <td className="py-3 px-4 text-right">
-                      <span className="text-sm font-semibold font-mono text-red-400">
+                      <span className="text-sm font-semibold tabular-nums text-red-400">
                         {formatCurrency(parseFloat(tx.amount))}
                       </span>
                     </td>
@@ -176,7 +176,7 @@ export default function TransactionReviewPage() {
                         <select
                           value={selectedHouse[tx.id] || ""}
                           onChange={(e) => setSelectedHouse({ ...selectedHouse, [tx.id]: e.target.value })}
-                          className="h-8 px-2 text-xs border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                          className="h-8 px-2 text-xs border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                         >
                           <option value="">Select house...</option>
                           {allHouses?.map((h) => (

@@ -104,10 +104,10 @@ export default function DisclosuresPage() {
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-amber-300">
+              <h3 className="text-sm font-semibold text-amber-600">
                 Patient Rights: Accounting of Disclosures
               </h3>
-              <p className="text-sm text-amber-300 mt-1">
+              <p className="text-sm text-amber-600 mt-1">
                 Under 42 CFR Part 2, patients have the right to request an accounting of all
                 disclosures made without their consent. Use the &quot;Request Accounting&quot; button to
                 generate a formal report for a specific patient.
@@ -154,13 +154,13 @@ export default function DisclosuresPage() {
                 placeholder="Search by recipient, organization..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
               />
             </div>
             <select
               value={selectedPurpose}
               onChange={(e) => setSelectedPurpose(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="">All Purposes</option>
               <option value="treatment">Treatment Coordination</option>
@@ -190,7 +190,7 @@ export default function DisclosuresPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                    <tr className="border-y border-zinc-200/50 bg-zinc-100">
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Date</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Recipient</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Organization</th>
@@ -201,13 +201,13 @@ export default function DisclosuresPage() {
                   </thead>
                   <tbody>
                     {filtered.map((disclosure) => (
-                      <tr key={disclosure.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                      <tr key={disclosure.id} className="border-b border-zinc-200/50 hover:bg-zinc-100 transition-colors">
                         <td className="py-3 px-4 text-sm text-zinc-400">
                           {disclosure.disclosed_at
                             ? new Date(disclosure.disclosed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                             : "—"}
                         </td>
-                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-800">
                           {disclosure.disclosed_to_name ?? "—"}
                         </td>
                         <td className="py-3 px-4 text-sm text-zinc-400">
@@ -231,7 +231,7 @@ export default function DisclosuresPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50 flex items-center justify-between">
+              <div className="px-4 py-3 border-t border-zinc-200/50 bg-zinc-100 flex items-center justify-between">
                 <p className="text-sm text-zinc-500">
                   Showing {filtered.length} of {totalCount} disclosures
                 </p>

@@ -6,10 +6,10 @@ export function RedisclosureBanner() {
       <div className="flex items-start gap-3">
         <AlertCircle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
         <div>
-          <h3 className="text-sm font-semibold text-amber-200">
+          <h3 className="text-sm font-semibold text-amber-700">
             42 CFR Part 2 Redisclosure Notice
           </h3>
-          <p className="text-sm text-amber-300 mt-1">
+          <p className="text-sm text-amber-600 mt-1">
             This information has been disclosed to you from records protected by
             Federal confidentiality rules (42 CFR Part 2). The Federal rules
             prohibit you from making any further disclosure of this information

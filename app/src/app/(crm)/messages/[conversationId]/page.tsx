@@ -138,17 +138,17 @@ export default function ConversationPage({
   return (
     <div className="flex flex-col h-[calc(100vh-64px)]">
       {/* Header */}
-      <div className="bg-zinc-900 border-b border-zinc-800 p-4">
+      <div className="bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href="/messages"
-              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="h-5 w-5 text-zinc-400" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-zinc-800 rounded-full">
+              <div className="p-2 bg-zinc-100 rounded-full">
                 {conversation.conversation_type === "direct" ? (
                   <User className="h-5 w-5 text-zinc-400" />
                 ) : (
@@ -156,7 +156,7 @@ export default function ConversationPage({
                 )}
               </div>
               <div>
-                <h1 className="font-semibold text-zinc-100">{displayTitle}</h1>
+                <h1 className="font-semibold text-zinc-800">{displayTitle}</h1>
                 <p className="text-sm text-zinc-500">
                   {conversation.conversation_type === "direct"
                     ? "Direct Message"
@@ -166,21 +166,21 @@ export default function ConversationPage({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+            <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
               <Phone className="h-5 w-5 text-zinc-400" />
             </button>
-            <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+            <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
               <Video className="h-5 w-5 text-zinc-400" />
             </button>
             <button
               onClick={() => setShowMembers(!showMembers)}
               className={`p-2 rounded-lg transition-colors ${
-                showMembers ? "bg-zinc-800" : "hover:bg-zinc-800"
+                showMembers ? "bg-zinc-100" : "hover:bg-zinc-100"
               }`}
             >
               <Info className="h-5 w-5 text-zinc-400" />
             </button>
-            <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+            <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
               <MoreVertical className="h-5 w-5 text-zinc-400" />
             </button>
           </div>
@@ -191,7 +191,7 @@ export default function ConversationPage({
           <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-300">
+              <p className="text-sm text-amber-600">
                 <strong>Confidentiality Notice:</strong> {messagesData.redisclosureNotice}
               </p>
             </div>
@@ -216,7 +216,7 @@ export default function ConversationPage({
               groupedMessages.map((group) => (
                 <div key={group.date}>
                   <div className="flex items-center justify-center mb-4">
-                    <span className="px-3 py-1 bg-zinc-800 text-zinc-400 text-xs font-medium rounded-full">
+                    <span className="px-3 py-1 bg-zinc-100 text-zinc-400 text-xs font-medium rounded-full">
                       {group.date}
                     </span>
                   </div>
@@ -235,7 +235,7 @@ export default function ConversationPage({
                             className={`max-w-[70%] ${
                               message.isOwnMessage
                                 ? "bg-indigo-500 text-white rounded-l-lg rounded-tr-lg"
-                                : "bg-zinc-800 text-zinc-100 rounded-r-lg rounded-tl-lg"
+                                : "bg-zinc-100 text-zinc-800 rounded-r-lg rounded-tl-lg"
                             } p-3`}
                           >
                             {!message.isOwnMessage && conversation.conversation_type === "group" && (
@@ -268,12 +268,12 @@ export default function ConversationPage({
           </div>
 
           {/* Message Input */}
-          <div className="bg-zinc-900 border-t border-zinc-800 p-4">
+          <div className="bg-white border-t border-zinc-200 p-4">
             <div className="flex items-end gap-2">
-              <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
                 <Paperclip className="h-5 w-5 text-zinc-400" />
               </button>
-              <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
                 <Image className="h-5 w-5 text-zinc-400" />
               </button>
               <div className="flex-1 relative">
@@ -283,11 +283,11 @@ export default function ConversationPage({
                   onKeyDown={handleKeyPress}
                   placeholder="Type a message..."
                   rows={1}
-                  className="w-full px-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                  className="w-full px-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
                   style={{ minHeight: "40px", maxHeight: "120px" }}
                 />
               </div>
-              <button className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
                 <Smile className="h-5 w-5 text-zinc-400" />
               </button>
               <button
@@ -296,7 +296,7 @@ export default function ConversationPage({
                 className={`p-2 rounded-lg transition-colors ${
                   newMessage.trim() && !sendMutation.isPending
                     ? "bg-indigo-500 text-white hover:bg-indigo-400"
-                    : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                    : "bg-zinc-100 text-zinc-500 cursor-not-allowed"
                 }`}
               >
                 {sendMutation.isPending ? (
@@ -311,18 +311,18 @@ export default function ConversationPage({
 
         {/* Members Sidebar */}
         {showMembers && (
-          <div className="w-80 bg-zinc-800/40 border-l border-zinc-800 p-4 overflow-y-auto">
-            <h2 className="font-semibold text-zinc-100 mb-4">
+          <div className="w-80 bg-zinc-100 border-l border-zinc-200 p-4 overflow-y-auto">
+            <h2 className="font-semibold text-zinc-800 mb-4">
               {conversation.conversation_type === "direct" ? "Contact Info" : "Members"}
             </h2>
             <div className="space-y-3">
               {conversation.members.map((member) => (
-                <div key={member.id} className="flex items-center gap-3 p-2 hover:bg-zinc-800 rounded-lg">
-                  <div className="p-2 bg-zinc-700 rounded-full">
+                <div key={member.id} className="flex items-center gap-3 p-2 hover:bg-zinc-100 rounded-lg">
+                  <div className="p-2 bg-zinc-200 rounded-full">
                     <User className="h-4 w-4 text-zinc-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-100 truncate">{member.name}</p>
+                    <p className="text-sm font-medium text-zinc-800 truncate">{member.name}</p>
                     {member.email && (
                       <p className="text-xs text-zinc-500 truncate">{member.email}</p>
                     )}
@@ -335,7 +335,7 @@ export default function ConversationPage({
             </div>
 
             {conversation.conversation_type === "group" && (
-              <button className="mt-4 w-full px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg text-sm font-medium hover:bg-zinc-800">
+              <button className="mt-4 w-full px-4 py-2 border border-zinc-200 text-zinc-600 rounded-lg text-sm font-medium hover:bg-zinc-100">
                 Add Member
               </button>
             )}

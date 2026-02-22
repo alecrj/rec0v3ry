@@ -59,7 +59,7 @@ function StatusPipeline({ currentStatus }: { currentStatus: string }) {
                     ? "bg-green-500 text-white"
                     : isCurrent
                     ? "bg-indigo-500 text-white"
-                    : "bg-zinc-700 text-zinc-400"
+                    : "bg-zinc-200 text-zinc-400"
                 }`}
               >
                 {isCompleted ? (
@@ -79,7 +79,7 @@ function StatusPipeline({ currentStatus }: { currentStatus: string }) {
             {index < PIPELINE_STAGES.length - 1 && (
               <div
                 className={`flex-1 h-0.5 mx-2 shrink ${
-                  index < currentIndex ? "bg-green-500" : "bg-zinc-700"
+                  index < currentIndex ? "bg-green-500" : "bg-zinc-200"
                 }`}
               />
             )}
@@ -169,9 +169,9 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-lg mx-4">
-        <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-xl font-semibold text-zinc-100">Approve and Move In</h2>
+      <div className="relative bg-white border border-zinc-200 rounded-xl shadow-2xl w-full max-w-lg mx-4">
+        <div className="p-6 border-b border-zinc-200">
+          <h2 className="text-xl font-semibold text-zinc-800">Approve and Move In</h2>
           <p className="text-sm text-zinc-400 mt-1">
             One-click admission for {lead.first_name} {lead.last_name}
           </p>
@@ -179,12 +179,12 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Part 2 notice */}
-          <div className="bg-amber-950/40 border border-amber-700/50 rounded-lg p-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <Shield className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" />
-              <div className="text-sm text-amber-200">
+              <Shield className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+              <div className="text-sm text-amber-700">
                 <p className="font-medium">42 CFR Part 2 Consent Required</p>
-                <p className="mt-1 text-amber-300/80">
+                <p className="mt-1 text-amber-600">
                   Intake cannot be completed without an active Part 2 consent form.
                   The resident will sign this during intake.
                 </p>
@@ -194,7 +194,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 House <span className="text-red-400">*</span>
               </label>
               <select
@@ -204,7 +204,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                   setBedId("");
                 }}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">Select house...</option>
                 {housesData?.map((h) => (
@@ -215,14 +215,14 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Bed
               </label>
               <select
                 value={bedId}
                 onChange={(e) => setBedId(e.target.value)}
                 disabled={!houseId}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
               >
                 <option value="">Assign later...</option>
                 {availableBeds?.map((b) => (
@@ -236,7 +236,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Move-in Date <span className="text-red-400">*</span>
               </label>
               <input
@@ -244,11 +244,11 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                 value={admissionDate}
                 onChange={(e) => setAdmissionDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Date of Birth <span className="text-red-400">*</span>
               </label>
               <input
@@ -256,7 +256,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -266,7 +266,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
               <div
                 onClick={() => setGenerateInvoice(!generateInvoice)}
                 className={`w-10 h-6 rounded-full flex items-center transition-colors cursor-pointer ${
-                  generateInvoice ? "bg-indigo-600" : "bg-zinc-700"
+                  generateInvoice ? "bg-indigo-600" : "bg-zinc-200"
                 }`}
               >
                 <div
@@ -276,7 +276,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                 />
               </div>
               <div>
-                <span className="text-sm font-medium text-zinc-200">
+                <span className="text-sm font-medium text-zinc-700">
                   Generate first month's invoice
                 </span>
                 <p className="text-xs text-zinc-500">
@@ -288,7 +288,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
               <div
                 onClick={() => setSendDocuments(!sendDocuments)}
                 className={`w-10 h-6 rounded-full flex items-center transition-colors cursor-pointer ${
-                  sendDocuments ? "bg-indigo-600" : "bg-zinc-700"
+                  sendDocuments ? "bg-indigo-600" : "bg-zinc-200"
                 }`}
               >
                 <div
@@ -298,7 +298,7 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
                 />
               </div>
               <div>
-                <span className="text-sm font-medium text-zinc-200">
+                <span className="text-sm font-medium text-zinc-700">
                   Send documents for signing
                 </span>
                 <p className="text-xs text-zinc-500">
@@ -312,8 +312,8 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
             <div
               className={`rounded-lg p-3 text-sm ${
                 toastMsg.startsWith("Error")
-                  ? "bg-red-900/50 border border-red-700 text-red-300"
-                  : "bg-green-900/50 border border-green-700 text-green-300"
+                  ? "bg-red-50 border border-red-200 text-red-700"
+                  : "bg-green-50 border border-green-200 text-green-700"
               }`}
             >
               {toastMsg}
@@ -321,12 +321,12 @@ function ConvertToResidentModal({ isOpen, onClose, lead }: ConvertModalProps) {
           )}
         </form>
 
-        <div className="p-6 border-t border-zinc-800 flex justify-end gap-3">
+        <div className="p-6 border-t border-zinc-200 flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={convertMutation.isPending}
-            className="px-4 py-2 text-zinc-300 border border-zinc-700 rounded-lg font-medium hover:bg-zinc-800 disabled:opacity-50"
+            className="px-4 py-2 text-zinc-600 border border-zinc-200 rounded-lg font-medium hover:bg-zinc-100 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -386,9 +386,9 @@ function SendInviteModal({ isOpen, onClose, residentId, residentName }: InviteMo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-        <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-100">Send App Invite</h2>
+      <div className="relative bg-white border border-zinc-200 rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div className="p-6 border-b border-zinc-200">
+          <h2 className="text-lg font-semibold text-zinc-800">Send App Invite</h2>
           <p className="text-sm text-zinc-400 mt-1">
             Generate a sign-up link for {residentName}
           </p>
@@ -396,12 +396,12 @@ function SendInviteModal({ isOpen, onClose, residentId, residentName }: InviteMo
         <div className="p-6 space-y-4">
           {!inviteLink ? (
             <>
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-zinc-600">
                 This generates a unique invite link for the resident to create
                 their account in the RecoveryOS app.
               </p>
               {errorMsg && (
-                <div className="bg-red-900/50 border border-red-700 text-red-300 rounded-lg p-3 text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
                   {errorMsg}
                 </div>
               )}
@@ -425,14 +425,14 @@ function SendInviteModal({ isOpen, onClose, residentId, residentName }: InviteMo
             </>
           ) : (
             <>
-              <div className="bg-zinc-800 rounded-lg p-3">
+              <div className="bg-zinc-100 rounded-lg p-3">
                 <p className="text-xs text-zinc-500 mb-1 font-medium">Invite Link</p>
-                <p className="text-sm text-zinc-200 break-all font-mono">{inviteLink}</p>
+                <p className="text-sm text-zinc-700 break-all font-mono">{inviteLink}</p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={handleCopy}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-700 text-white rounded-lg font-medium hover:bg-zinc-600"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-200 text-zinc-900 rounded-lg font-medium hover:bg-zinc-200"
                 >
                   {copied ? (
                     <>
@@ -448,7 +448,7 @@ function SendInviteModal({ isOpen, onClose, residentId, residentName }: InviteMo
                 </button>
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg font-medium hover:bg-zinc-800"
+                  className="px-4 py-2 border border-zinc-200 text-zinc-600 rounded-lg font-medium hover:bg-zinc-100"
                 >
                   Done
                 </button>
@@ -477,9 +477,9 @@ export default function LeadDetailPage() {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-zinc-800 rounded w-1/3" />
-          <div className="h-40 bg-zinc-800 rounded" />
-          <div className="h-60 bg-zinc-800 rounded" />
+          <div className="h-8 bg-zinc-100 rounded w-1/3" />
+          <div className="h-40 bg-zinc-100 rounded" />
+          <div className="h-60 bg-zinc-100 rounded" />
         </div>
       </div>
     );
@@ -488,7 +488,7 @@ export default function LeadDetailPage() {
   if (error || !lead) {
     return (
       <div className="p-6">
-        <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-300">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
           <p className="font-medium">Error loading lead</p>
           <p className="text-sm mt-1">{error?.message || "Lead not found"}</p>
         </div>
@@ -510,7 +510,7 @@ export default function LeadDetailPage() {
       <div>
         <Link
           href="/admissions"
-          className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white"
+          className="flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-900"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Pipeline
@@ -518,15 +518,15 @@ export default function LeadDetailPage() {
       </div>
 
       {/* Header */}
-      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
+      <div className="bg-white rounded-lg border border-zinc-200 p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center text-xl font-semibold text-zinc-300">
+            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center text-xl font-semibold text-zinc-600">
               {lead.first_name[0]}
               {lead.last_name[0]}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-100">
+              <h1 className="text-2xl font-bold text-zinc-800">
                 {lead.first_name} {lead.last_name}
               </h1>
               <div className="flex items-center gap-4 mt-2 text-sm text-zinc-400">
@@ -545,18 +545,18 @@ export default function LeadDetailPage() {
               </div>
               <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
                 {lead.house_name && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-950/50 text-indigo-400 rounded border border-indigo-800/50">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 rounded border border-red-200">
                     <Home className="h-3.5 w-3.5" />
                     {lead.house_name}
                   </span>
                 )}
                 {lead.preferred_move_in_date && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-950/50 text-green-400 rounded border border-green-800/50">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded border border-green-200">
                     <Calendar className="h-3.5 w-3.5" />
                     Move-in: {new Date(lead.preferred_move_in_date).toLocaleDateString()}
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-800 text-zinc-400 rounded">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-100 text-zinc-400 rounded">
                   <Clock className="h-3.5 w-3.5" />
                   {daysInPipeline} days in pipeline
                 </span>
@@ -586,7 +586,7 @@ export default function LeadDetailPage() {
         </div>
 
         {/* Status Pipeline */}
-        <div className="mt-6 pt-6 border-t border-zinc-800">
+        <div className="mt-6 pt-6 border-t border-zinc-200">
           <StatusPipeline currentStatus={lead.status} />
         </div>
       </div>
@@ -596,11 +596,11 @@ export default function LeadDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Converted banner */}
           {isConverted && (
-            <div className="bg-green-950/30 border border-green-800/50 rounded-lg p-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-6 w-6 text-green-400 shrink-0" />
                 <div>
-                  <p className="font-medium text-green-300">
+                  <p className="font-medium text-green-600">
                     Admitted as Resident
                   </p>
                   {lead.converted_at && (
@@ -615,9 +615,9 @@ export default function LeadDetailPage() {
           )}
 
           {/* Lead Details */}
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800">
-            <div className="p-4 border-b border-zinc-800">
-              <h3 className="font-semibold text-zinc-100">Lead Information</h3>
+          <div className="bg-white rounded-lg border border-zinc-200">
+            <div className="p-4 border-b border-zinc-200">
+              <h3 className="font-semibold text-zinc-800">Lead Information</h3>
             </div>
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -625,7 +625,7 @@ export default function LeadDetailPage() {
                   <label className="text-xs text-zinc-500 uppercase tracking-wide">
                     Source
                   </label>
-                  <p className="text-sm font-medium text-zinc-200 mt-1">
+                  <p className="text-sm font-medium text-zinc-700 mt-1">
                     {lead.source || "—"}
                   </p>
                 </div>
@@ -633,7 +633,7 @@ export default function LeadDetailPage() {
                   <label className="text-xs text-zinc-500 uppercase tracking-wide">
                     Created
                   </label>
-                  <p className="text-sm font-medium text-zinc-200 mt-1">
+                  <p className="text-sm font-medium text-zinc-700 mt-1">
                     {new Date(lead.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -641,7 +641,7 @@ export default function LeadDetailPage() {
                   <label className="text-xs text-zinc-500 uppercase tracking-wide">
                     Status
                   </label>
-                  <p className="text-sm font-medium text-zinc-200 mt-1 capitalize">
+                  <p className="text-sm font-medium text-zinc-700 mt-1 capitalize">
                     {lead.status.replace("_", " ")}
                   </p>
                 </div>
@@ -650,7 +650,7 @@ export default function LeadDetailPage() {
                     <label className="text-xs text-zinc-500 uppercase tracking-wide">
                       Preferred Move-in
                     </label>
-                    <p className="text-sm font-medium text-zinc-200 mt-1">
+                    <p className="text-sm font-medium text-zinc-700 mt-1">
                       {new Date(lead.preferred_move_in_date).toLocaleDateString()}
                     </p>
                   </div>
@@ -661,7 +661,7 @@ export default function LeadDetailPage() {
                   <label className="text-xs text-zinc-500 uppercase tracking-wide">
                     Notes
                   </label>
-                  <p className="text-sm text-zinc-300 mt-1">{lead.notes}</p>
+                  <p className="text-sm text-zinc-600 mt-1">{lead.notes}</p>
                 </div>
               )}
             </div>
@@ -669,9 +669,9 @@ export default function LeadDetailPage() {
 
           {/* Intake Checklist for eligible leads */}
           {(canConvert || isConverted) && (
-            <div className="bg-zinc-900 rounded-lg border border-zinc-800">
-              <div className="p-4 border-b border-zinc-800">
-                <h3 className="font-semibold text-zinc-100">Intake Checklist</h3>
+            <div className="bg-white rounded-lg border border-zinc-200">
+              <div className="p-4 border-b border-zinc-200">
+                <h3 className="font-semibold text-zinc-800">Intake Checklist</h3>
               </div>
               <div className="p-4">
                 <div className="space-y-2">
@@ -694,7 +694,7 @@ export default function LeadDetailPage() {
                       )}
                       <span
                         className={`text-sm ${
-                          item.done ? "text-zinc-400 line-through" : "text-zinc-200"
+                          item.done ? "text-zinc-400 line-through" : "text-zinc-700"
                         }`}
                       >
                         {item.label}
@@ -715,15 +715,15 @@ export default function LeadDetailPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800">
-            <div className="p-4 border-b border-zinc-800">
-              <h3 className="font-semibold text-zinc-100">Quick Actions</h3>
+          <div className="bg-white rounded-lg border border-zinc-200">
+            <div className="p-4 border-b border-zinc-200">
+              <h3 className="font-semibold text-zinc-800">Quick Actions</h3>
             </div>
             <div className="p-2">
               {canConvert && (
                 <button
                   onClick={() => setShowConvertModal(true)}
-                  className="w-full text-left px-3 py-2.5 text-sm font-medium text-green-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2"
+                  className="w-full text-left px-3 py-2.5 text-sm font-medium text-green-600 hover:bg-zinc-100 rounded-lg flex items-center gap-2"
                 >
                   <ArrowRight className="h-4 w-4" />
                   Approve and Move In
@@ -732,21 +732,21 @@ export default function LeadDetailPage() {
               {isConverted && lead.converted_to_resident_id && (
                 <button
                   onClick={() => setShowInviteModal(true)}
-                  className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2"
+                  className="w-full text-left px-3 py-2.5 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg flex items-center gap-2"
                 >
                   <Send className="h-4 w-4 text-zinc-400" />
                   Send App Invite
                 </button>
               )}
-              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
+              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg flex items-center gap-2">
                 <Phone className="h-4 w-4 text-zinc-500" />
                 Log Phone Call
               </button>
-              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
+              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg flex items-center gap-2">
                 <Mail className="h-4 w-4 text-zinc-500" />
                 Send Email
               </button>
-              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 rounded-lg flex items-center gap-2">
+              <button className="w-full text-left px-3 py-2.5 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg flex items-center gap-2">
                 <FileText className="h-4 w-4 text-zinc-500" />
                 Add Note
               </button>
@@ -754,31 +754,31 @@ export default function LeadDetailPage() {
           </div>
 
           {/* Lead Stats */}
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800">
-            <div className="p-4 border-b border-zinc-800">
-              <h3 className="font-semibold text-zinc-100">Details</h3>
+          <div className="bg-white rounded-lg border border-zinc-200">
+            <div className="p-4 border-b border-zinc-200">
+              <h3 className="font-semibold text-zinc-800">Details</h3>
             </div>
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-zinc-500">Pipeline Stage</span>
-                <span className="text-zinc-200 font-medium capitalize">
+                <span className="text-zinc-700 font-medium capitalize">
                   {lead.status.replace("_", " ")}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-zinc-500">Days in Pipeline</span>
-                <span className="text-zinc-200 font-medium">{daysInPipeline}</span>
+                <span className="text-zinc-700 font-medium">{daysInPipeline}</span>
               </div>
               {lead.source && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-zinc-500">Source</span>
-                  <span className="text-zinc-200 font-medium">{lead.source}</span>
+                  <span className="text-zinc-700 font-medium">{lead.source}</span>
                 </div>
               )}
               {isConverted && lead.converted_at && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-zinc-500">Admitted On</span>
-                  <span className="text-zinc-200 font-medium">
+                  <span className="text-zinc-700 font-medium">
                     {new Date(lead.converted_at).toLocaleDateString()}
                   </span>
                 </div>

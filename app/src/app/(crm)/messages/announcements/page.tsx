@@ -124,18 +124,18 @@ export default function AnnouncementsPage() {
     return d.toLocaleDateString();
   };
 
-  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
   return (
     <PageContainer>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/messages" className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+          <Link href="/messages" className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
             <ChevronLeft className="h-5 w-5 text-zinc-400" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-100">Announcements</h1>
+            <h1 className="text-2xl font-bold text-zinc-800">Announcements</h1>
             <p className="text-zinc-500 mt-1">Broadcast messages to houses and organization</p>
           </div>
         </div>
@@ -195,13 +195,13 @@ export default function AnnouncementsPage() {
                 placeholder="Search announcements..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
               />
             </div>
             <select
               value={selectedScope}
               onChange={(e) => setSelectedScope(e.target.value as typeof selectedScope)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Scopes</option>
               <option value="organization">Organization-wide</option>
@@ -229,11 +229,11 @@ export default function AnnouncementsPage() {
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="animate-pulse flex items-start gap-4">
-                  <div className="w-9 h-9 bg-zinc-700 rounded-lg" />
+                  <div className="w-9 h-9 bg-zinc-200 rounded-lg" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-48 bg-zinc-700 rounded" />
-                    <div className="h-3 w-full bg-zinc-700 rounded" />
-                    <div className="h-3 w-32 bg-zinc-700 rounded" />
+                    <div className="h-4 w-48 bg-zinc-200 rounded" />
+                    <div className="h-3 w-full bg-zinc-200 rounded" />
+                    <div className="h-3 w-32 bg-zinc-200 rounded" />
                   </div>
                 </div>
               ))}
@@ -249,18 +249,18 @@ export default function AnnouncementsPage() {
             />
           </CardContent>
         ) : (
-          <div className="divide-y divide-zinc-800/50">
+          <div className="divide-y divide-zinc-200/50">
             {filteredAnnouncements.map((announcement) => {
               const pc = priorityConfig[(announcement.priority as Priority) ?? "normal"];
               return (
                 <div
                   key={announcement.id}
-                  className={`px-6 py-4 hover:bg-zinc-800/50 transition-colors ${
+                  className={`px-6 py-4 hover:bg-zinc-100 transition-colors ${
                     !announcement.isRead && !announcement.is_draft ? "bg-indigo-500/10/30" : ""
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className={`p-2 rounded-lg ${announcement.is_pinned ? "bg-indigo-500/15" : "bg-zinc-800"}`}>
+                    <div className={`p-2 rounded-lg ${announcement.is_pinned ? "bg-indigo-500/15" : "bg-zinc-100"}`}>
                       {announcement.is_pinned ? (
                         <Pin className="h-5 w-5 text-indigo-400" />
                       ) : (
@@ -269,7 +269,7 @@ export default function AnnouncementsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`text-sm font-medium ${!announcement.isRead && !announcement.is_draft ? "text-zinc-100" : "text-zinc-300"}`}>
+                        <h3 className={`text-sm font-medium ${!announcement.isRead && !announcement.is_draft ? "text-zinc-800" : "text-zinc-600"}`}>
                           {announcement.title}
                         </h3>
                         <Badge variant={pc.variant}>{pc.label}</Badge>
@@ -303,7 +303,7 @@ export default function AnnouncementsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        className="p-2 hover:bg-zinc-700 rounded-lg transition-colors"
+                        className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
                         onClick={() => {
                           if (confirm("Delete this announcement?")) {
                             deleteMutation.mutate({ announcementId: announcement.id });
@@ -324,10 +324,10 @@ export default function AnnouncementsPage() {
       {/* Create Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-zinc-100">New Announcement</h2>
+                <h2 className="text-xl font-bold text-zinc-800">New Announcement</h2>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
                   className="text-zinc-500 hover:text-zinc-400 text-xl"
@@ -353,7 +353,7 @@ export default function AnnouncementsPage() {
             >
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Title <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -366,7 +366,7 @@ export default function AnnouncementsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Content <span className="text-red-400">*</span>
                   </label>
                   <textarea
@@ -375,12 +375,12 @@ export default function AnnouncementsPage() {
                     placeholder="Write your announcement..."
                     value={newContent}
                     onChange={(e) => setNewContent(e.target.value)}
-                    className="w-full px-4 py-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
+                    className="w-full px-4 py-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Scope</label>
+                    <label className="block text-sm font-medium text-zinc-600 mb-1.5">Scope</label>
                     <select
                       value={newHouseId}
                       onChange={(e) => setNewHouseId(e.target.value)}
@@ -393,7 +393,7 @@ export default function AnnouncementsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-1.5">Priority</label>
+                    <label className="block text-sm font-medium text-zinc-600 mb-1.5">Priority</label>
                     <select
                       value={newPriority}
                       onChange={(e) => setNewPriority(e.target.value as typeof newPriority)}
@@ -412,22 +412,22 @@ export default function AnnouncementsPage() {
                       type="checkbox"
                       checked={newIsPinned}
                       onChange={(e) => setNewIsPinned(e.target.checked)}
-                      className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500"
+                      className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500"
                     />
-                    <span className="text-sm text-zinc-300">Pin announcement</span>
+                    <span className="text-sm text-zinc-600">Pin announcement</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={newIsDraft}
                       onChange={(e) => setNewIsDraft(e.target.checked)}
-                      className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500"
+                      className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500"
                     />
-                    <span className="text-sm text-zinc-300">Save as draft</span>
+                    <span className="text-sm text-zinc-600">Save as draft</span>
                   </label>
                 </div>
               </div>
-              <div className="p-6 border-t border-zinc-800 flex justify-end gap-3">
+              <div className="p-6 border-t border-zinc-200 flex justify-end gap-3">
                 <Button type="button" variant="secondary" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
                 <Button type="submit" variant="primary" disabled={createMutation.isPending}>
                   {createMutation.isPending ? "Publishing..." : newIsDraft ? "Save Draft" : "Publish Announcement"}

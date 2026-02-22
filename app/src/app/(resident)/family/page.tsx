@@ -27,11 +27,11 @@ function OverviewSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 h-20"></div>
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 h-20"></div>
+        <div className="bg-white rounded-xl border border-zinc-200 p-4 h-20"></div>
+        <div className="bg-white rounded-xl border border-zinc-200 p-4 h-20"></div>
       </div>
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 h-32"></div>
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 h-40"></div>
+      <div className="bg-white rounded-xl border border-zinc-200 p-4 h-32"></div>
+      <div className="bg-white rounded-xl border border-zinc-200 p-4 h-40"></div>
     </div>
   );
 }
@@ -39,8 +39,8 @@ function OverviewSkeleton() {
 function PaymentsSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="bg-indigo-500 rounded-xl p-4 h-32"></div>
-      <div className="bg-zinc-900 rounded-xl border border-zinc-800 h-48"></div>
+      <div className="bg-[#0d9488] rounded-xl p-4 h-32"></div>
+      <div className="bg-white rounded-xl border border-zinc-200 h-48"></div>
     </div>
   );
 }
@@ -134,10 +134,10 @@ export default function FamilyPortalPage() {
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
-      pending: "bg-amber-500/15 text-amber-300",
-      paid: "bg-green-500/15 text-green-300",
-      overdue: "bg-red-500/15 text-red-300",
-      partially_paid: "bg-amber-500/15 text-amber-300",
+      pending: "bg-amber-50 text-amber-600",
+      paid: "bg-green-50 text-green-600",
+      overdue: "bg-red-50 text-red-600",
+      partially_paid: "bg-amber-50 text-amber-600",
     };
     const labels: Record<string, string> = {
       pending: "Due",
@@ -146,7 +146,7 @@ export default function FamilyPortalPage() {
       partially_paid: "Partial"
     };
     return (
-      <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[status] ?? "bg-zinc-800 text-zinc-300"}`}>
+      <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[status] ?? "bg-zinc-100 text-zinc-600"}`}>
         {labels[status] ?? status}
       </span>
     );
@@ -192,10 +192,10 @@ export default function FamilyPortalPage() {
   // Empty state - no linked residents
   if (!residentsLoading && (!linkedResidents || linkedResidents.length === 0)) {
     return (
-      <div className="min-h-screen bg-zinc-800/40 flex items-center justify-center p-4">
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-8 max-w-md text-center">
+      <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl border border-zinc-200 p-8 max-w-md text-center">
           <User className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-zinc-100 mb-2">No Linked Residents</h2>
+          <h2 className="text-lg font-semibold text-zinc-800 mb-2">No Linked Residents</h2>
           <p className="text-zinc-400 text-sm">
             You don&apos;t have access to any resident profiles yet. Please contact the house manager to set up your family portal access.
           </p>
@@ -205,28 +205,28 @@ export default function FamilyPortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-800/40 pb-16">
+    <div className="min-h-screen bg-zinc-100 pb-16">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-6">
+      <div className="bg-gradient-to-r from-[#0d9488] to-[#0f766e] text-white px-4 py-6">
         {isLoading ? (
           <div className="flex items-center gap-4 animate-pulse">
-            <div className="w-16 h-16 rounded-full bg-zinc-900/20"></div>
+            <div className="w-16 h-16 rounded-full bg-white/20"></div>
             <div className="space-y-2">
-              <div className="h-5 w-32 bg-zinc-900/20 rounded"></div>
-              <div className="h-4 w-24 bg-zinc-900/20 rounded"></div>
+              <div className="h-5 w-32 bg-white/20 rounded"></div>
+              <div className="h-4 w-24 bg-white/20 rounded"></div>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-zinc-900/20 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
               <User className="h-8 w-8 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold">
                 {residentSummary?.resident.firstName} {resident?.resident_last_name}
               </h1>
-              <p className="text-indigo-700 text-sm">{resident?.house_name ?? "Residence"}</p>
-              <p className="text-indigo-600 text-xs mt-1">{daysInProgram} days in program</p>
+              <p className="text-white/70 text-sm">{resident?.house_name ?? "Residence"}</p>
+              <p className="text-white/60 text-xs mt-1">{daysInProgram} days in program</p>
             </div>
           </div>
         )}
@@ -237,7 +237,7 @@ export default function FamilyPortalPage() {
         <div className="flex items-start gap-2">
           <Shield className="h-4 w-4 text-amber-400 mt-0.5" />
           <div>
-            <p className="text-xs text-amber-300">
+            <p className="text-xs text-amber-600">
               Your access is protected under 42 CFR Part 2. You can only view information you have been
               consented to access.
             </p>
@@ -250,20 +250,20 @@ export default function FamilyPortalPage() {
         <div className="mx-4 mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
           <div className="flex items-start gap-2">
             <AlertCircle className="h-4 w-4 text-red-400 mt-0.5" />
-            <p className="text-xs text-red-300">{residentsError.message}</p>
+            <p className="text-xs text-red-600">{residentsError.message}</p>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-zinc-800 bg-zinc-900 mt-4">
+      <div className="flex border-b border-zinc-200 bg-white mt-4">
         {(["overview", "payments", "messages"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab
-                ? "border-indigo-500 text-indigo-400"
+                ? "border-[#0d9488] text-[#0d9488]"
                 : "border-transparent text-zinc-400"
             }`}
           >
@@ -282,59 +282,59 @@ export default function FamilyPortalPage() {
               <>
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
+                  <div className="bg-white rounded-xl border border-zinc-200 p-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-green-500/15 rounded-lg">
                         <CheckCircle className="h-5 w-5 text-green-400" />
                       </div>
                       <div>
                         <p className="text-xs text-zinc-500">Status</p>
-                        <p className="font-semibold text-zinc-100">
+                        <p className="font-semibold text-zinc-800">
                           {residentSummary?.admission?.status === "active" ? "Active" : "Inactive"}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
+                  <div className="bg-white rounded-xl border border-zinc-200 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-500/15 rounded-lg">
-                        <DollarSign className="h-5 w-5 text-indigo-400" />
+                      <div className="p-2 bg-[#0d9488]/15 rounded-lg">
+                        <DollarSign className="h-5 w-5 text-[#0d9488]" />
                       </div>
                       <div>
                         <p className="text-xs text-zinc-500">Balance Due</p>
-                        <p className="font-semibold text-zinc-100">${balance.toFixed(2)}</p>
+                        <p className="font-semibold text-zinc-800">${balance.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-                  <div className="p-4 border-b border-zinc-800/50">
-                    <h2 className="font-semibold text-zinc-100">Quick Actions</h2>
+                <div className="bg-white rounded-xl border border-zinc-200">
+                  <div className="p-4 border-b border-zinc-200/50">
+                    <h2 className="font-semibold text-zinc-800">Quick Actions</h2>
                   </div>
-                  <div className="divide-y divide-zinc-800/50">
+                  <div className="divide-y divide-zinc-200/50">
                     <button
                       onClick={() => setActiveTab("payments")}
-                      className="w-full p-4 flex items-center justify-between active:bg-zinc-800/40"
+                      className="w-full p-4 flex items-center justify-between active:bg-zinc-100"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-green-500/15 rounded-lg">
                           <CreditCard className="h-5 w-5 text-green-400" />
                         </div>
-                        <span className="font-medium text-zinc-100">Make a Payment</span>
+                        <span className="font-medium text-zinc-800">Make a Payment</span>
                       </div>
                       <ChevronRight className="h-5 w-5 text-zinc-500" />
                     </button>
                     <button
                       onClick={() => setActiveTab("messages")}
-                      className="w-full p-4 flex items-center justify-between active:bg-zinc-800/40"
+                      className="w-full p-4 flex items-center justify-between active:bg-zinc-100"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-500/15 rounded-lg">
-                          <MessageSquare className="h-5 w-5 text-indigo-400" />
+                        <div className="p-2 bg-[#0d9488]/15 rounded-lg">
+                          <MessageSquare className="h-5 w-5 text-[#0d9488]" />
                         </div>
-                        <span className="font-medium text-zinc-100">Contact House Manager</span>
+                        <span className="font-medium text-zinc-800">Contact House Manager</span>
                       </div>
                       <ChevronRight className="h-5 w-5 text-zinc-500" />
                     </button>
@@ -342,19 +342,19 @@ export default function FamilyPortalPage() {
                 </div>
 
                 {/* Recent Announcements */}
-                <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-                  <div className="p-4 border-b border-zinc-800/50">
-                    <h2 className="font-semibold text-zinc-100">House Announcements</h2>
+                <div className="bg-white rounded-xl border border-zinc-200">
+                  <div className="p-4 border-b border-zinc-200/50">
+                    <h2 className="font-semibold text-zinc-800">House Announcements</h2>
                   </div>
                   {!announcements || announcements.length === 0 ? (
                     <div className="p-6 text-center">
                       <p className="text-zinc-500 text-sm">No recent announcements</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-zinc-800/50">
+                    <div className="divide-y divide-zinc-200/50">
                       {announcements.slice(0, 3).map((announcement) => (
                         <div key={announcement.id} className="p-4">
-                          <p className="font-medium text-zinc-100">{announcement.title}</p>
+                          <p className="font-medium text-zinc-800">{announcement.title}</p>
                           <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
                             <Calendar className="h-3 w-3" />
                             {announcement.published_at
@@ -368,20 +368,20 @@ export default function FamilyPortalPage() {
                 </div>
 
                 {/* House Info */}
-                <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-                  <h2 className="font-semibold text-zinc-100 mb-3">House Information</h2>
+                <div className="bg-white rounded-xl border border-zinc-200 p-4">
+                  <h2 className="font-semibold text-zinc-800 mb-3">House Information</h2>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <Home className="h-4 w-4 text-zinc-500" />
                       <div>
-                        <p className="font-medium text-zinc-100">{resident?.house_name ?? "Residence"}</p>
+                        <p className="font-medium text-zinc-800">{resident?.house_name ?? "Residence"}</p>
                         <p className="text-xs text-zinc-500">Sober Living Residence</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Clock className="h-4 w-4 text-zinc-500" />
                       <div>
-                        <p className="font-medium text-zinc-100">Visiting Hours</p>
+                        <p className="font-medium text-zinc-800">Visiting Hours</p>
                         <p className="text-xs text-zinc-500">Contact house manager for schedule</p>
                       </div>
                     </div>
@@ -399,13 +399,13 @@ export default function FamilyPortalPage() {
             ) : (
               <>
                 {/* Balance Card */}
-                <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl p-4">
-                  <p className="text-indigo-700 text-sm">Current Balance</p>
+                <div className="bg-gradient-to-r from-[#0d9488] to-[#0f766e] text-white rounded-xl p-4">
+                  <p className="text-white/70 text-sm">Current Balance</p>
                   <p className="text-3xl font-bold mt-1">${balance.toFixed(2)}</p>
                   {balance > 0 && (
                     <button
                       onClick={() => handlePayNow()}
-                      className="mt-4 w-full py-2 bg-zinc-900 text-indigo-400 rounded-lg font-medium active:bg-indigo-500/10"
+                      className="mt-4 w-full py-2 bg-white text-[#0d9488] rounded-lg font-medium active:bg-[#0d9488]/10"
                     >
                       Pay Now
                     </button>
@@ -413,20 +413,20 @@ export default function FamilyPortalPage() {
                 </div>
 
                 {/* Invoices */}
-                <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-                  <div className="p-4 border-b border-zinc-800/50">
-                    <h2 className="font-semibold text-zinc-100">Recent Invoices</h2>
+                <div className="bg-white rounded-xl border border-zinc-200">
+                  <div className="p-4 border-b border-zinc-200/50">
+                    <h2 className="font-semibold text-zinc-800">Recent Invoices</h2>
                   </div>
                   {invoices.length === 0 ? (
                     <div className="p-6 text-center">
                       <p className="text-zinc-500 text-sm">No invoices yet</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-zinc-800/50">
+                    <div className="divide-y divide-zinc-200/50">
                       {invoices.map((invoice) => (
                         <div key={invoice.id} className="p-4 flex items-center justify-between">
                           <div>
-                            <p className="font-medium text-zinc-100">{invoice.invoice_number}</p>
+                            <p className="font-medium text-zinc-800">{invoice.invoice_number}</p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-sm text-zinc-500">
                                 Due {new Date(invoice.due_date).toLocaleDateString()}
@@ -435,13 +435,13 @@ export default function FamilyPortalPage() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-zinc-100">
+                            <p className="font-semibold text-zinc-800">
                               ${Number(invoice.total).toFixed(2)}
                             </p>
                             {(invoice.status === "pending" || invoice.status === "overdue") && (
                               <button
                                 onClick={() => handlePayNow(invoice.id, Number(invoice.total))}
-                                className="text-sm text-indigo-400 font-medium mt-1"
+                                className="text-sm text-[#0d9488] font-medium mt-1"
                               >
                                 Pay
                               </button>
@@ -454,11 +454,11 @@ export default function FamilyPortalPage() {
                 </div>
 
                 {/* Payment Methods */}
-                <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-                  <h2 className="font-semibold text-zinc-100 mb-3">Payment Methods</h2>
+                <div className="bg-white rounded-xl border border-zinc-200 p-4">
+                  <h2 className="font-semibold text-zinc-800 mb-3">Payment Methods</h2>
                   <button
                     onClick={() => toast("info", "Card payments coming soon", "Stripe integration is being configured. Use check or cash for now.")}
-                    className="w-full p-3 border border-dashed border-zinc-700 rounded-lg text-zinc-400 flex items-center justify-center gap-2"
+                    className="w-full p-3 border border-dashed border-zinc-200 rounded-lg text-zinc-400 flex items-center justify-center gap-2"
                   >
                     <CreditCard className="h-4 w-4" />
                     Add Payment Method
@@ -472,8 +472,8 @@ export default function FamilyPortalPage() {
         {activeTab === "messages" && (
           <>
             {/* Message House Manager */}
-            <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4">
-              <h2 className="font-semibold text-zinc-100 mb-3">Contact House Manager</h2>
+            <div className="bg-white rounded-xl border border-zinc-200 p-4">
+              <h2 className="font-semibold text-zinc-800 mb-3">Contact House Manager</h2>
               <p className="text-sm text-zinc-400 mb-4">
                 Send a message to the house manager. Messages are logged for compliance purposes.
               </p>
@@ -482,12 +482,12 @@ export default function FamilyPortalPage() {
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Type your message..."
-                className="w-full px-3 py-2 border border-zinc-700 rounded-lg text-base resize-none bg-zinc-800/40 text-zinc-100 placeholder:text-zinc-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-base resize-none bg-zinc-100 text-zinc-800 placeholder:text-zinc-500 focus:ring-2 focus:ring-[#0d9488] focus:border-[#0d9488]"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!messageText.trim() || sendMessage.isPending || createConversation.isPending}
-                className="mt-3 w-full py-2 bg-indigo-500 text-white rounded-lg font-medium active:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="mt-3 w-full py-2 bg-[#0d9488] text-white rounded-lg font-medium active:bg-[#14b8a6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {sendMessage.isPending || createConversation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -499,16 +499,16 @@ export default function FamilyPortalPage() {
             </div>
 
             {/* Previous Messages */}
-            <div className="bg-zinc-900 rounded-xl border border-zinc-800">
-              <div className="p-4 border-b border-zinc-800/50">
-                <h2 className="font-semibold text-zinc-100">Recent Messages</h2>
+            <div className="bg-white rounded-xl border border-zinc-200">
+              <div className="p-4 border-b border-zinc-200/50">
+                <h2 className="font-semibold text-zinc-800">Recent Messages</h2>
               </div>
               {paymentSummary?.recentPayments && paymentSummary.recentPayments.length > 0 ? (
-                <div className="divide-y divide-zinc-800/50">
+                <div className="divide-y divide-zinc-200/50">
                   {/* Show payment confirmations as "messages" for now */}
                   {paymentSummary.recentPayments.map((p) => (
                     <div key={p.id} className="p-4">
-                      <p className="text-sm text-zinc-300">
+                      <p className="text-sm text-zinc-600">
                         Payment of ${Number(p.amount).toFixed(2)} ({p.payment_method_type})
                       </p>
                       <p className="text-xs text-zinc-500 mt-1">
@@ -526,7 +526,7 @@ export default function FamilyPortalPage() {
             </div>
 
             {/* Consent Notice */}
-            <div className="p-3 bg-zinc-800 rounded-xl">
+            <div className="p-3 bg-zinc-100 rounded-xl">
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-zinc-500 mt-0.5" />
                 <p className="text-xs text-zinc-400">
@@ -540,14 +540,14 @@ export default function FamilyPortalPage() {
       </div>
 
       {/* Your Relationship Banner */}
-      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 px-4 py-3">
         <div className="flex items-center justify-between text-sm">
           <span className="text-zinc-400">
-            Viewing as: <span className="font-medium text-zinc-100">{resident?.relationship ?? "Family"}</span>
+            Viewing as: <span className="font-medium text-zinc-800">{resident?.relationship ?? "Family"}</span>
           </span>
           <button
             onClick={() => setShowConsents(true)}
-            className="text-indigo-400 font-medium"
+            className="text-[#0d9488] font-medium"
           >
             Consent Details
           </button>
@@ -557,16 +557,16 @@ export default function FamilyPortalPage() {
       {/* Payment Modal */}
       {showPayModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60">
-          <div className="bg-zinc-900 border-t border-zinc-800 rounded-t-2xl p-6 w-full max-w-lg animate-in slide-in-from-bottom">
+          <div className="bg-white border-t border-zinc-200 rounded-t-2xl p-6 w-full max-w-lg animate-in slide-in-from-bottom">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-zinc-100">Record Payment</h3>
+              <h3 className="text-lg font-semibold text-zinc-800">Record Payment</h3>
               <button onClick={() => setShowPayModal(false)} className="p-1 text-zinc-400">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">Amount</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1">Amount</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">$</span>
                   <input
@@ -574,16 +574,16 @@ export default function FamilyPortalPage() {
                     step="0.01"
                     value={payAmount}
                     onChange={(e) => setPayAmount(e.target.value)}
-                    className="w-full pl-8 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full pl-8 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#0d9488]/20 focus:border-[#0d9488]"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">Payment Method</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1">Payment Method</label>
                 <select
                   value={payMethod}
                   onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}
-                  className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#0d9488]/20 focus:border-[#0d9488]"
                 >
                   <option value="check">Check</option>
                   <option value="cash">Cash</option>
@@ -594,7 +594,7 @@ export default function FamilyPortalPage() {
               <button
                 onClick={handleSubmitPayment}
                 disabled={recordPayment.isPending || !payAmount}
-                className="w-full py-3 bg-indigo-500 text-white rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[#0d9488] text-white rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {recordPayment.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -611,9 +611,9 @@ export default function FamilyPortalPage() {
       {/* Consent Details Modal */}
       {showConsents && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60">
-          <div className="bg-zinc-900 border-t border-zinc-800 rounded-t-2xl p-6 w-full max-w-lg max-h-[70vh] overflow-y-auto">
+          <div className="bg-white border-t border-zinc-200 rounded-t-2xl p-6 w-full max-w-lg max-h-[70vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-zinc-100">Active Consents</h3>
+              <h3 className="text-lg font-semibold text-zinc-800">Active Consents</h3>
               <button onClick={() => setShowConsents(false)} className="p-1 text-zinc-400">
                 <X className="h-5 w-5" />
               </button>
@@ -623,8 +623,8 @@ export default function FamilyPortalPage() {
             ) : (
               <div className="space-y-3">
                 {activeConsents.map((c) => (
-                  <div key={c.id} className="p-3 bg-zinc-800/50 rounded-lg border border-zinc-800">
-                    <p className="text-sm font-medium text-zinc-100">
+                  <div key={c.id} className="p-3 bg-zinc-100 rounded-lg border border-zinc-200">
+                    <p className="text-sm font-medium text-zinc-800">
                       {c.consent_type.replace(/_/g, " ")}
                     </p>
                     <p className="text-xs text-zinc-400 mt-1">{c.purpose}</p>

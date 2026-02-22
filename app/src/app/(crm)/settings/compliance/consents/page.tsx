@@ -109,10 +109,10 @@ export default function ConsentsPage() {
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-amber-300">
+              <h3 className="text-sm font-semibold text-amber-600">
                 Important: 42 CFR Part 2 Final Rule (Effective Feb 16, 2026)
               </h3>
-              <p className="text-sm text-amber-300 mt-1">
+              <p className="text-sm text-amber-600 mt-1">
                 All consent forms must comply with updated requirements including
                 specific disclosure recipients, clear purpose statements, and
                 standardized revocation procedures. RecoveryOS consent forms are
@@ -126,8 +126,8 @@ export default function ConsentsPage() {
       {error && (
         <Card variant="outlined" className="border-red-500/30 bg-red-500/10">
           <CardContent>
-            <p className="text-sm font-medium text-red-300">Error loading consents</p>
-            <p className="text-sm text-red-300 mt-1">{error.message}</p>
+            <p className="text-sm font-medium text-red-600">Error loading consents</p>
+            <p className="text-sm text-red-600 mt-1">{error.message}</p>
           </CardContent>
         </Card>
       )}
@@ -173,13 +173,13 @@ export default function ConsentsPage() {
                 placeholder="Search by resident name or consent type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as ConsentStatus | "all")}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -214,7 +214,7 @@ export default function ConsentsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                    <tr className="border-y border-zinc-200/50 bg-zinc-100">
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resident Name</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Consent Type</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
@@ -225,8 +225,8 @@ export default function ConsentsPage() {
                   </thead>
                   <tbody>
                     {filteredConsents.map((consent) => (
-                      <tr key={consent.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
-                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                      <tr key={consent.id} className="border-b border-zinc-200/50 hover:bg-zinc-100 transition-colors">
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-800">
                           {consent.recipient_name || "—"}
                         </td>
                         <td className="py-3 px-4 text-sm text-zinc-400">
@@ -280,7 +280,7 @@ export default function ConsentsPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+              <div className="px-4 py-3 border-t border-zinc-200/50 bg-zinc-100">
                 <p className="text-sm text-zinc-500">
                   Showing {filteredConsents.length} consent{filteredConsents.length !== 1 ? "s" : ""}
                 </p>
@@ -292,8 +292,8 @@ export default function ConsentsPage() {
       {/* Revoke Confirmation Modal */}
       {revokeId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-zinc-100">Revoke Consent</h3>
+          <div className="bg-white border border-zinc-200 rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-zinc-800">Revoke Consent</h3>
             <p className="text-sm text-zinc-400 mt-2">
               Are you sure you want to revoke this consent? This action cannot be undone.
               Per 42 CFR 2.31(b), revocation does not apply retroactively.
@@ -315,20 +315,20 @@ export default function ConsentsPage() {
       {/* Renew Modal */}
       {renewId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-zinc-100">Renew Consent</h3>
+          <div className="bg-white border border-zinc-200 rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-zinc-800">Renew Consent</h3>
             <p className="text-sm text-zinc-400 mt-2">
               This will create a new active consent with the same terms as the expired one.
             </p>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 New Expiration Date
               </label>
               <input
                 type="datetime-local"
                 value={renewDate}
                 onChange={(e) => setRenewDate(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               />
             </div>
             <div className="flex items-center justify-end gap-3 mt-6">

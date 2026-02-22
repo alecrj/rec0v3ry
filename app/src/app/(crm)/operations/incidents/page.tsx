@@ -117,7 +117,7 @@ export default function IncidentsPage() {
       header: "Type",
       sortable: true,
       render: (_val, row) => (
-        <span className="text-sm font-medium text-zinc-100">
+        <span className="text-sm font-medium text-zinc-800">
           {incidentTypeLabels[row.incident_type] ?? row.incident_type}
         </span>
       ),
@@ -137,7 +137,7 @@ export default function IncidentsPage() {
         row.resident_first_name ? (
           <div className="flex items-center gap-2">
             <User className="h-3.5 w-3.5 text-zinc-500" />
-            <span className="text-sm text-zinc-100">
+            <span className="text-sm text-zinc-800">
               {row.resident_first_name} {row.resident_last_name}
             </span>
           </div>
@@ -230,11 +230,11 @@ export default function IncidentsPage() {
       <Card>
         <CardContent>
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <span className="text-sm font-medium text-zinc-600">Filter:</span>
             <select
               value={selectedSeverity}
               onChange={(e) => setSelectedSeverity(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical</option>
@@ -245,7 +245,7 @@ export default function IncidentsPage() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Types</option>
               {Object.entries(incidentTypeLabels).map(([key, label]) => (
@@ -288,9 +288,9 @@ export default function IncidentsPage() {
       {showCreateModal && orgId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Report Incident</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Report Incident</h2>
             </div>
             <form
               onSubmit={(e: FormEvent) => {
@@ -309,16 +309,16 @@ export default function IncidentsPage() {
             >
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Type <span className="text-red-400">*</span></label>
-                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={incidentForm.incidentType} onChange={(e) => setIncidentForm({ ...incidentForm, incidentType: e.target.value })}>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Type <span className="text-red-400">*</span></label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" required value={incidentForm.incidentType} onChange={(e) => setIncidentForm({ ...incidentForm, incidentType: e.target.value })}>
                     {Object.entries(incidentTypeLabels).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Severity <span className="text-red-400">*</span></label>
-                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={incidentForm.severity} onChange={(e) => setIncidentForm({ ...incidentForm, severity: e.target.value })}>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Severity <span className="text-red-400">*</span></label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" required value={incidentForm.severity} onChange={(e) => setIncidentForm({ ...incidentForm, severity: e.target.value })}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -328,21 +328,21 @@ export default function IncidentsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date & Time <span className="text-red-400">*</span></label>
-                  <input type="datetime-local" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={incidentForm.occurredAt} onChange={(e) => setIncidentForm({ ...incidentForm, occurredAt: e.target.value })} />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Date & Time <span className="text-red-400">*</span></label>
+                  <input type="datetime-local" className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" required value={incidentForm.occurredAt} onChange={(e) => setIncidentForm({ ...incidentForm, occurredAt: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Location</label>
-                  <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="e.g., Common Room" value={incidentForm.location} onChange={(e) => setIncidentForm({ ...incidentForm, location: e.target.value })} />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Location</label>
+                  <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" placeholder="e.g., Common Room" value={incidentForm.location} onChange={(e) => setIncidentForm({ ...incidentForm, location: e.target.value })} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description <span className="text-red-400">*</span></label>
-                <textarea className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 min-h-[80px]" required minLength={10} placeholder="Describe what happened (minimum 10 characters)..." value={incidentForm.description} onChange={(e) => setIncidentForm({ ...incidentForm, description: e.target.value })} />
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Description <span className="text-red-400">*</span></label>
+                <textarea className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 min-h-[80px]" required minLength={10} placeholder="Describe what happened (minimum 10 characters)..." value={incidentForm.description} onChange={(e) => setIncidentForm({ ...incidentForm, description: e.target.value })} />
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" checked={incidentForm.followUpRequired} onChange={(e) => setIncidentForm({ ...incidentForm, followUpRequired: e.target.checked })} />
-                <span className="text-sm text-zinc-300">Follow-up required</span>
+                <input type="checkbox" className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500" checked={incidentForm.followUpRequired} onChange={(e) => setIncidentForm({ ...incidentForm, followUpRequired: e.target.checked })} />
+                <span className="text-sm text-zinc-600">Follow-up required</span>
               </label>
               <div className="pt-2 flex justify-end gap-3">
                 <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>

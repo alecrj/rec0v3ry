@@ -90,7 +90,7 @@ function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-zinc-100">
+                <h3 className="font-semibold text-zinc-800">
                   {entry.resident_first_name} {entry.resident_last_name}
                 </h3>
                 <Badge variant={status.variant} dot>{status.label}</Badge>
@@ -119,18 +119,18 @@ function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors"
               >
                 <MoreVertical className="h-4 w-4 text-zinc-500" />
               </button>
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-8 w-48 bg-zinc-900 rounded-xl shadow-lg border border-zinc-800 py-1 z-20">
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40">
+                  <div className="absolute right-0 top-8 w-48 bg-white rounded-xl shadow-lg border border-zinc-200 py-1 z-20">
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100/40">
                       <User className="h-4 w-4" /> View Profile
                     </button>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40">
+                    <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100/40">
                       <Check className="h-4 w-4" /> Update Status
                     </button>
                     <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-400 hover:bg-green-500/10">
@@ -146,14 +146,14 @@ function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-zinc-800/50">
+        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-zinc-200/50">
           <div>
             <p className="text-xs text-zinc-500">Preferred House</p>
-            <p className="text-sm font-medium text-zinc-100 mt-0.5">{entry.house_name || "Any"}</p>
+            <p className="text-sm font-medium text-zinc-800 mt-0.5">{entry.house_name || "Any"}</p>
           </div>
           <div>
             <p className="text-xs text-zinc-500">Target Move-in</p>
-            <p className="text-sm font-medium text-zinc-100 mt-0.5">
+            <p className="text-sm font-medium text-zinc-800 mt-0.5">
               {entry.requested_move_in_date
                 ? new Date(entry.requested_move_in_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                 : "Flexible"}
@@ -161,7 +161,7 @@ function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
           </div>
           <div>
             <p className="text-xs text-zinc-500">Days on List</p>
-            <p className="text-sm font-medium text-zinc-100 mt-0.5 flex items-center gap-1">
+            <p className="text-sm font-medium text-zinc-800 mt-0.5 flex items-center gap-1">
               <Clock className="h-3 w-3 text-zinc-500" />
               {daysOnList}
             </p>
@@ -169,9 +169,9 @@ function WaitlistCard({ entry }: { entry: WaitlistEntry }) {
         </div>
 
         {entry.notes && (
-          <div className="mt-3 p-3 bg-zinc-800/40 rounded-lg">
+          <div className="mt-3 p-3 bg-zinc-100 rounded-lg">
             <p className="text-xs text-zinc-500 mb-0.5">Notes</p>
-            <p className="text-sm text-zinc-300">{entry.notes}</p>
+            <p className="text-sm text-zinc-600">{entry.notes}</p>
           </div>
         )}
       </CardContent>
@@ -212,14 +212,14 @@ function AddToWaitlistModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
 
   if (!isOpen) return null;
 
-  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500";
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-xl font-semibold text-zinc-100">Add to Waitlist</h2>
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200">
+          <h2 className="text-xl font-semibold text-zinc-800">Add to Waitlist</h2>
           <p className="text-sm text-zinc-500 mt-1">Select an existing resident to add to the waitlist</p>
         </div>
         <form
@@ -236,7 +236,7 @@ function AddToWaitlistModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           className="p-6 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Resident <span className="text-red-400">*</span>
             </label>
             <select
@@ -255,7 +255,7 @@ function AddToWaitlistModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Preferred House</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Preferred House</label>
               <select
                 value={wlHouseId}
                 onChange={(e) => setWlHouseId(e.target.value)}
@@ -268,7 +268,7 @@ function AddToWaitlistModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Priority</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as typeof priority)}
@@ -282,7 +282,7 @@ function AddToWaitlistModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Target Move-in Date</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Target Move-in Date</label>
             <input
               type="date"
               value={moveInDate}
@@ -291,12 +291,12 @@ function AddToWaitlistModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Notes</label>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
               placeholder="Referral source, special requirements, etc."
             />
           </div>
@@ -372,13 +372,13 @@ export default function WaitlistPage() {
             placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
           />
         </div>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="h-10 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+          className="h-10 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
         >
           <option value="">All Statuses</option>
           {Object.entries(statusBadge).map(([key, config]) => (
@@ -388,7 +388,7 @@ export default function WaitlistPage() {
         <select
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value)}
-          className="h-10 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+          className="h-10 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
         >
           <option value="">All Priorities</option>
           <option value="urgent">Urgent</option>

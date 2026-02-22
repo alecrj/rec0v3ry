@@ -64,7 +64,7 @@ const typeLabels: Record<string, string> = {
   other: "Other",
 };
 
-const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
 // ── Create Document Modal ──────────────────────────────────
 function CreateDocumentModal({
@@ -152,13 +152,13 @@ function CreateDocumentModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-100">New Document</h2>
+            <h2 className="text-xl font-semibold text-zinc-800">New Document</h2>
             <p className="text-sm text-zinc-500 mt-1">Create a new document record</p>
           </div>
-          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -170,7 +170,7 @@ function CreateDocumentModal({
           className="p-6 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Title <span className="text-red-400">*</span>
             </label>
             <input
@@ -184,7 +184,7 @@ function CreateDocumentModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Document Type <span className="text-red-400">*</span>
               </label>
               <select
@@ -198,7 +198,7 @@ function CreateDocumentModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Sensitivity</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Sensitivity</label>
               <select
                 value={sensitivityLevel}
                 onChange={(e) => setSensitivityLevel(e.target.value as typeof SENSITIVITY_LEVELS[number])}
@@ -213,7 +213,7 @@ function CreateDocumentModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident (Optional)</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Resident (Optional)</label>
             <select
               value={residentId}
               onChange={(e) => setResidentId(e.target.value)}
@@ -229,12 +229,12 @@ function CreateDocumentModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Attach File</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Attach File</label>
             <input
               type="file"
               accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="w-full text-sm text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer"
+              className="w-full text-sm text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-zinc-100 file:text-zinc-600 hover:file:bg-zinc-200 cursor-pointer"
             />
             {file && (
               <p className="text-xs text-zinc-500 mt-1">
@@ -244,12 +244,12 @@ function CreateDocumentModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Description</label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
               placeholder="Brief description of this document..."
             />
           </div>
@@ -294,26 +294,26 @@ function ViewDocumentModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-zinc-100">Document Details</h2>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-zinc-800">Document Details</h2>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-6 space-y-4">
           <div>
             <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Title</label>
-            <p className="text-sm text-zinc-100 mt-1">{doc.title}</p>
+            <p className="text-sm text-zinc-800 mt-1">{doc.title}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Type</label>
-              <p className="text-sm text-zinc-100 mt-1">{typeLabels[doc.document_type] ?? doc.document_type}</p>
+              <p className="text-sm text-zinc-800 mt-1">{typeLabels[doc.document_type] ?? doc.document_type}</p>
             </div>
             <div>
               <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Resident</label>
-              <p className="text-sm text-zinc-100 mt-1">
+              <p className="text-sm text-zinc-800 mt-1">
                 {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "Organization-wide"}
               </p>
             </div>
@@ -426,12 +426,12 @@ export default function DocumentLibraryPage() {
               placeholder="Search by title or resident name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 border-b border-zinc-800 overflow-x-auto">
+        <div className="flex items-center gap-2 border-b border-zinc-200 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -439,7 +439,7 @@ export default function DocumentLibraryPage() {
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-indigo-500 text-indigo-400"
-                  : "border-transparent text-zinc-400 hover:text-zinc-100"
+                  : "border-transparent text-zinc-400 hover:text-zinc-800"
               }`}
             >
               {tab.label}
@@ -462,7 +462,7 @@ export default function DocumentLibraryPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-zinc-800">
+              <tr className="border-b border-zinc-200">
                 <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Document</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Type</th>
                 <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resident</th>
@@ -472,16 +472,16 @@ export default function DocumentLibraryPage() {
                 <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800/50">
+            <tbody className="divide-y divide-zinc-200/50">
               {documents.map((doc) => {
                 const sc = statusConfig[doc.status] ?? statusConfig.draft;
                 const sens = sensitivityConfig[doc.sensitivity_level ?? "internal"] ?? sensitivityConfig.internal;
                 return (
-                  <tr key={doc.id} className="hover:bg-zinc-800/40 transition-colors">
+                  <tr key={doc.id} className="hover:bg-zinc-100/40 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-zinc-500 flex-shrink-0" />
-                        <span className="text-sm font-medium text-zinc-100">{doc.title}</span>
+                        <span className="text-sm font-medium text-zinc-800">{doc.title}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-sm text-zinc-400">
@@ -535,7 +535,7 @@ export default function DocumentLibraryPage() {
               })}
             </tbody>
           </table>
-          <div className="px-4 py-3 border-t border-zinc-800/50">
+          <div className="px-4 py-3 border-t border-zinc-200/50">
             <p className="text-sm text-zinc-500">Showing {documents.length} document{documents.length !== 1 ? "s" : ""}</p>
           </div>
         </div>

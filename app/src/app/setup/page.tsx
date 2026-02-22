@@ -53,7 +53,7 @@ const initialData: SetupData = {
 };
 
 const inputClass =
-  "w-full h-11 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-zinc-100 placeholder:text-zinc-600";
+  "w-full h-11 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-zinc-800 placeholder:text-zinc-400";
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
@@ -62,7 +62,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
         <div
           key={i}
           className={`h-1.5 rounded-full transition-all duration-300 ${
-            i <= current ? "bg-indigo-500 w-8" : "bg-zinc-700 w-4"
+            i <= current ? "bg-indigo-500 w-8" : "bg-zinc-200 w-4"
           }`}
         />
       ))}
@@ -173,8 +173,8 @@ export default function SetupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#09090B] px-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl p-8 max-w-lg w-full">
+    <div className="min-h-screen flex items-center justify-center bg-[#fafafa] px-4">
+      <div className="bg-white border border-zinc-200 rounded-xl shadow-xl p-8 max-w-lg w-full">
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <div className="w-14 h-14 rounded-xl bg-indigo-500 flex items-center justify-center">
@@ -185,7 +185,7 @@ export default function SetupPage() {
         {status === "checking" && (
           <div className="text-center">
             <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto mb-4" />
-            <h1 className="text-lg font-semibold text-zinc-100">Checking account...</h1>
+            <h1 className="text-lg font-semibold text-zinc-800">Checking account...</h1>
           </div>
         )}
 
@@ -200,7 +200,7 @@ export default function SetupPage() {
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 mb-3">
                     <Building2 className="w-5 h-5 text-indigo-400" />
                   </div>
-                  <h1 className="text-xl font-bold text-zinc-100">Name your organization</h1>
+                  <h1 className="text-xl font-bold text-zinc-800">Name your organization</h1>
                   <p className="text-sm text-zinc-500 mt-1">What&apos;s your sober living business called?</p>
                 </div>
 
@@ -229,7 +229,7 @@ export default function SetupPage() {
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 mb-3">
                     <Home className="w-5 h-5 text-indigo-400" />
                   </div>
-                  <h1 className="text-xl font-bold text-zinc-100">Add your first house</h1>
+                  <h1 className="text-xl font-bold text-zinc-800">Add your first house</h1>
                   <p className="text-sm text-zinc-500 mt-1">You can add more later.</p>
                 </div>
 
@@ -332,7 +332,7 @@ export default function SetupPage() {
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-500/15 mb-3">
                     <Users className="w-5 h-5 text-indigo-400" />
                   </div>
-                  <h1 className="text-xl font-bold text-zinc-100">Add your first resident</h1>
+                  <h1 className="text-xl font-bold text-zinc-800">Add your first resident</h1>
                   <p className="text-sm text-zinc-500 mt-1">Optional — you can skip and add residents later.</p>
                 </div>
 
@@ -396,7 +396,7 @@ export default function SetupPage() {
               {step > 0 ? (
                 <button
                   onClick={() => setStep(step - 1)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Back
@@ -419,7 +419,7 @@ export default function SetupPage() {
         {status === "creating" && (
           <div className="text-center">
             <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto mb-4" />
-            <h1 className="text-lg font-semibold text-zinc-100">Setting up your business...</h1>
+            <h1 className="text-lg font-semibold text-zinc-800">Setting up your business...</h1>
             <p className="text-sm text-zinc-500 mt-1">Creating your organization, house, and beds.</p>
           </div>
         )}
@@ -429,7 +429,7 @@ export default function SetupPage() {
             <div className="w-12 h-12 bg-indigo-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
               <Building2 className="w-6 h-6 text-indigo-400" />
             </div>
-            <h1 className="text-lg font-semibold text-zinc-100">Welcome back!</h1>
+            <h1 className="text-lg font-semibold text-zinc-800">Welcome back!</h1>
             <p className="text-sm text-zinc-500 mt-1">Redirecting to dashboard...</p>
           </div>
         )}
@@ -439,7 +439,7 @@ export default function SetupPage() {
             <div className="w-12 h-12 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-6 h-6 text-green-400" />
             </div>
-            <h1 className="text-lg font-semibold text-zinc-100">You&apos;re all set!</h1>
+            <h1 className="text-lg font-semibold text-zinc-800">You&apos;re all set!</h1>
             <p className="text-sm text-zinc-500 mt-1">
               {data.houseName ? `${data.houseName} is ready with ${data.bedCount} beds.` : "Your organization is ready."}
             </p>
@@ -452,7 +452,7 @@ export default function SetupPage() {
             <div className="w-12 h-12 bg-red-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
               <XCircle className="w-6 h-6 text-red-400" />
             </div>
-            <h1 className="text-lg font-semibold text-zinc-100">Setup failed</h1>
+            <h1 className="text-lg font-semibold text-zinc-800">Setup failed</h1>
             <p className="text-red-400 mt-2 text-sm">{error}</p>
             <button
               onClick={() => {

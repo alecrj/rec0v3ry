@@ -125,8 +125,8 @@ function DataTable<T extends Record<string, unknown>>({
           <thead>
             <tr
               className={cn(
-                "border-b border-zinc-800",
-                stickyHeader && "sticky top-0 z-10 bg-[#09090B]"
+                "border-b border-zinc-200",
+                stickyHeader && "sticky top-0 z-10 bg-[#fafafa]"
               )}
             >
               {selectable && (
@@ -137,7 +137,7 @@ function DataTable<T extends Record<string, unknown>>({
                       "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                       allSelected
                         ? "bg-indigo-500 border-indigo-500"
-                        : "border-zinc-700 hover:border-zinc-500"
+                        : "border-zinc-200 hover:border-zinc-400"
                     )}
                   >
                     {allSelected && <Check className="h-3 w-3 text-white" />}
@@ -152,7 +152,7 @@ function DataTable<T extends Record<string, unknown>>({
                     "px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider text-left",
                     column.align === "center" && "text-center",
                     column.align === "right" && "text-right",
-                    column.sortable && "cursor-pointer select-none hover:text-zinc-300 transition-colors"
+                    column.sortable && "cursor-pointer select-none hover:text-zinc-600 transition-colors"
                   )}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && handleSort(column.key)}
@@ -198,9 +198,9 @@ function DataTable<T extends Record<string, unknown>>({
                     key={rowId}
                     className={cn(
                       rowHeight,
-                      "border-b border-zinc-800/50 last:border-b-0 transition-colors",
+                      "border-b border-zinc-200/50 last:border-b-0 transition-colors",
                       isSelected && "bg-indigo-500/8",
-                      !isSelected && isHovered && "bg-zinc-800/40",
+                      !isSelected && isHovered && "bg-zinc-100",
                       onRowClick && "cursor-pointer"
                     )}
                     onMouseEnter={() => setHoveredRow(rowId)}
@@ -215,7 +215,7 @@ function DataTable<T extends Record<string, unknown>>({
                             "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                             isSelected
                               ? "bg-indigo-500 border-indigo-500"
-                              : "border-zinc-700 hover:border-zinc-500"
+                              : "border-zinc-200 hover:border-zinc-400"
                           )}
                         >
                           {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -233,7 +233,7 @@ function DataTable<T extends Record<string, unknown>>({
                         <td
                           key={column.key}
                           className={cn(
-                            "px-4 py-2.5 text-sm text-zinc-300",
+                            "px-4 py-2.5 text-sm text-zinc-600",
                             column.align === "center" && "text-center",
                             column.align === "right" && "text-right"
                           )}
@@ -259,7 +259,7 @@ function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {pagination && pagination.total > pagination.pageSize && (
-        <div className="flex items-center justify-between px-4 py-2.5 border-t border-zinc-800/50">
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-zinc-200/50">
           <p className="text-xs text-zinc-500">
             {(pagination.page - 1) * pagination.pageSize + 1}&ndash;{Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total}
           </p>
@@ -269,12 +269,12 @@ function DataTable<T extends Record<string, unknown>>({
               disabled={pagination.page === 1}
               className={cn(
                 "p-1.5 rounded transition-colors",
-                pagination.page === 1 ? "text-zinc-700" : "text-zinc-400 hover:bg-zinc-800"
+                pagination.page === 1 ? "text-zinc-700" : "text-zinc-400 hover:bg-zinc-100"
               )}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="px-2 text-xs font-medium text-zinc-400 font-mono">
+            <span className="px-2 text-xs font-medium text-zinc-400 tabular-nums">
               {pagination.page}/{Math.ceil(pagination.total / pagination.pageSize)}
             </span>
             <button
@@ -282,7 +282,7 @@ function DataTable<T extends Record<string, unknown>>({
               disabled={pagination.page * pagination.pageSize >= pagination.total}
               className={cn(
                 "p-1.5 rounded transition-colors",
-                pagination.page * pagination.pageSize >= pagination.total ? "text-zinc-700" : "text-zinc-400 hover:bg-zinc-800"
+                pagination.page * pagination.pageSize >= pagination.total ? "text-zinc-700" : "text-zinc-400 hover:bg-zinc-100"
               )}
             >
               <ChevronRight className="h-4 w-4" />
@@ -305,7 +305,7 @@ function RowActionButton({
     <button
       onClick={onClick}
       className={cn(
-        "p-1 rounded text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors",
+        "p-1 rounded text-zinc-600 hover:text-zinc-600 hover:bg-zinc-100 transition-colors",
         className
       )}
     >

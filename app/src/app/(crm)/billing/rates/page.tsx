@@ -159,7 +159,7 @@ export default function RatesPage() {
                 type="checkbox"
                 checked={showInactive}
                 onChange={(e) => setShowInactive(e.target.checked)}
-                className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500"
+                className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500"
               />
               Show inactive
             </label>
@@ -184,11 +184,11 @@ export default function RatesPage() {
             <form onSubmit={handleCreateRate}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Property
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     value={rateForm.propertyId}
                     onChange={(e) => setRateForm({ ...rateForm, propertyId: e.target.value, houseId: "" })}
                   >
@@ -199,11 +199,11 @@ export default function RatesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     House
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     value={rateForm.houseId}
                     onChange={(e) => setRateForm({ ...rateForm, houseId: e.target.value })}
                     disabled={!rateForm.propertyId}
@@ -215,11 +215,11 @@ export default function RatesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Payment Type <span className="text-red-400">*</span>
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     required
                     value={rateForm.paymentType}
                     onChange={(e) => setRateForm({ ...rateForm, paymentType: e.target.value })}
@@ -231,20 +231,20 @@ export default function RatesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Rate Name <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
                     placeholder="e.g., Weekly Rent"
                     required
-                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     value={rateForm.rateName}
                     onChange={(e) => setRateForm({ ...rateForm, rateName: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Amount <span className="text-red-400">*</span>
                   </label>
                   <div className="relative">
@@ -255,18 +255,18 @@ export default function RatesPage() {
                       step="0.01"
                       placeholder="0.00"
                       required
-                      className="w-full h-12 pl-8 pr-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full h-12 pl-8 pr-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                       value={rateForm.amount}
                       onChange={(e) => setRateForm({ ...rateForm, amount: e.target.value })}
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Billing Frequency <span className="text-red-400">*</span>
                   </label>
                   <select
-                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                    className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     required
                     value={rateForm.billingFrequency}
                     onChange={(e) => setRateForm({ ...rateForm, billingFrequency: e.target.value })}
@@ -278,13 +278,13 @@ export default function RatesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                     Effective From <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="date"
                     required
-                    className="w-full h-12 px-4 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full h-12 px-4 text-sm border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     value={rateForm.effectiveFrom}
                     onChange={(e) => setRateForm({ ...rateForm, effectiveFrom: e.target.value })}
                   />
@@ -346,13 +346,13 @@ export default function RatesPage() {
                   key={rate.id}
                   className={`border rounded-xl p-5 transition-all ${
                     rate.is_active
-                      ? "border-zinc-800 bg-zinc-900 hover:border-zinc-700 hover:shadow-sm"
-                      : "border-zinc-800/50 bg-zinc-800/40 opacity-60"
+                      ? "border-zinc-200 bg-white hover:border-zinc-200 hover:shadow-sm"
+                      : "border-zinc-200/50 bg-zinc-100 opacity-60"
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-zinc-100 mb-1.5">{rate.rate_name}</h3>
+                      <h3 className="text-sm font-semibold text-zinc-800 mb-1.5">{rate.rate_name}</h3>
                       <Badge variant={paymentTypeBadge[rate.payment_type] ?? "default"}>
                         {paymentTypeLabels[rate.payment_type] ?? rate.payment_type}
                       </Badge>
@@ -362,7 +362,7 @@ export default function RatesPage() {
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-baseline gap-2">
-                      <p className="text-2xl font-bold text-zinc-100">{formatCurrency(rate.amount)}</p>
+                      <p className="text-2xl font-bold text-zinc-800">{formatCurrency(rate.amount)}</p>
                       <p className="text-xs text-zinc-500">
                         / {frequencyLabels[rate.billing_frequency]?.toLowerCase() ?? rate.billing_frequency}
                       </p>
@@ -379,7 +379,7 @@ export default function RatesPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2 pt-3 border-t border-zinc-800/50">
+                  <div className="flex gap-2 pt-3 border-t border-zinc-200/50">
                     <Button variant="ghost" size="sm" icon={<Edit className="h-3 w-3" />} className="flex-1">
                       Edit
                     </Button>
@@ -388,7 +388,7 @@ export default function RatesPage() {
                         variant="ghost"
                         size="sm"
                         icon={<XCircle className="h-3 w-3" />}
-                        className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        className="flex-1 text-red-400 hover:text-red-600 hover:bg-red-500/10"
                         onClick={() => deactivateRate.mutate({ id: rate.id })}
                         disabled={deactivateRate.isPending}
                       >

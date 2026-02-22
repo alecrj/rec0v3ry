@@ -80,18 +80,18 @@ function ConnectionCard({
     : connection.account_type ?? "account";
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 space-y-4">
+    <div className="bg-white border border-zinc-200 rounded-xl p-6 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center">
             <CreditCard className="h-5 w-5 text-indigo-400" />
           </div>
           <div>
-            <p className="text-white font-semibold">{displayName || "Unknown Account"}</p>
+            <p className="text-zinc-900 font-semibold">{displayName || "Unknown Account"}</p>
             <p className="text-zinc-400 text-sm capitalize">
               {subtypeDisplay}{" "}
-              {maskDisplay && <span className="font-mono">{maskDisplay}</span>}
+              {maskDisplay && <span className="tabular-nums">{maskDisplay}</span>}
             </p>
           </div>
         </div>
@@ -112,7 +112,7 @@ function ConnectionCard({
             value={connection.default_house_id ?? ""}
             onChange={(e) => onHouseChange(e.target.value || null)}
             disabled={isUpdating}
-            className="w-full bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="w-full bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           >
             <option value="">All Houses (manual assignment)</option>
             {houses.map((h) => (
@@ -141,11 +141,11 @@ function ConnectionCard({
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-2 border-t border-zinc-700">
+      <div className="flex items-center gap-2 pt-2 border-t border-zinc-200">
         <button
           onClick={onSync}
           disabled={isSyncing}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-zinc-100 text-zinc-900 rounded-lg hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isSyncing ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -158,7 +158,7 @@ function ConnectionCard({
         <button
           onClick={onDisconnect}
           disabled={isDisconnecting}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-auto"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-400 hover:text-red-600 hover:bg-red-400/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-auto"
         >
           {isDisconnecting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -266,7 +266,7 @@ export default function PlaidSettingsPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Bank Connections</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Bank Connections</h1>
           <p className="text-zinc-400 mt-1">
             Connect bank accounts and cards to automatically import expenses via Plaid.
           </p>
@@ -298,9 +298,9 @@ export default function PlaidSettingsPage() {
       {/* Info box */}
       <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 flex items-start gap-3">
         <Building2 className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
-        <div className="text-sm text-indigo-300">
+        <div className="text-sm text-indigo-600">
           <p className="font-semibold mb-1">Card-to-House Mapping</p>
-          <p className="text-indigo-300/70">
+          <p className="text-indigo-600/70">
             Assign each connected account to a specific house. All new transactions from that account
             will automatically be attributed to the assigned house. Multiple cards can map to the
             same house.
@@ -332,9 +332,9 @@ export default function PlaidSettingsPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-12 text-center">
+        <div className="bg-white border border-zinc-200 rounded-xl p-12 text-center">
           <CreditCard className="h-12 w-12 text-zinc-600 mx-auto mb-4" />
-          <p className="text-white font-semibold text-lg mb-2">No accounts connected</p>
+          <p className="text-zinc-900 font-semibold text-lg mb-2">No accounts connected</p>
           <p className="text-zinc-400 text-sm mb-6">
             Connect a bank account or credit card to automatically import expenses.
           </p>

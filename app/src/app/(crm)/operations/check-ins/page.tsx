@@ -83,7 +83,7 @@ export default function CheckInsPage() {
       render: (_val, row) => (
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-zinc-500" />
-          <span className="text-sm font-medium text-zinc-100">
+          <span className="text-sm font-medium text-zinc-800">
             {row.resident_first_name} {row.resident_last_name}
           </span>
         </div>
@@ -194,7 +194,7 @@ export default function CheckInsPage() {
       <Card>
         <CardContent>
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-zinc-300">Date:</span>
+            <span className="text-sm font-medium text-zinc-600">Date:</span>
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={() => {
@@ -202,7 +202,7 @@ export default function CheckInsPage() {
                   d.setDate(d.getDate() - 1);
                   setSelectedDate(d.toISOString().split("T")[0]);
                 }}
-                className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
               >
                 <ChevronLeft className="h-4 w-4 text-zinc-400" />
               </button>
@@ -212,7 +212,7 @@ export default function CheckInsPage() {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
               <button
@@ -221,7 +221,7 @@ export default function CheckInsPage() {
                   d.setDate(d.getDate() + 1);
                   setSelectedDate(d.toISOString().split("T")[0]);
                 }}
-                className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
               >
                 <ChevronRight className="h-4 w-4 text-zinc-400" />
               </button>

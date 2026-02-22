@@ -103,13 +103,13 @@ export default function UsersPage() {
       )}
 
       {/* Role Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-zinc-800 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-zinc-200 overflow-x-auto">
         <button
           onClick={() => setSelectedRole("all")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             selectedRole === "all"
               ? "border-indigo-500 text-indigo-400"
-              : "border-transparent text-zinc-400 hover:text-zinc-100"
+              : "border-transparent text-zinc-400 hover:text-zinc-800"
           }`}
         >
           All ({data?.items.length || 0})
@@ -124,7 +124,7 @@ export default function UsersPage() {
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 selectedRole === role
                   ? "border-indigo-500 text-indigo-400"
-                  : "border-transparent text-zinc-400 hover:text-zinc-100"
+                  : "border-transparent text-zinc-400 hover:text-zinc-800"
               }`}
             >
               {roleConfig[role]?.label || role} ({count})
@@ -142,7 +142,7 @@ export default function UsersPage() {
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function UsersPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                    <tr className="border-y border-zinc-200/50 bg-zinc-100">
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Name</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Email</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Role</th>
@@ -177,15 +177,15 @@ export default function UsersPage() {
                     {filteredUsers.map((user) => {
                       const rc = roleConfig[user.role as UserRole] || { variant: "default" as const, label: user.role };
                       return (
-                        <tr key={user.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                        <tr key={user.id} className="border-b border-zinc-200/50 hover:bg-zinc-100 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                              <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">
                                 <span className="text-sm font-medium text-zinc-400">
                                   {user.first_name?.charAt(0) || "?"}{user.last_name?.charAt(0) || ""}
                                 </span>
                               </div>
-                              <span className="text-sm font-medium text-zinc-100">
+                              <span className="text-sm font-medium text-zinc-800">
                                 {user.first_name} {user.last_name}
                               </span>
                             </div>
@@ -249,7 +249,7 @@ export default function UsersPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+              <div className="px-4 py-3 border-t border-zinc-200/50 bg-zinc-100">
                 <p className="text-sm text-zinc-500">
                   Showing {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""}
                 </p>
@@ -262,9 +262,9 @@ export default function UsersPage() {
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingUser(null)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Edit User Role</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Edit User Role</h2>
             </div>
             <form
               onSubmit={(e) => {
@@ -278,11 +278,11 @@ export default function UsersPage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">New Role</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">New Role</label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value)}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="org_owner">Owner</option>
                   <option value="property_manager">Manager</option>

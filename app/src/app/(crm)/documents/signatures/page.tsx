@@ -28,7 +28,7 @@ import { DocumentStatusBadge } from "@/components/document-status-badge";
 
 export const dynamic = "force-dynamic";
 
-const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
 const statusMap: Record<string, "pending_signature" | "signed" | "voided" | undefined> = {
   all: undefined,
@@ -103,13 +103,13 @@ function SendFromTemplateModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-100">Send for Signature</h2>
+            <h2 className="text-xl font-semibold text-zinc-800">Send for Signature</h2>
             <p className="text-sm text-zinc-500 mt-1">Choose a template and resident to send via DocuSign</p>
           </div>
-          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -127,7 +127,7 @@ function SendFromTemplateModal({
         >
           {/* Template Selection */}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Document Template <span className="text-red-400">*</span>
             </label>
             <select
@@ -153,7 +153,7 @@ function SendFromTemplateModal({
 
           {/* Resident Selection */}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Resident <span className="text-red-400">*</span>
             </label>
             <select
@@ -174,7 +174,7 @@ function SendFromTemplateModal({
 
           {/* Optional subject override */}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email Subject (Optional)</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Email Subject (Optional)</label>
             <input
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
@@ -236,17 +236,17 @@ function ViewDocModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">Signature Details</h2>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-800">Signature Details</h2>
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-6 space-y-4">
           <div>
             <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Document</label>
-            <p className="text-sm text-zinc-100 mt-1">{doc.title}</p>
+            <p className="text-sm text-zinc-800 mt-1">{doc.title}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -257,7 +257,7 @@ function ViewDocModal({
             </div>
             <div>
               <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Resident</label>
-              <p className="text-sm text-zinc-100 mt-1">
+              <p className="text-sm text-zinc-800 mt-1">
                 {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "Organization"}
               </p>
             </div>
@@ -281,8 +281,8 @@ function ViewDocModal({
               <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Signers</label>
               <div className="mt-2 space-y-2">
                 {getStatus.data.signatures.map((sig) => (
-                  <div key={sig.id} className="flex items-center justify-between py-1.5 px-3 bg-zinc-800/30 rounded-lg">
-                    <span className="text-sm text-zinc-300">{sig.signerName}</span>
+                  <div key={sig.id} className="flex items-center justify-between py-1.5 px-3 bg-zinc-100/30 rounded-lg">
+                    <span className="text-sm text-zinc-600">{sig.signerName}</span>
                     <Badge variant={sig.signedAt ? "success" : "warning"} size="sm">
                       {sig.signedAt ? `Signed ${new Date(sig.signedAt).toLocaleDateString()}` : "Pending"}
                     </Badge>
@@ -292,7 +292,7 @@ function ViewDocModal({
             </div>
           )}
           {doc.status === "pending_signature" && (
-            <div className="space-y-3 border-t border-zinc-800 pt-4">
+            <div className="space-y-3 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Generate Signing Link</p>
               <input
                 value={signerName}
@@ -417,12 +417,12 @@ export default function SignatureTrackerPage() {
               placeholder="Search documents..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 border-b border-zinc-800 overflow-x-auto">
+        <div className="flex items-center gap-2 border-b border-zinc-200 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -430,7 +430,7 @@ export default function SignatureTrackerPage() {
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-indigo-500 text-indigo-400"
-                  : "border-transparent text-zinc-400 hover:text-zinc-100"
+                  : "border-transparent text-zinc-400 hover:text-zinc-800"
               }`}
             >
               {tab.label}
@@ -452,13 +452,13 @@ export default function SignatureTrackerPage() {
       ) : (
         <div className="space-y-3">
           {signatureDocs.map((doc) => (
-            <div key={doc.id} className="border border-zinc-800 rounded-lg p-4 hover:bg-zinc-800/30 transition-colors">
+            <div key={doc.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-zinc-100/30 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${
                     doc.status === "signed" ? "bg-green-500/10" :
                     doc.status === "pending_signature" ? "bg-amber-500/10" :
-                    "bg-zinc-800"
+                    "bg-zinc-100"
                   }`}>
                     {doc.status === "signed" ? (
                       <CheckCircle className="h-4 w-4 text-green-400" />
@@ -469,7 +469,7 @@ export default function SignatureTrackerPage() {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-zinc-100">{doc.title}</h3>
+                    <h3 className="text-sm font-medium text-zinc-800">{doc.title}</h3>
                     <p className="text-xs text-zinc-500 mt-0.5">
                       {doc.resident ? `${doc.resident.first_name} ${doc.resident.last_name}` : "Organization"} &bull;{" "}
                       Created {new Date(doc.created_at).toLocaleDateString()}
@@ -499,7 +499,7 @@ export default function SignatureTrackerPage() {
               {doc.status === "pending_signature" && (
                 <div className="mt-3 flex gap-2">
                   <button
-                    className="text-xs text-red-400 hover:text-red-300 font-medium"
+                    className="text-xs text-red-400 hover:text-red-600 font-medium"
                     onClick={() => {
                       if (window.confirm("Void this document?")) {
                         voidEnvelope.mutate({ documentId: doc.id, reason: "Voided by admin" });

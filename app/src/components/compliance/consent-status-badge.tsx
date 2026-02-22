@@ -10,19 +10,19 @@ interface ConsentStatusBadgeProps {
 const statusConfig: Record<ConsentStatus, { label: string; className: string }> = {
   active: {
     label: "Active",
-    className: "bg-green-500/15 text-green-300 border-green-500/20",
+    className: "bg-green-50 text-green-700 border-green-200",
   },
   expired: {
     label: "Expired",
-    className: "bg-yellow-500/15 text-yellow-300 border-yellow-500/20",
+    className: "bg-yellow-50 text-yellow-700 border-yellow-200",
   },
   revoked: {
     label: "Revoked",
-    className: "bg-red-500/15 text-red-300 border-red-500/20",
+    className: "bg-red-50 text-red-700 border-red-200",
   },
   pending: {
     label: "Pending",
-    className: "bg-indigo-500/15 text-indigo-300 border-indigo-500/20",
+    className: "bg-indigo-50 text-indigo-700 border-indigo-200",
   },
 };
 

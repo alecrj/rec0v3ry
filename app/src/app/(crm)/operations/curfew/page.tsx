@@ -136,7 +136,7 @@ export default function CurfewPage() {
       render: (_val, row) => (
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-zinc-500" />
-          <span className="text-sm font-medium text-zinc-100">
+          <span className="text-sm font-medium text-zinc-800">
             {row.resident_first_name} {row.resident_last_name}
           </span>
         </div>
@@ -244,11 +244,11 @@ export default function CurfewPage() {
       <Card>
         <CardContent>
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <span className="text-sm font-medium text-zinc-600">Filter:</span>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Statuses</option>
               <option value="on_time">On Time</option>
@@ -264,7 +264,7 @@ export default function CurfewPage() {
                   d.setDate(d.getDate() - 1);
                   setSelectedDate(d.toISOString().split("T")[0]);
                 }}
-                className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
               >
                 <ChevronLeft className="h-4 w-4 text-zinc-400" />
               </button>
@@ -274,7 +274,7 @@ export default function CurfewPage() {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
               <button
@@ -283,7 +283,7 @@ export default function CurfewPage() {
                   d.setDate(d.getDate() + 1);
                   setSelectedDate(d.toISOString().split("T")[0]);
                 }}
-                className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
               >
                 <ChevronRight className="h-4 w-4 text-zinc-400" />
               </button>
@@ -374,21 +374,21 @@ export default function CurfewPage() {
       {excuseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setExcuseModal(null); setExcuseReason(""); }} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-lg font-bold text-zinc-100">Mark as Excused</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-lg font-bold text-zinc-800">Mark as Excused</h2>
               <p className="text-sm text-zinc-500 mt-1">{excuseModal.name}</p>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Excuse Reason <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   value={excuseReason}
                   onChange={(e) => setExcuseReason(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                   placeholder="Reason for excusing this late check-in..."
                   autoFocus
                 />
@@ -462,19 +462,19 @@ function ConfigureCurfewModal({ orgId, onClose }: { orgId: string; onClose: () =
     });
   };
 
-  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-xl font-bold text-zinc-100">Configure Curfew</h2>
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200">
+          <h2 className="text-xl font-bold text-zinc-800">Configure Curfew</h2>
           <p className="text-sm text-zinc-500 mt-1">Set curfew times for a house</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               House <span className="text-red-400">*</span>
             </label>
             <select
@@ -497,7 +497,7 @@ function ConfigureCurfewModal({ orgId, onClose }: { orgId: string; onClose: () =
 
           {existingConfig && selectedHouseId && (
             <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-3">
-              <p className="text-sm text-indigo-200">
+              <p className="text-sm text-indigo-700">
                 Existing config: {existingConfig.weekday_curfew?.slice(0, 5)} weekdays, {existingConfig.weekend_curfew?.slice(0, 5)} weekends.
                 Saving will create a new config effective from the date below.
               </p>
@@ -506,7 +506,7 @@ function ConfigureCurfewModal({ orgId, onClose }: { orgId: string; onClose: () =
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Weekday Curfew <span className="text-red-400">*</span>
               </label>
               <input
@@ -519,7 +519,7 @@ function ConfigureCurfewModal({ orgId, onClose }: { orgId: string; onClose: () =
               <p className="text-xs text-zinc-500 mt-1">Mon — Fri</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Weekend Curfew <span className="text-red-400">*</span>
               </label>
               <input
@@ -534,7 +534,7 @@ function ConfigureCurfewModal({ orgId, onClose }: { orgId: string; onClose: () =
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Effective From <span className="text-red-400">*</span>
             </label>
             <input
@@ -547,12 +547,12 @@ function ConfigureCurfewModal({ orgId, onClose }: { orgId: string; onClose: () =
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Notes</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
               placeholder="Optional notes about this curfew policy..."
             />
           </div>

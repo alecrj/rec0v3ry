@@ -15,12 +15,12 @@ function Badge({
   ...props
 }: BadgeProps) {
   const variants = {
-    default: "bg-zinc-800 text-zinc-300",
+    default: "bg-zinc-100 text-zinc-600",
     success: "bg-green-500/12 text-green-400",
     warning: "bg-yellow-500/12 text-yellow-400",
     error: "bg-red-500/12 text-red-400",
     info: "bg-indigo-500/12 text-indigo-400",
-    outline: "border border-zinc-700 text-zinc-400",
+    outline: "border border-zinc-200 text-zinc-400",
   };
 
   const sizes = {

@@ -121,7 +121,7 @@ export default function MaintenancePage() {
       sortable: true,
       render: (_val, row) => (
         <div>
-          <Link href={`/operations/maintenance/${row.id}`} className="text-sm font-medium text-indigo-400 hover:text-indigo-300">
+          <Link href={`/operations/maintenance/${row.id}`} className="text-sm font-medium text-indigo-400 hover:text-indigo-600">
             {row.title}
           </Link>
           {row.location && <p className="text-xs text-zinc-500 mt-0.5">{row.location}</p>}
@@ -220,11 +220,11 @@ export default function MaintenancePage() {
       <Card>
         <CardContent>
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <span className="text-sm font-medium text-zinc-600">Filter:</span>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Status</option>
               <option value="open">Open</option>
@@ -235,7 +235,7 @@ export default function MaintenancePage() {
             <select
               value={selectedPriority}
               onChange={(e) => setSelectedPriority(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Priority</option>
               <option value="urgent">Urgent</option>
@@ -283,9 +283,9 @@ export default function MaintenancePage() {
       {showCreateModal && orgId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">New Maintenance Request</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">New Maintenance Request</h2>
             </div>
             <form
               onSubmit={(e: FormEvent) => {
@@ -302,35 +302,35 @@ export default function MaintenancePage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Property</label>
-                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={selectedPropertyId} onChange={(e) => { setSelectedPropertyId(e.target.value); setRequestForm({ ...requestForm, houseId: "" }); }}>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Property</label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" value={selectedPropertyId} onChange={(e) => { setSelectedPropertyId(e.target.value); setRequestForm({ ...requestForm, houseId: "" }); }}>
                   <option value="">Select property...</option>
                   {(propertiesData ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">House <span className="text-red-400">*</span></label>
-                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={requestForm.houseId} onChange={(e) => setRequestForm({ ...requestForm, houseId: e.target.value })} disabled={!selectedPropertyId}>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">House <span className="text-red-400">*</span></label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" required value={requestForm.houseId} onChange={(e) => setRequestForm({ ...requestForm, houseId: e.target.value })} disabled={!selectedPropertyId}>
                   <option value="">Select house...</option>
                   {(housesForProp ?? []).map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Title <span className="text-red-400">*</span></label>
-                <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="e.g., Leaking faucet in kitchen" required value={requestForm.title} onChange={(e) => setRequestForm({ ...requestForm, title: e.target.value })} />
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Title <span className="text-red-400">*</span></label>
+                <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" placeholder="e.g., Leaking faucet in kitchen" required value={requestForm.title} onChange={(e) => setRequestForm({ ...requestForm, title: e.target.value })} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description <span className="text-red-400">*</span></label>
-                <textarea className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 min-h-[80px]" required placeholder="Describe the issue..." value={requestForm.description} onChange={(e) => setRequestForm({ ...requestForm, description: e.target.value })} />
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Description <span className="text-red-400">*</span></label>
+                <textarea className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 min-h-[80px]" required placeholder="Describe the issue..." value={requestForm.description} onChange={(e) => setRequestForm({ ...requestForm, description: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Location</label>
-                  <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="Kitchen, Room 3..." value={requestForm.location} onChange={(e) => setRequestForm({ ...requestForm, location: e.target.value })} />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Location</label>
+                  <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" placeholder="Kitchen, Room 3..." value={requestForm.location} onChange={(e) => setRequestForm({ ...requestForm, location: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Priority</label>
-                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={requestForm.priority} onChange={(e) => setRequestForm({ ...requestForm, priority: e.target.value })}>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Priority</label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" value={requestForm.priority} onChange={(e) => setRequestForm({ ...requestForm, priority: e.target.value })}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>

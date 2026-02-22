@@ -32,7 +32,7 @@ function Skeleton({
   return (
     <div
       className={cn(
-        "bg-zinc-800",
+        "bg-zinc-100",
         variants[variant],
         animations[animation],
         className
@@ -89,13 +89,13 @@ function SkeletonStatCard({ className }: { className?: string }) {
 function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: number; columns?: number; className?: string }) {
   return (
     <div className={cn("overflow-hidden", className)}>
-      <div className="flex gap-4 px-4 py-3 border-b border-zinc-800">
+      <div className="flex gap-4 px-4 py-3 border-b border-zinc-200">
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={i} variant="text" height={14} className="flex-1" />
         ))}
       </div>
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div key={rowIndex} className="flex gap-4 px-4 py-3 border-b border-zinc-800/50 last:border-b-0">
+        <div key={rowIndex} className="flex gap-4 px-4 py-3 border-b border-zinc-200/50 last:border-b-0">
           {Array.from({ length: columns }).map((_, colIndex) => (
             <Skeleton
               key={colIndex}

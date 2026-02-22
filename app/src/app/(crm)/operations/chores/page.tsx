@@ -124,7 +124,7 @@ export default function ChoresPage() {
       header: "Chore",
       sortable: true,
       render: (_val, row) => (
-        <span className="text-sm font-medium text-zinc-100">{row.chore_title}</span>
+        <span className="text-sm font-medium text-zinc-800">{row.chore_title}</span>
       ),
     },
     {
@@ -140,7 +140,7 @@ export default function ChoresPage() {
       render: (_val, row) => (
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-zinc-500" />
-          <span className="text-sm text-zinc-100">
+          <span className="text-sm text-zinc-800">
             {row.resident_first_name} {row.resident_last_name}
           </span>
         </div>
@@ -227,11 +227,11 @@ export default function ChoresPage() {
       <Card>
         <CardContent>
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <span className="text-sm font-medium text-zinc-600">Filter:</span>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Statuses</option>
               <option value="assigned">Assigned</option>
@@ -323,9 +323,9 @@ export default function ChoresPage() {
       {showCreateModal && orgId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">New Chore</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">New Chore</h2>
             </div>
             <form
               onSubmit={(e: FormEvent) => {
@@ -341,31 +341,31 @@ export default function ChoresPage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Property</label>
-                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={selectedPropertyId} onChange={(e) => { setSelectedPropertyId(e.target.value); setChoreForm({ ...choreForm, houseId: "" }); }}>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Property</label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" value={selectedPropertyId} onChange={(e) => { setSelectedPropertyId(e.target.value); setChoreForm({ ...choreForm, houseId: "" }); }}>
                   <option value="">Select property...</option>
                   {(propertiesData ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">House <span className="text-red-400">*</span></label>
-                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={choreForm.houseId} onChange={(e) => setChoreForm({ ...choreForm, houseId: e.target.value })} disabled={!selectedPropertyId}>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">House <span className="text-red-400">*</span></label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" required value={choreForm.houseId} onChange={(e) => setChoreForm({ ...choreForm, houseId: e.target.value })} disabled={!selectedPropertyId}>
                   <option value="">Select house...</option>
                   {(housesForProp ?? []).map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Title <span className="text-red-400">*</span></label>
-                <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="e.g., Clean kitchen" required value={choreForm.title} onChange={(e) => setChoreForm({ ...choreForm, title: e.target.value })} />
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Title <span className="text-red-400">*</span></label>
+                <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" placeholder="e.g., Clean kitchen" required value={choreForm.title} onChange={(e) => setChoreForm({ ...choreForm, title: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Area</label>
-                  <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" placeholder="Kitchen, Bathroom..." value={choreForm.area} onChange={(e) => setChoreForm({ ...choreForm, area: e.target.value })} />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Area</label>
+                  <input type="text" className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" placeholder="Kitchen, Bathroom..." value={choreForm.area} onChange={(e) => setChoreForm({ ...choreForm, area: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Frequency</label>
-                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={choreForm.frequency} onChange={(e) => setChoreForm({ ...choreForm, frequency: e.target.value })}>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Frequency</label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" value={choreForm.frequency} onChange={(e) => setChoreForm({ ...choreForm, frequency: e.target.value })}>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="biweekly">Biweekly</option>

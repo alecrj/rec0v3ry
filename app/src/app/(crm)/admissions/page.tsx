@@ -78,11 +78,11 @@ function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (
   const daysInPipeline = Math.floor((Date.now() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+    <div className="bg-white rounded-lg border border-zinc-200 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <GripVertical className="h-4 w-4 text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab" />
-          <div className="w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-xs font-semibold text-zinc-400">
+          <div className="w-8 h-8 bg-zinc-100 rounded-full flex items-center justify-center text-xs font-semibold text-zinc-400">
             {lead.first_name[0]}{lead.last_name[0]}
           </div>
         </div>
@@ -92,22 +92,22 @@ function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 hover:bg-zinc-800 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 hover:bg-zinc-100 rounded opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <MoreVertical className="h-4 w-4 text-zinc-500" />
           </button>
           {showMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-6 w-40 bg-zinc-900 rounded-lg shadow-lg border border-zinc-800 py-1 z-20">
+              <div className="absolute right-0 top-6 w-40 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-20">
                 <Link
                   href={`/admissions/${lead.id}`}
-                  className="block px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40"
+                  className="block px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100/40"
                 >
                   View Details
                 </Link>
                 <button
-                  className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40"
+                  className="w-full text-left px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100/40"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowMenu(false);
@@ -133,7 +133,7 @@ function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (
       </div>
 
       <Link href={`/admissions/${lead.id}`}>
-        <h4 className="font-medium text-zinc-100 text-sm">
+        <h4 className="font-medium text-zinc-800 text-sm">
           {lead.first_name} {lead.last_name}
         </h4>
 
@@ -156,13 +156,13 @@ function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (
 
         <div className="mt-2 flex items-center gap-2 flex-wrap">
           {lead.house_name && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-500/10 text-indigo-300 text-xs rounded">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-indigo-500/10 text-indigo-600 text-xs rounded">
               <Home className="h-3 w-3" />
               {lead.house_name}
             </span>
           )}
           {lead.preferred_move_in_date && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 text-green-300 text-xs rounded">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 text-green-600 text-xs rounded">
               <Calendar className="h-3 w-3" />
               {new Date(lead.preferred_move_in_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
@@ -173,7 +173,7 @@ function LeadCard({ lead, onMoveNext, onMarkLost }: { lead: Lead; onMoveNext?: (
           <p className="mt-2 text-xs text-zinc-500">{lead.source}</p>
         )}
 
-        <div className="mt-2 pt-2 border-t border-zinc-800/50 flex items-center justify-between text-xs">
+        <div className="mt-2 pt-2 border-t border-zinc-200/50 flex items-center justify-between text-xs">
           <span className="text-zinc-500">{daysInPipeline} days</span>
           <ArrowRight className="h-3 w-3 text-zinc-600" />
         </div>
@@ -188,13 +188,13 @@ function PipelineColumn({ stage, leads, isLoading, onMoveNext, onMarkLost }: { s
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${stage.color}`} />
-          <h3 className="font-semibold text-zinc-100 text-sm">{stage.label}</h3>
-          <span className="bg-zinc-800 text-zinc-400 text-xs font-medium px-2 py-0.5 rounded-full">
+          <h3 className="font-semibold text-zinc-800 text-sm">{stage.label}</h3>
+          <span className="bg-zinc-100 text-zinc-400 text-xs font-medium px-2 py-0.5 rounded-full">
             {isLoading ? "--" : leads.length}
           </span>
         </div>
       </div>
-      <div className="bg-zinc-800/40 rounded-lg p-2 min-h-[200px] space-y-2">
+      <div className="bg-zinc-100 rounded-lg p-2 min-h-[200px] space-y-2">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
@@ -240,39 +240,39 @@ function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmitting }: CreateLead
     });
   };
 
-  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-xl font-bold text-zinc-100">Add New Lead</h2>
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200">
+          <h2 className="text-xl font-bold text-zinc-800">Add New Lead</h2>
           <p className="text-sm text-zinc-500 mt-1">Enter information for a prospective resident</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name *</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">First Name *</label>
               <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name *</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Last Name *</label>
               <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Phone</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Lead Source</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Lead Source</label>
             <select value={source} onChange={(e) => setSource(e.target.value)} className={inputClass}>
               <option value="">Select source...</option>
               <option value="Website">Website</option>
@@ -286,16 +286,16 @@ function CreateLeadModal({ isOpen, onClose, onSubmit, isSubmitting }: CreateLead
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Notes</label>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
+              className="w-full px-3 py-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
               placeholder="Initial contact notes, special circumstances, etc."
             />
           </div>
-          <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
+          <div className="pt-4 border-t border-zinc-200 flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
             <Button type="submit" variant="primary" loading={isSubmitting}>
               {isSubmitting ? "Adding..." : "Add Lead"}
@@ -463,18 +463,18 @@ export default function AdmissionsPage() {
               placeholder="Search leads..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
           </div>
 
           {/* View mode toggle */}
-          <div className="flex items-center bg-zinc-800/40 rounded-lg border border-zinc-800 p-0.5">
+          <div className="flex items-center bg-zinc-100 rounded-lg border border-zinc-200 p-0.5">
             <button
               onClick={() => setViewMode("simple")}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 viewMode === "simple"
-                  ? "bg-zinc-700 text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  ? "bg-zinc-200 text-zinc-800"
+                  : "text-zinc-500 hover:text-zinc-600"
               }`}
             >
               Simple
@@ -483,8 +483,8 @@ export default function AdmissionsPage() {
               onClick={() => setViewMode("detailed")}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 viewMode === "detailed"
-                  ? "bg-zinc-700 text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  ? "bg-zinc-200 text-zinc-800"
+                  : "text-zinc-500 hover:text-zinc-600"
               }`}
             >
               Detailed
@@ -544,21 +544,21 @@ export default function AdmissionsPage() {
       {lostModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setLostModal(null); setLostReason(""); }} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-lg font-bold text-zinc-100">Mark Lead as Lost</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-lg font-bold text-zinc-800">Mark Lead as Lost</h2>
               <p className="text-sm text-zinc-500 mt-1">This lead will be removed from the pipeline</p>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Reason <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   value={lostReason}
                   onChange={(e) => setLostReason(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                   placeholder="Why was this lead lost? (e.g., chose another facility, no response, not a fit)"
                   autoFocus
                 />

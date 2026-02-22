@@ -34,11 +34,11 @@ export const dynamic = "force-dynamic";
 type BedStatus = "available" | "occupied" | "reserved" | "maintenance" | "out_of_service";
 
 const statusConfig: Record<BedStatus, { bg: string; border: string; text: string; label: string; dotColor: string }> = {
-  available: { bg: "bg-green-500/10", border: "border-green-500/30", text: "text-green-300", label: "Available", dotColor: "bg-green-500" },
-  occupied: { bg: "bg-indigo-500/10", border: "border-indigo-500/30", text: "text-indigo-200", label: "Occupied", dotColor: "bg-indigo-500" },
-  reserved: { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-300", label: "Reserved", dotColor: "bg-amber-500" },
-  maintenance: { bg: "bg-zinc-800", border: "border-zinc-700", text: "text-zinc-300", label: "Maintenance", dotColor: "bg-amber-400" },
-  out_of_service: { bg: "bg-zinc-800", border: "border-zinc-700", text: "text-zinc-400", label: "Out of Service", dotColor: "bg-zinc-500" },
+  available: { bg: "bg-green-50", border: "border-green-200", text: "text-green-600", label: "Available", dotColor: "bg-green-500" },
+  occupied: { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-700", label: "Occupied", dotColor: "bg-indigo-500" },
+  reserved: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-600", label: "Reserved", dotColor: "bg-amber-500" },
+  maintenance: { bg: "bg-zinc-100", border: "border-zinc-200", text: "text-zinc-600", label: "Maintenance", dotColor: "bg-amber-400" },
+  out_of_service: { bg: "bg-zinc-100", border: "border-zinc-200", text: "text-zinc-400", label: "Out of Service", dotColor: "bg-zinc-500" },
 };
 
 interface Bed {
@@ -115,9 +115,9 @@ function BedCard({ bed }: { bed: Bed }) {
 
 function RoomSection({ room }: { room: Room }) {
   return (
-    <div className="bg-zinc-800/40/80 rounded-lg p-3">
+    <div className="bg-zinc-100/80 rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-medium text-zinc-100">
+        <h4 className="text-sm font-medium text-zinc-800">
           {room.name}
           {room.floor !== null && <span className="text-zinc-500 ml-1.5">F{room.floor}</span>}
         </h4>
@@ -140,7 +140,7 @@ function HouseSection({ house }: { house: House }) {
     <Card>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-5 flex items-center justify-between hover:bg-zinc-800/50 transition-colors rounded-t-xl"
+        className="w-full p-5 flex items-center justify-between hover:bg-zinc-100 transition-colors rounded-t-xl"
       >
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-green-500/10 rounded-lg">
@@ -148,7 +148,7 @@ function HouseSection({ house }: { house: House }) {
           </div>
           <div className="text-left">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-zinc-100">{house.name}</h3>
+              <h3 className="font-semibold text-zinc-800">{house.name}</h3>
               {house.gender_restriction && (
                 <Badge variant={house.gender_restriction === "male" ? "info" : house.gender_restriction === "female" ? "error" : "default"}>
                   {house.gender_restriction.charAt(0).toUpperCase() + house.gender_restriction.slice(1)}
@@ -242,10 +242,10 @@ function AssignBedModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-md w-full mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-zinc-100">Assign Bed</h2>
+            <h2 className="text-xl font-bold text-zinc-800">Assign Bed</h2>
             <button onClick={onClose} className="text-zinc-500 hover:text-zinc-400 text-xl">&times;</button>
           </div>
           <p className="text-sm text-zinc-500 mt-1">Assign an active resident to an available bed</p>
@@ -265,14 +265,14 @@ function AssignBedModal({
           className="p-6 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Resident <span className="text-red-400">*</span>
             </label>
             <select
               required
               value={selectedResidentId}
               onChange={(e) => setSelectedResidentId(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="">Select a resident</option>
               {residents
@@ -287,14 +287,14 @@ function AssignBedModal({
             <p className="text-xs text-zinc-500 mt-1">Only showing residents without a bed assignment</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Bed <span className="text-red-400">*</span>
             </label>
             <select
               required
               value={selectedBedId}
               onChange={(e) => setSelectedBedId(e.target.value)}
-              className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="">Select a bed</option>
               {(availableBeds ?? []).map((b) => (
@@ -374,8 +374,8 @@ export default function BedGridPage() {
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-red-300">Error loading bed grid</p>
-                <p className="text-sm text-red-300 mt-1">{error.message}</p>
+                <p className="font-medium text-red-600">Error loading bed grid</p>
+                <p className="text-sm text-red-600 mt-1">{error.message}</p>
               </div>
             </div>
           </CardContent>
@@ -422,7 +422,7 @@ export default function BedGridPage() {
             placeholder="Search by resident, house, or property..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
           />
         </div>
         <div className="flex items-center gap-4 text-sm">

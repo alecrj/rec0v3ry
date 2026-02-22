@@ -69,17 +69,17 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   }, [onDismiss]);
 
   return (
-    <div className="flex bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden animate-slide-in-up shadow-lg">
+    <div className="flex bg-white rounded-lg border border-zinc-200 overflow-hidden animate-slide-in-up shadow-lg">
       <div className={`w-1 flex-shrink-0 ${barColors[toast.type]}`} />
       <div className="flex items-start gap-3 p-3 flex-1">
         <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-zinc-100">{toast.title}</p>
+          <p className="text-sm font-medium text-zinc-800">{toast.title}</p>
           {toast.description && (
             <p className="text-sm text-zinc-400 mt-0.5">{toast.description}</p>
           )}
         </div>
-        <button onClick={onDismiss} className="flex-shrink-0 p-1 hover:bg-zinc-800 rounded transition-colors">
+        <button onClick={onDismiss} className="flex-shrink-0 p-1 hover:bg-zinc-100 rounded transition-colors">
           <X className="h-4 w-4 text-zinc-500" />
         </button>
       </div>

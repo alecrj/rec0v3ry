@@ -39,11 +39,11 @@ function StatCard({
   };
 
   return (
-    <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-5">
+    <div className="bg-white rounded-lg border border-zinc-200 p-5">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-zinc-400">{title}</p>
-          <p className="text-2xl font-bold text-zinc-100 mt-1">{value}</p>
+          <p className="text-2xl font-bold text-zinc-800 mt-1">{value}</p>
           <p className="text-sm text-zinc-500 mt-1">{subtitle}</p>
         </div>
         <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
@@ -91,13 +91,13 @@ export default function OperationsReportPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-100">Operations Report</h1>
+          <h1 className="text-2xl font-bold text-zinc-800">Operations Report</h1>
           <p className="text-zinc-400 mt-1">
             Chores, meetings, incidents, drug tests, and passes
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg">
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-zinc-200 rounded-lg">
             <Calendar className="h-4 w-4 text-zinc-500" />
             <select
               className="text-sm bg-transparent border-none outline-none"
@@ -136,7 +136,7 @@ export default function OperationsReportPage() {
           <button
             onClick={() => handleExport("csv")}
             disabled={exportMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-900 border border-zinc-700 rounded-lg hover:bg-zinc-800/40 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-100/40 disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
             Export
@@ -203,24 +203,24 @@ export default function OperationsReportPage() {
       {/* Chores & Meetings Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chore Details */}
-        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-          <h2 className="text-lg font-semibold text-zinc-100 mb-4">
+        <div className="bg-white rounded-lg border border-zinc-200 p-6">
+          <h2 className="text-lg font-semibold text-zinc-800 mb-4">
             Chore Completion by House
           </h2>
           {choresLoading ? (
             <div className="animate-pulse space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-zinc-800 rounded"></div>
+                <div key={i} className="h-10 bg-zinc-100 rounded"></div>
               ))}
             </div>
           ) : (
             <div className="space-y-3">
               {choresByHouse?.byHouse.map((house) => (
                 <div key={house.houseId} className="flex items-center gap-3">
-                  <span className="w-32 text-sm font-medium text-zinc-300 truncate">
+                  <span className="w-32 text-sm font-medium text-zinc-600 truncate">
                     {house.houseName}
                   </span>
-                  <div className="flex-1 h-6 bg-zinc-800 rounded-lg overflow-hidden">
+                  <div className="flex-1 h-6 bg-zinc-100 rounded-lg overflow-hidden">
                     <div
                       className={`h-full ${
                         house.completionRate >= 90
@@ -232,7 +232,7 @@ export default function OperationsReportPage() {
                       style={{ width: `${house.completionRate}%` }}
                     >
                       {house.completionRate > 20 && (
-                        <span className="text-xs font-medium text-zinc-100">
+                        <span className="text-xs font-medium text-zinc-800">
                           {house.completionRate}%
                         </span>
                       )}
@@ -255,44 +255,44 @@ export default function OperationsReportPage() {
         </div>
 
         {/* Meeting Summary */}
-        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-          <h2 className="text-lg font-semibold text-zinc-100 mb-4">
+        <div className="bg-white rounded-lg border border-zinc-200 p-6">
+          <h2 className="text-lg font-semibold text-zinc-800 mb-4">
             Meeting Summary
           </h2>
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-zinc-800 rounded"></div>
+                <div key={i} className="h-10 bg-zinc-100 rounded"></div>
               ))}
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-zinc-800/40 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-zinc-100 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-zinc-500" />
-                  <span className="text-sm font-medium text-zinc-300">
+                  <span className="text-sm font-medium text-zinc-600">
                     Total Attendance Records
                   </span>
                 </div>
-                <span className="text-lg font-bold text-zinc-100">
+                <span className="text-lg font-bold text-zinc-800">
                   {summary?.meetings.totalAttendanceRecords || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-400" />
-                  <span className="text-sm font-medium text-green-300">Attended</span>
+                  <span className="text-sm font-medium text-green-600">Attended</span>
                 </div>
-                <span className="text-lg font-bold text-green-200">
+                <span className="text-lg font-bold text-green-700">
                   {summary?.meetings.attended || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg">
                 <div className="flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-red-400" />
-                  <span className="text-sm font-medium text-red-300">Missed</span>
+                  <span className="text-sm font-medium text-red-600">Missed</span>
                 </div>
-                <span className="text-lg font-bold text-red-200">
+                <span className="text-lg font-bold text-red-700">
                   {(summary?.meetings.totalAttendanceRecords || 0) -
                     (summary?.meetings.attended || 0)}
                 </span>
@@ -303,47 +303,47 @@ export default function OperationsReportPage() {
       </div>
 
       {/* Incidents */}
-      <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-        <h2 className="text-lg font-semibold text-zinc-100 mb-4">
+      <div className="bg-white rounded-lg border border-zinc-200 p-6">
+        <h2 className="text-lg font-semibold text-zinc-800 mb-4">
           Incidents by Severity
         </h2>
         {isLoading ? (
-          <div className="animate-pulse h-24 bg-zinc-800 rounded"></div>
+          <div className="animate-pulse h-24 bg-zinc-100 rounded"></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-zinc-800/40 rounded-lg border border-zinc-800/50">
+            <div className="p-4 bg-zinc-100 rounded-lg border border-zinc-200/50">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-                <p className="text-sm font-medium text-zinc-300">Low</p>
+                <p className="text-sm font-medium text-zinc-600">Low</p>
               </div>
-              <p className="text-3xl font-bold text-zinc-100 mt-2">
+              <p className="text-3xl font-bold text-zinc-800 mt-2">
                 {summary?.incidents.bySeverity.low || 0}
               </p>
             </div>
             <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <p className="text-sm font-medium text-yellow-300">Medium</p>
+                <p className="text-sm font-medium text-yellow-600">Medium</p>
               </div>
-              <p className="text-3xl font-bold text-yellow-200 mt-2">
+              <p className="text-3xl font-bold text-yellow-700 mt-2">
                 {summary?.incidents.bySeverity.medium || 0}
               </p>
             </div>
             <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <p className="text-sm font-medium text-orange-300">High</p>
+                <p className="text-sm font-medium text-orange-600">High</p>
               </div>
-              <p className="text-3xl font-bold text-orange-200 mt-2">
+              <p className="text-3xl font-bold text-orange-700 mt-2">
                 {summary?.incidents.bySeverity.high || 0}
               </p>
             </div>
             <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <p className="text-sm font-medium text-red-300">Critical</p>
+                <p className="text-sm font-medium text-red-600">Critical</p>
               </div>
-              <p className="text-3xl font-bold text-red-200 mt-2">
+              <p className="text-3xl font-bold text-red-700 mt-2">
                 {summary?.incidents.bySeverity.critical || 0}
               </p>
             </div>
@@ -354,41 +354,41 @@ export default function OperationsReportPage() {
       {/* Drug Tests & Passes Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Drug Test Results */}
-        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-          <h2 className="text-lg font-semibold text-zinc-100 mb-4">
+        <div className="bg-white rounded-lg border border-zinc-200 p-6">
+          <h2 className="text-lg font-semibold text-zinc-800 mb-4">
             Drug Test Results
           </h2>
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-zinc-800 rounded"></div>
+                <div key={i} className="h-10 bg-zinc-100 rounded"></div>
               ))}
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-zinc-800/40 rounded-lg">
-                <span className="text-sm font-medium text-zinc-300">
+              <div className="flex items-center justify-between p-3 bg-zinc-100 rounded-lg">
+                <span className="text-sm font-medium text-zinc-600">
                   Total Tests
                 </span>
-                <span className="text-lg font-bold text-zinc-100">
+                <span className="text-lg font-bold text-zinc-800">
                   {summary?.drugTests.total || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
-                <span className="text-sm font-medium text-green-300">Negative</span>
-                <span className="text-lg font-bold text-green-200">
+                <span className="text-sm font-medium text-green-600">Negative</span>
+                <span className="text-lg font-bold text-green-700">
                   {summary?.drugTests.negative || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg">
-                <span className="text-sm font-medium text-red-300">Positive</span>
-                <span className="text-lg font-bold text-red-200">
+                <span className="text-sm font-medium text-red-600">Positive</span>
+                <span className="text-lg font-bold text-red-700">
                   {summary?.drugTests.positive || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-yellow-500/10 rounded-lg">
-                <span className="text-sm font-medium text-yellow-300">Pending</span>
-                <span className="text-lg font-bold text-yellow-200">
+                <span className="text-sm font-medium text-yellow-600">Pending</span>
+                <span className="text-lg font-bold text-yellow-700">
                   {summary?.drugTests.pending || 0}
                 </span>
               </div>
@@ -397,35 +397,35 @@ export default function OperationsReportPage() {
         </div>
 
         {/* Pass Statistics */}
-        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-6">
-          <h2 className="text-lg font-semibold text-zinc-100 mb-4">
+        <div className="bg-white rounded-lg border border-zinc-200 p-6">
+          <h2 className="text-lg font-semibold text-zinc-800 mb-4">
             Pass Statistics
           </h2>
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-zinc-800 rounded"></div>
+                <div key={i} className="h-10 bg-zinc-100 rounded"></div>
               ))}
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-zinc-800/40 rounded-lg">
-                <span className="text-sm font-medium text-zinc-300">Total Passes</span>
-                <span className="text-lg font-bold text-zinc-100">
+              <div className="flex items-center justify-between p-3 bg-zinc-100 rounded-lg">
+                <span className="text-sm font-medium text-zinc-600">Total Passes</span>
+                <span className="text-lg font-bold text-zinc-800">
                   {summary?.passes.total || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
-                <span className="text-sm font-medium text-green-300">Approved</span>
-                <span className="text-lg font-bold text-green-200">
+                <span className="text-sm font-medium text-green-600">Approved</span>
+                <span className="text-lg font-bold text-green-700">
                   {summary?.passes.approved || 0}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg">
-                <span className="text-sm font-medium text-red-300">
+                <span className="text-sm font-medium text-red-600">
                   Violated ({summary?.passes.violationRate || 0}%)
                 </span>
-                <span className="text-lg font-bold text-red-200">
+                <span className="text-lg font-bold text-red-700">
                   {summary?.passes.violated || 0}
                 </span>
               </div>

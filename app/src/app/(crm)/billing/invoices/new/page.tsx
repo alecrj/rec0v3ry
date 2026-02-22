@@ -145,7 +145,7 @@ export default function NewInvoicePage() {
 
       <Link
         href="/billing/invoices"
-        className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors -mt-4"
+        className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-600 transition-colors -mt-4"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Invoices
@@ -157,13 +157,13 @@ export default function NewInvoicePage() {
           <Card>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Resident <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={selectedResident}
                   onChange={(e) => setSelectedResident(e.target.value)}
-                  className="w-full h-12 px-4 text-sm text-zinc-100 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                  className="w-full h-12 px-4 text-sm text-zinc-800 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">Select a resident...</option>
                   {residents.map((r) => (
@@ -173,14 +173,14 @@ export default function NewInvoicePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Due Date <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full h-12 px-4 text-sm text-zinc-100 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  className="w-full h-12 px-4 text-sm text-zinc-800 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 />
               </div>
             </CardContent>
@@ -200,7 +200,7 @@ export default function NewInvoicePage() {
               {lineItems.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-12 gap-3 p-4 border border-zinc-800 rounded-lg bg-zinc-800/50 hover:bg-zinc-800/40 transition-colors"
+                  className="grid grid-cols-12 gap-3 p-4 border border-zinc-200 rounded-lg bg-zinc-100 hover:bg-zinc-100/40 transition-colors"
                 >
                   <div className="col-span-12 sm:col-span-4">
                     <label className="block text-xs font-medium text-zinc-500 mb-1">Description</label>
@@ -209,7 +209,7 @@ export default function NewInvoicePage() {
                       value={item.description}
                       onChange={(e) => updateLineItem(item.id, "description", e.target.value)}
                       placeholder="Item description"
-                      className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="col-span-12 sm:col-span-3">
@@ -217,7 +217,7 @@ export default function NewInvoicePage() {
                     <select
                       value={item.type}
                       onChange={(e) => updateLineItem(item.id, "type", e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
+                      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none"
                     >
                       {paymentTypes.map((type) => (
                         <option key={type.value} value={type.value}>{type.label}</option>
@@ -231,7 +231,7 @@ export default function NewInvoicePage() {
                       min="1"
                       value={item.quantity}
                       onChange={(e) => updateLineItem(item.id, "quantity", parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="col-span-5 sm:col-span-2">
@@ -242,13 +242,13 @@ export default function NewInvoicePage() {
                       step="0.01"
                       value={item.unitPrice}
                       onChange={(e) => updateLineItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1 flex items-end justify-between gap-1">
                     <div className="flex-1">
                       <label className="block text-xs font-medium text-zinc-500 mb-1">Total</label>
-                      <p className="text-sm font-semibold text-zinc-100 py-2">
+                      <p className="text-sm font-semibold text-zinc-800 py-2">
                         {formatCurrency(calculateAmount(item))}
                       </p>
                     </div>
@@ -265,18 +265,18 @@ export default function NewInvoicePage() {
               ))}
 
               {/* Totals */}
-              <div className="pt-4 border-t border-zinc-800 space-y-2">
+              <div className="pt-4 border-t border-zinc-200 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">Subtotal</span>
-                  <span className="font-medium text-zinc-100">{formatCurrency(subtotal)}</span>
+                  <span className="font-medium text-zinc-800">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">Tax</span>
-                  <span className="font-medium text-zinc-100">{formatCurrency(tax)}</span>
+                  <span className="font-medium text-zinc-800">{formatCurrency(tax)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-800">
-                  <span className="text-zinc-100">Total</span>
-                  <span className="text-zinc-100">{formatCurrency(total)}</span>
+                <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-200">
+                  <span className="text-zinc-800">Total</span>
+                  <span className="text-zinc-800">{formatCurrency(total)}</span>
                 </div>
               </div>
             </CardContent>
@@ -285,13 +285,13 @@ export default function NewInvoicePage() {
           {/* Notes */}
           <Card>
             <CardContent>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes (Optional)</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Notes (Optional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
                 placeholder="Add any additional notes or instructions..."
-                className="w-full px-4 py-3 text-sm text-zinc-100 bg-zinc-900 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y transition-all"
+                className="w-full px-4 py-3 text-sm text-zinc-800 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y transition-all"
               />
             </CardContent>
           </Card>
@@ -307,43 +307,43 @@ export default function NewInvoicePage() {
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-4 text-sm">
-              <div className="pb-4 border-b border-zinc-800">
+              <div className="pb-4 border-b border-zinc-200">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Invoice</p>
-                <p className="font-mono text-zinc-100 font-semibold">INV-XXXX-XXXX</p>
+                <p className="text-zinc-800 font-semibold tracking-wide">INV-XXXX-XXXX</p>
               </div>
 
-              <div className="pb-4 border-b border-zinc-800">
+              <div className="pb-4 border-b border-zinc-200">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Bill To</p>
-                <p className="text-zinc-100 font-medium">
+                <p className="text-zinc-800 font-medium">
                   {selectedResident
                     ? residents.find((r) => r.id === selectedResident)?.name
                     : "No resident selected"}
                 </p>
               </div>
 
-              <div className="pb-4 border-b border-zinc-800 space-y-2">
+              <div className="pb-4 border-b border-zinc-200 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Issue Date</span>
-                  <span className="text-zinc-100">{new Date().toLocaleDateString()}</span>
+                  <span className="text-zinc-800">{new Date().toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Due Date</span>
-                  <span className="text-zinc-100">
+                  <span className="text-zinc-800">
                     {dueDate ? new Date(dueDate).toLocaleDateString() : "Not set"}
                   </span>
                 </div>
               </div>
 
-              <div className="pb-4 border-b border-zinc-800">
+              <div className="pb-4 border-b border-zinc-200">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Items</p>
                 <div className="space-y-2">
                   {lineItems.map((item) => (
                     <div key={item.id} className="flex justify-between">
                       <div className="flex-1">
-                        <p className="text-zinc-100 font-medium">{item.description || "Untitled"}</p>
+                        <p className="text-zinc-800 font-medium">{item.description || "Untitled"}</p>
                         <p className="text-xs text-zinc-500">{item.quantity} x {formatCurrency(item.unitPrice)}</p>
                       </div>
-                      <p className="text-zinc-100 font-semibold">{formatCurrency(calculateAmount(item))}</p>
+                      <p className="text-zinc-800 font-semibold">{formatCurrency(calculateAmount(item))}</p>
                     </div>
                   ))}
                 </div>
@@ -352,22 +352,22 @@ export default function NewInvoicePage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Subtotal</span>
-                  <span className="text-zinc-100 font-medium">{formatCurrency(subtotal)}</span>
+                  <span className="text-zinc-800 font-medium">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Tax</span>
-                  <span className="text-zinc-100 font-medium">{formatCurrency(tax)}</span>
+                  <span className="text-zinc-800 font-medium">{formatCurrency(tax)}</span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-zinc-800">
-                  <span className="font-semibold text-zinc-100">Total Due</span>
-                  <span className="text-lg font-bold text-zinc-100">{formatCurrency(total)}</span>
+                <div className="flex justify-between pt-2 border-t border-zinc-200">
+                  <span className="font-semibold text-zinc-800">Total Due</span>
+                  <span className="text-lg font-bold text-zinc-800">{formatCurrency(total)}</span>
                 </div>
               </div>
 
               {notes && (
-                <div className="pt-4 border-t border-zinc-800">
+                <div className="pt-4 border-t border-zinc-200">
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Notes</p>
-                  <p className="text-zinc-300 text-xs leading-relaxed">{notes}</p>
+                  <p className="text-zinc-600 text-xs leading-relaxed">{notes}</p>
                 </div>
               )}
             </CardContent>

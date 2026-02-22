@@ -58,9 +58,9 @@ export default function ResidentMaintenancePage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "open":
-        return <Circle className="h-4 w-4 text-indigo-400" />;
+        return <Circle className="h-4 w-4 text-[#0d9488]" />;
       case "in_progress":
-        return <Clock className="h-4 w-4 text-indigo-400" />;
+        return <Clock className="h-4 w-4 text-[#0d9488]" />;
       case "completed":
         return <CheckCircle className="h-4 w-4 text-green-400" />;
       default:
@@ -82,7 +82,7 @@ export default function ResidentMaintenancePage() {
     const colors: Record<string, string> = {
       low: "text-zinc-500",
       medium: "text-amber-400",
-      high: "text-amber-300",
+      high: "text-amber-600",
       urgent: "text-red-400",
     };
     return colors[priority] ?? "text-zinc-500";
@@ -110,9 +110,9 @@ export default function ResidentMaintenancePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-800/40">
-      <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-4">
-        <h1 className="text-xl font-bold text-zinc-100">Maintenance</h1>
+    <div className="min-h-screen bg-zinc-100">
+      <div className="bg-white border-b border-zinc-200 px-4 py-4">
+        <h1 className="text-xl font-bold text-zinc-800">Maintenance</h1>
         <p className="text-sm text-zinc-400">Report and track repair requests</p>
       </div>
 
@@ -120,7 +120,7 @@ export default function ResidentMaintenancePage() {
         {!showNewRequest && (
           <button
             onClick={() => setShowNewRequest(true)}
-            className="w-full p-4 bg-indigo-500 text-white rounded-xl font-medium flex items-center justify-center gap-2 active:bg-indigo-400"
+            className="w-full p-4 bg-[#0d9488] text-white rounded-xl font-medium flex items-center justify-center gap-2 active:bg-[#14b8a6]"
           >
             <Plus className="h-5 w-5" />
             Report an Issue
@@ -128,11 +128,11 @@ export default function ResidentMaintenancePage() {
         )}
 
         {showNewRequest && (
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 space-y-4">
-            <h2 className="font-semibold text-zinc-100">Report an Issue</h2>
+          <div className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4">
+            <h2 className="font-semibold text-zinc-800">Report an Issue</h2>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 What&apos;s the issue?
               </label>
               <input
@@ -140,12 +140,12 @@ export default function ResidentMaintenancePage() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g., Leaking faucet"
-                className="w-full px-3 py-2 border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 text-base focus:ring-2 focus:ring-[#0d9488] focus:border-[#0d9488]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Description
               </label>
               <textarea
@@ -153,12 +153,12 @@ export default function ResidentMaintenancePage() {
                 onChange={(e) => setNewDescription(e.target.value)}
                 placeholder="Provide more details..."
                 rows={3}
-                className="w-full px-3 py-2 border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 text-base focus:ring-2 focus:ring-[#0d9488] focus:border-[#0d9488]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 mb-1">
                 Location
               </label>
               <input
@@ -166,12 +166,12 @@ export default function ResidentMaintenancePage() {
                 value={newLocation}
                 onChange={(e) => setNewLocation(e.target.value)}
                 placeholder="e.g., Kitchen, Bathroom, My Room"
-                className="w-full px-3 py-2 border border-zinc-800 rounded-lg bg-zinc-800/40 text-zinc-100 text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-3 py-2 border border-zinc-200 rounded-lg bg-zinc-100 text-zinc-800 text-base focus:ring-2 focus:ring-[#0d9488] focus:border-[#0d9488]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
+              <label className="block text-sm font-medium text-zinc-600 mb-2">
                 Priority
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -181,8 +181,8 @@ export default function ResidentMaintenancePage() {
                     onClick={() => setNewPriority(p)}
                     className={`px-3 py-2 border rounded-lg text-sm font-medium capitalize ${
                       newPriority === p
-                        ? "border-indigo-500 bg-indigo-500/10 text-indigo-300"
-                        : "border-zinc-700 text-zinc-300"
+                        ? "border-[#0d9488] bg-[#0d9488]/10 text-teal-700"
+                        : "border-zinc-200 text-zinc-600"
                     }`}
                   >
                     {p}
@@ -194,14 +194,14 @@ export default function ResidentMaintenancePage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowNewRequest(false)}
-                className="flex-1 px-4 py-2 border border-zinc-700 text-zinc-300 rounded-lg font-medium"
+                className="flex-1 px-4 py-2 border border-zinc-200 text-zinc-600 rounded-lg font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!newTitle.trim() || createMutation.isPending}
-                className="flex-1 px-4 py-2 bg-indigo-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 disabled:bg-zinc-700"
+                className="flex-1 px-4 py-2 bg-[#0d9488] text-white rounded-lg font-medium flex items-center justify-center gap-2 disabled:bg-zinc-200"
               >
                 {createMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -215,10 +215,10 @@ export default function ResidentMaintenancePage() {
         )}
 
         <div className="space-y-3">
-          <h2 className="font-semibold text-zinc-100 px-1">Your Requests</h2>
+          <h2 className="font-semibold text-zinc-800 px-1">Your Requests</h2>
 
           {requests.length === 0 ? (
-            <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-8 text-center">
+            <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
               <p className="text-zinc-500">No maintenance requests yet</p>
               <p className="text-sm text-zinc-500 mt-1">Report an issue using the button above</p>
             </div>
@@ -226,13 +226,13 @@ export default function ResidentMaintenancePage() {
             requests.map((request: typeof requests[number]) => (
               <div
                 key={request.id}
-                className="bg-zinc-900 rounded-xl border border-zinc-800 p-4 active:bg-zinc-800/40"
+                className="bg-white rounded-xl border border-zinc-200 p-4 active:bg-zinc-100"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       {getStatusIcon(request.status ?? "open")}
-                      <span className="font-medium text-zinc-100">{request.title}</span>
+                      <span className="font-medium text-zinc-800">{request.title}</span>
                     </div>
                     {request.description && (
                       <p className="text-sm text-zinc-400 mt-1 line-clamp-2">
@@ -256,7 +256,7 @@ export default function ResidentMaintenancePage() {
                           {new Date(request.created_at).toLocaleDateString()}
                         </span>
                       )}
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400">
                         {getStatusLabel(request.status ?? "open")}
                       </span>
                     </div>

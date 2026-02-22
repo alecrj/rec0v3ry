@@ -92,13 +92,13 @@ export default function DocuSignSettingsPage() {
       />
 
       {/* Connection Status */}
-      <div className="border border-zinc-800 rounded-xl p-6 space-y-4">
+      <div className="border border-zinc-200 rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-indigo-500/10 rounded-lg">
             <PenTool className="h-5 w-5 text-indigo-400" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-zinc-100">Connection Status</h2>
+            <h2 className="text-lg font-semibold text-zinc-800">Connection Status</h2>
             <p className="text-sm text-zinc-500">
               DocuSign e-signature integration for document signing workflows
             </p>
@@ -119,7 +119,7 @@ export default function DocuSignSettingsPage() {
         </div>
 
         {!isLoading && !connection?.isConfigured && (
-          <div className="bg-zinc-800/30 rounded-lg p-4 space-y-2">
+          <div className="bg-zinc-100/30 rounded-lg p-4 space-y-2">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-zinc-400">
@@ -134,7 +134,7 @@ export default function DocuSignSettingsPage() {
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
             <div className="flex items-start gap-2">
               <CheckCircle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-blue-300">
+              <p className="text-sm text-blue-600">
                 Connected to DocuSign Demo environment ({connection.baseUrl}).
                 Envelopes sent here are for testing only. Switch to production env vars to go live.
               </p>
@@ -159,7 +159,7 @@ export default function DocuSignSettingsPage() {
               return (
                 <div
                   key={key}
-                  className="flex items-center justify-between py-2 px-3 bg-zinc-800/20 rounded-lg"
+                  className="flex items-center justify-between py-2 px-3 bg-zinc-100/20 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
                     {isLoading ? (
@@ -170,7 +170,7 @@ export default function DocuSignSettingsPage() {
                       <XCircle className="h-4 w-4 text-red-400" />
                     )}
                     <div>
-                      <p className="text-sm font-medium text-zinc-300">{meta.label}</p>
+                      <p className="text-sm font-medium text-zinc-600">{meta.label}</p>
                       <p className="text-xs text-zinc-500">{meta.description}</p>
                     </div>
                   </div>
@@ -183,7 +183,7 @@ export default function DocuSignSettingsPage() {
           </div>
         </div>
 
-        <div className="pt-2 border-t border-zinc-800/50">
+        <div className="pt-2 border-t border-zinc-200/50">
           <div className="flex items-center gap-3 text-sm">
             <span className="text-zinc-400">Webhook Endpoint:</span>
             <code className="text-xs text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded font-mono">
@@ -196,49 +196,49 @@ export default function DocuSignSettingsPage() {
 
       {/* Features Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="border border-zinc-800 rounded-xl p-5">
+        <div className="border border-zinc-200 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <FileText className="h-4 w-4 text-indigo-400" />
-            <h3 className="text-sm font-semibold text-zinc-100">Document Templates</h3>
+            <h3 className="text-sm font-semibold text-zinc-800">Document Templates</h3>
           </div>
           <p className="text-sm text-zinc-400 mb-3">
             Create reusable templates for common documents like house rules, agreements, and consent forms.
           </p>
           <Link
             href="/documents/templates"
-            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
+            className="text-sm text-indigo-400 hover:text-indigo-600 font-medium"
           >
             Manage Templates
           </Link>
         </div>
 
-        <div className="border border-zinc-800 rounded-xl p-5">
+        <div className="border border-zinc-200 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <PenTool className="h-4 w-4 text-indigo-400" />
-            <h3 className="text-sm font-semibold text-zinc-100">Signature Tracking</h3>
+            <h3 className="text-sm font-semibold text-zinc-800">Signature Tracking</h3>
           </div>
           <p className="text-sm text-zinc-400 mb-3">
             Track signature status for all documents. View pending, signed, and voided envelopes.
           </p>
           <Link
             href="/documents/signatures"
-            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
+            className="text-sm text-indigo-400 hover:text-indigo-600 font-medium"
           >
             View Signatures
           </Link>
         </div>
 
-        <div className="border border-zinc-800 rounded-xl p-5">
+        <div className="border border-zinc-200 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="h-4 w-4 text-indigo-400" />
-            <h3 className="text-sm font-semibold text-zinc-100">Compliance</h3>
+            <h3 className="text-sm font-semibold text-zinc-800">Compliance</h3>
           </div>
           <p className="text-sm text-zinc-400 mb-3">
             42 CFR Part 2 compliant. No SUD data in envelope metadata. Full audit trail for all signature events.
           </p>
           <Link
             href="/settings/compliance/audit-log"
-            className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
+            className="text-sm text-indigo-400 hover:text-indigo-600 font-medium"
           >
             View Audit Log
           </Link>
@@ -246,10 +246,10 @@ export default function DocuSignSettingsPage() {
       </div>
 
       {/* Recommended Templates */}
-      <div className="border border-zinc-800 rounded-xl p-6 space-y-4">
+      <div className="border border-zinc-200 rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-100">Recommended Templates</h2>
+            <h2 className="text-lg font-semibold text-zinc-800">Recommended Templates</h2>
             <p className="text-sm text-zinc-500 mt-0.5">
               Pre-built templates for common sober living documents
             </p>
@@ -265,12 +265,12 @@ export default function DocuSignSettingsPage() {
           {templateGuides.map((template) => (
             <div
               key={template.name}
-              className="flex items-center justify-between py-3 px-4 bg-zinc-800/20 rounded-lg hover:bg-zinc-800/40 transition-colors"
+              className="flex items-center justify-between py-3 px-4 bg-zinc-100/20 rounded-lg hover:bg-zinc-100/40 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <FileText className="h-4 w-4 text-zinc-500" />
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">{template.name}</p>
+                  <p className="text-sm font-medium text-zinc-700">{template.name}</p>
                   <p className="text-xs text-zinc-500">{template.description}</p>
                 </div>
               </div>
@@ -281,37 +281,37 @@ export default function DocuSignSettingsPage() {
       </div>
 
       {/* Setup Guide */}
-      <div className="border border-zinc-800 rounded-xl p-6 space-y-3">
+      <div className="border border-zinc-200 rounded-xl p-6 space-y-3">
         <div className="flex items-center gap-2">
           <Settings2 className="h-5 w-5 text-zinc-400" />
-          <h2 className="text-lg font-semibold text-zinc-100">Setup Guide</h2>
+          <h2 className="text-lg font-semibold text-zinc-800">Setup Guide</h2>
         </div>
         <ol className="space-y-3 text-sm text-zinc-400 list-decimal list-inside">
           <li>
-            <span className="text-zinc-300">Create a DocuSign developer account</span> at{" "}
+            <span className="text-zinc-600">Create a DocuSign developer account</span> at{" "}
             <a
               href="https://developers.docusign.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-400 hover:text-indigo-300"
+              className="text-indigo-400 hover:text-indigo-600"
             >
               developers.docusign.com
             </a>
           </li>
           <li>
-            <span className="text-zinc-300">Create an integration key</span> in the DocuSign admin panel under Apps and Keys
+            <span className="text-zinc-600">Create an integration key</span> in the DocuSign admin panel under Apps and Keys
           </li>
           <li>
-            <span className="text-zinc-300">Generate an RSA keypair</span> and add the public key to your integration
+            <span className="text-zinc-600">Generate an RSA keypair</span> and add the public key to your integration
           </li>
           <li>
-            <span className="text-zinc-300">Grant consent</span> for the integration to act on behalf of your account
+            <span className="text-zinc-600">Grant consent</span> for the integration to act on behalf of your account
           </li>
           <li>
-            <span className="text-zinc-300">Configure environment variables</span> with the values from above
+            <span className="text-zinc-600">Configure environment variables</span> with the values from above
           </li>
           <li>
-            <span className="text-zinc-300">Set up Connect webhook</span> pointing to{" "}
+            <span className="text-zinc-600">Set up Connect webhook</span> pointing to{" "}
             <code className="text-xs text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded font-mono">
               https://your-domain.com/api/webhooks/docusign
             </code>

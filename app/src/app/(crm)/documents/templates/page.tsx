@@ -48,7 +48,7 @@ const typeLabels: Record<string, string> = {
   other: "Other",
 };
 
-const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
 // ── Pre-built template definitions ─────────────────────────
 const prebuiltTemplates = [
@@ -147,17 +147,17 @@ function TemplateFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-100">
+            <h2 className="text-xl font-semibold text-zinc-800">
               {isEdit ? "Edit Template" : "New Template"}
             </h2>
             <p className="text-sm text-zinc-500 mt-1">
               {isEdit ? "Update template details" : "Create a reusable document template"}
             </p>
           </div>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -186,7 +186,7 @@ function TemplateFormModal({
           className="p-6 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Template Name <span className="text-red-400">*</span>
             </label>
             <input
@@ -200,7 +200,7 @@ function TemplateFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Document Type</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Document Type</label>
               <select
                 value={documentType}
                 onChange={(e) => setDocumentType(e.target.value as typeof DOC_TYPES[number])}
@@ -212,7 +212,7 @@ function TemplateFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Version</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Version</label>
               <input
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
@@ -223,23 +223,23 @@ function TemplateFormModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Description</label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
               placeholder="Brief description..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Template Content</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Template Content</label>
             <textarea
               rows={5}
               value={templateContent}
               onChange={(e) => setTemplateContent(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y font-mono"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y font-mono"
               placeholder="Template body text or HTML content..."
             />
           </div>
@@ -357,15 +357,15 @@ function SendFromTemplateModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-100">Send for Signature</h2>
+            <h2 className="text-xl font-semibold text-zinc-800">Send for Signature</h2>
             <p className="text-sm text-zinc-500 mt-1">
               Send &quot;{templateName}&quot; to a resident for e-signature
             </p>
           </div>
-          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+          <button onClick={resetAndClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -377,7 +377,7 @@ function SendFromTemplateModal({
           className="p-6 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Resident (Optional)
             </label>
             <select
@@ -395,7 +395,7 @@ function SendFromTemplateModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Signer Name <span className="text-red-400">*</span>
             </label>
             <input
@@ -408,7 +408,7 @@ function SendFromTemplateModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Signer Email <span className="text-red-400">*</span>
             </label>
             <input
@@ -422,7 +422,7 @@ function SendFromTemplateModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Subject Line</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Subject Line</label>
             <input
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
@@ -432,14 +432,14 @@ function SendFromTemplateModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Message (Optional)
             </label>
             <textarea
               rows={2}
               value={emailBody}
               onChange={(e) => setEmailBody(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-y"
               placeholder="Optional message to include with the signing request..."
             />
           </div>
@@ -538,7 +538,7 @@ export default function DocumentTemplatesPage() {
             placeholder="Search templates..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
           />
         </div>
         <div className="flex gap-2 overflow-x-auto">
@@ -548,8 +548,8 @@ export default function DocumentTemplatesPage() {
               onClick={() => setActiveCategory(cat.id)}
               className={`px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                 activeCategory === cat.id
-                  ? "bg-indigo-500/15 text-indigo-300"
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                  ? "bg-indigo-500/15 text-indigo-600"
+                  : "bg-zinc-100 text-zinc-400 hover:bg-zinc-100"
               }`}
             >
               {cat.label}
@@ -575,7 +575,7 @@ export default function DocumentTemplatesPage() {
               return (
                 <div
                   key={pt.name}
-                  className="border border-zinc-800 rounded-lg p-5 hover:border-zinc-700 transition-colors bg-zinc-900/50"
+                  className="border border-zinc-200 rounded-lg p-5 hover:border-zinc-200 transition-colors bg-white/50"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className={`p-2 rounded-lg ${pt.color}`}>
@@ -586,10 +586,10 @@ export default function DocumentTemplatesPage() {
                     </Badge>
                   </div>
 
-                  <h3 className="font-semibold text-zinc-100 mb-1">{pt.name}</h3>
+                  <h3 className="font-semibold text-zinc-800 mb-1">{pt.name}</h3>
                   <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{pt.description}</p>
 
-                  <div className="flex items-center gap-2 border-t border-zinc-800/50 pt-3">
+                  <div className="flex items-center gap-2 border-t border-zinc-200/50 pt-3">
                     {existsInOrg ? (
                       <button
                         className="flex-1 px-3 py-1.5 text-sm font-medium text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors flex items-center justify-center gap-1"
@@ -643,7 +643,7 @@ export default function DocumentTemplatesPage() {
             {filteredTemplates.map((template) => (
               <div
                 key={template.id}
-                className="border border-zinc-800 rounded-lg p-5 hover:border-zinc-700 transition-colors"
+                className="border border-zinc-200 rounded-lg p-5 hover:border-zinc-200 transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -657,7 +657,7 @@ export default function DocumentTemplatesPage() {
                   </Badge>
                 </div>
 
-                <h3 className="font-semibold text-zinc-100 mb-1">{template.name}</h3>
+                <h3 className="font-semibold text-zinc-800 mb-1">{template.name}</h3>
                 <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{template.description ?? "No description"}</p>
 
                 <div className="flex items-center justify-between text-xs text-zinc-500 mb-4">
@@ -665,7 +665,7 @@ export default function DocumentTemplatesPage() {
                   <span>Updated {template.updated_at ? new Date(template.updated_at).toLocaleDateString() : "\u2014"}</span>
                 </div>
 
-                <div className="flex items-center gap-2 border-t border-zinc-800/50 pt-3">
+                <div className="flex items-center gap-2 border-t border-zinc-200/50 pt-3">
                   {template.is_active && (
                     <button
                       className="flex-1 px-3 py-1.5 text-sm font-medium text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors flex items-center justify-center gap-1"
@@ -678,7 +678,7 @@ export default function DocumentTemplatesPage() {
                     </button>
                   )}
                   <button
-                    className="px-3 py-1.5 text-sm font-medium text-zinc-400 hover:bg-zinc-800 rounded-lg transition-colors flex items-center justify-center gap-1"
+                    className="px-3 py-1.5 text-sm font-medium text-zinc-400 hover:bg-zinc-100 rounded-lg transition-colors flex items-center justify-center gap-1"
                     onClick={() => setEditingTemplate(template)}
                   >
                     <Pencil className="h-3.5 w-3.5" />

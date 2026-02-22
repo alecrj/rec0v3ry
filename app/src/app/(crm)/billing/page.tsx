@@ -51,7 +51,7 @@ function RevenueChart({ data }: { data: { month: string; amount: number }[] }) {
         return (
           <div key={item.month} className="flex-1 flex flex-col items-center gap-2">
             <div className="w-full flex flex-col items-center justify-end h-24">
-              <span className="text-xs font-medium text-zinc-500 mb-1 font-mono">
+              <span className="text-xs font-medium text-zinc-500 mb-1 tabular-nums">
                 {formatCurrency(item.amount)}
               </span>
               <div
@@ -59,7 +59,7 @@ function RevenueChart({ data }: { data: { month: string; amount: number }[] }) {
                   "w-full rounded-t transition-all duration-300",
                   isCurrentMonth
                     ? "bg-indigo-500"
-                    : "bg-zinc-700 hover:bg-zinc-600"
+                    : "bg-zinc-200 hover:bg-zinc-200"
                 )}
                 style={{ height: `${Math.max(heightPercent, 4)}%` }}
               />
@@ -92,9 +92,9 @@ function AgingBuckets({
           <div key={bucket.label} className="space-y-1.5">
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-500">{bucket.label}</span>
-              <span className="font-medium text-zinc-200 font-mono">{formatCurrency(bucket.amount)}</span>
+              <span className="font-medium text-zinc-700 tabular-nums">{formatCurrency(bucket.amount)}</span>
             </div>
-            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
               <div
                 className={cn("h-full rounded-full transition-all duration-500", bucket.color)}
                 style={{ width: `${percent}%` }}
@@ -231,7 +231,7 @@ export default function BillingOverviewPage() {
       />
 
       {/* Stats — horizontal dividers, no cards */}
-      <div className="flex items-start gap-0 divide-x divide-zinc-800">
+      <div className="flex items-start gap-0 divide-x divide-zinc-200">
         <div className="flex-1 pr-6">
           <StatCard
             title="Invoiced This Month"
@@ -287,7 +287,7 @@ export default function BillingOverviewPage() {
           {isLoading ? (
             <div className="h-32 flex items-end gap-2">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex-1 bg-zinc-800 rounded-t animate-shimmer" style={{ height: `${30 + Math.random() * 60}%` }} />
+                <div key={i} className="flex-1 bg-zinc-100 rounded-t animate-shimmer" style={{ height: `${30 + Math.random() * 60}%` }} />
               ))}
             </div>
           ) : (
@@ -311,10 +311,10 @@ export default function BillingOverviewPage() {
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="space-y-2">
                   <div className="flex justify-between">
-                    <div className="h-4 w-20 bg-zinc-800 rounded animate-shimmer" />
-                    <div className="h-4 w-16 bg-zinc-800 rounded animate-shimmer" />
+                    <div className="h-4 w-20 bg-zinc-100 rounded animate-shimmer" />
+                    <div className="h-4 w-16 bg-zinc-100 rounded animate-shimmer" />
                   </div>
-                  <div className="h-1.5 bg-zinc-800 rounded-full" />
+                  <div className="h-1.5 bg-zinc-100 rounded-full" />
                 </div>
               ))}
             </div>
@@ -354,7 +354,7 @@ export default function BillingOverviewPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-800">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left py-2.5 px-4 text-xs font-medium uppercase tracking-wider text-zinc-500">
                     Date
                   </th>
@@ -375,27 +375,27 @@ export default function BillingOverviewPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/50">
+              <tbody className="divide-y divide-zinc-200/50">
                 {recentPayments.map((payment) => (
                   <tr
                     key={payment.id}
-                    className="hover:bg-zinc-800/40 transition-colors"
+                    className="hover:bg-zinc-100/40 transition-colors"
                   >
-                    <td className="py-3 px-4 text-sm text-zinc-400 font-mono">
+                    <td className="py-3 px-4 text-sm text-zinc-400 tabular-nums">
                       {new Date(payment.payment_date).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                       })}
                     </td>
                     <td className="py-3 px-4">
-                      <p className="text-sm font-medium text-zinc-200">
+                      <p className="text-sm font-medium text-zinc-700">
                         {payment.resident
                           ? `${payment.resident.first_name} ${payment.resident.last_name}`
                           : "\u2014"}
                       </p>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <p className="text-sm font-semibold text-zinc-100 font-mono">
+                      <p className="text-sm font-semibold text-zinc-800 tabular-nums">
                         {formatCurrency(parseFloat(payment.amount))}
                       </p>
                     </td>
@@ -411,7 +411,7 @@ export default function BillingOverviewPage() {
                       {payment.invoice ? (
                         <Link
                           href={`/billing/invoices/${payment.invoice.id}`}
-                          className="text-sm font-mono text-indigo-400 hover:text-indigo-300 hover:underline"
+                          className="text-sm tabular-nums text-indigo-400 hover:text-indigo-600 hover:underline"
                         >
                           {payment.invoice.invoice_number}
                         </Link>
@@ -431,9 +431,9 @@ export default function BillingOverviewPage() {
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowPaymentModal(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Record Payment</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Record Payment</h2>
               <p className="text-sm text-zinc-500 mt-1">Manually record an offline payment</p>
             </div>
             <form
@@ -452,12 +452,12 @@ export default function BillingOverviewPage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Resident <span className="text-red-400">*</span></label>
                 <select
                   required
                   value={payForm.residentId}
                   onChange={(e) => setPayForm({ ...payForm, residentId: e.target.value })}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="">Select a resident</option>
                   {(residents?.items ?? []).map((r) => (
@@ -466,7 +466,7 @@ export default function BillingOverviewPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Amount <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Amount <span className="text-red-400">*</span></label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">$</span>
                   <input
@@ -476,18 +476,18 @@ export default function BillingOverviewPage() {
                     required
                     value={payForm.amount}
                     onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })}
-                    className="w-full h-10 pl-7 pr-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full h-10 pl-7 pr-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     placeholder="0.00"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Payment Method <span className="text-red-400">*</span></label>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Payment Method <span className="text-red-400">*</span></label>
                   <select
                     value={payForm.paymentMethodType}
                     onChange={(e) => setPayForm({ ...payForm, paymentMethodType: e.target.value as typeof payForm.paymentMethodType })}
-                    className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
                     <option value="cash">Cash</option>
                     <option value="cashapp">Cash App</option>
@@ -500,32 +500,32 @@ export default function BillingOverviewPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date</label>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Date</label>
                   <input
                     type="date"
                     value={payForm.paymentDate}
                     onChange={(e) => setPayForm({ ...payForm, paymentDate: e.target.value })}
-                    className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Reference # / Transaction ID</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Reference # / Transaction ID</label>
                 <input
                   type="text"
                   value={payForm.referenceNumber}
                   onChange={(e) => setPayForm({ ...payForm, referenceNumber: e.target.value })}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   placeholder="e.g. Cash App $cashtag, Venmo ID"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Notes</label>
                 <input
                   type="text"
                   value={payForm.notes}
                   onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   placeholder="Optional notes"
                 />
               </div>

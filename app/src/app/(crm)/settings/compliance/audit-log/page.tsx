@@ -69,8 +69,8 @@ export default function AuditLogPage() {
         actions={
           <div className="flex items-center gap-3">
             {verifyingChain ? (
-              <div className="flex items-center gap-2 px-3 py-2 bg-zinc-800/40 border border-zinc-800 rounded-lg">
-                <div className="h-4 w-4 border-2 border-zinc-700 border-t-indigo-400 rounded-full animate-spin" />
+              <div className="flex items-center gap-2 px-3 py-2 bg-zinc-100 border border-zinc-200 rounded-lg">
+                <div className="h-4 w-4 border-2 border-zinc-200 border-t-indigo-400 rounded-full animate-spin" />
                 <span className="text-sm font-medium text-zinc-400">Verifying...</span>
               </div>
             ) : chainVerification?.valid ? (
@@ -100,7 +100,7 @@ export default function AuditLogPage() {
         <CardContent>
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-indigo-200">
+            <p className="text-sm text-indigo-700">
               All audit events are cryptographically signed and chained to ensure integrity. Any
               tampering or deletion will be immediately detected. Logs are retained for 7 years per
               HIPAA requirements.
@@ -126,13 +126,13 @@ export default function AuditLogPage() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="flex-1 h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="flex-1 h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="flex-1 h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="flex-1 h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function AuditLogPage() {
               <select
                 value={selectedResourceType}
                 onChange={(e) => setSelectedResourceType(e.target.value)}
-                className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
                 <option value="">All Resources</option>
                 <option value="consent">Consent</option>
@@ -161,7 +161,7 @@ export default function AuditLogPage() {
               <select
                 value={selectedSensitivity}
                 onChange={(e) => setSelectedSensitivity(e.target.value as SensitivityLevel | "")}
-                className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
                 <option value="">All Levels</option>
                 <option value="part2_protected">42 CFR Part 2</option>
@@ -193,7 +193,7 @@ export default function AuditLogPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                  <tr className="border-y border-zinc-200/50 bg-zinc-100">
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Timestamp</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">User</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Action</th>
@@ -206,15 +206,15 @@ export default function AuditLogPage() {
                   {entries.map((entry) => {
                     const sc = sensitivityConfig[entry.sensitivity_level] ?? sensitivityConfig.public;
                     return (
-                      <tr key={entry.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                      <tr key={entry.id} className="border-b border-zinc-200/50 hover:bg-zinc-100 transition-colors">
                         <td className="py-3 px-4 text-sm text-zinc-400 whitespace-nowrap">
                           {new Date(entry.created_at).toLocaleString()}
                         </td>
-                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-800">
                           {formatActorName(entry)}
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-sm font-mono text-zinc-300">{entry.action}</span>
+                          <span className="text-sm font-mono text-zinc-600">{entry.action}</span>
                         </td>
                         <td className="py-3 px-4 text-sm text-zinc-400">
                           {entry.resource_type}
@@ -235,7 +235,7 @@ export default function AuditLogPage() {
         </div>
 
         {data && entries.length > 0 && (
-          <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+          <div className="px-4 py-3 border-t border-zinc-200/50 bg-zinc-100">
             <p className="text-sm text-zinc-500">
               Showing {entries.length} entries
               {data.nextCursor && " (more available)"}

@@ -70,7 +70,7 @@ export default function ResidentSchedulePage() {
       location: m.location ?? undefined,
       type: "meeting",
       badge: m.is_mandatory ? "Required" : "Optional",
-      badgeColor: m.is_mandatory ? "bg-indigo-500/15 text-indigo-300" : "bg-green-500/15 text-green-300",
+      badgeColor: m.is_mandatory ? "bg-teal-50 text-teal-700" : "bg-green-50 text-green-600",
     });
   });
 
@@ -82,7 +82,7 @@ export default function ResidentSchedulePage() {
       location: c.area ?? undefined,
       type: "chore",
       badge: "Chore",
-      badgeColor: "bg-indigo-500/15 text-indigo-300",
+      badgeColor: "bg-[#0d9488]/15 text-[#0d9488]",
     });
   });
 
@@ -100,7 +100,7 @@ export default function ResidentSchedulePage() {
   return (
     <div className="p-4 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">Schedule</h1>
+        <h1 className="text-2xl font-bold text-zinc-800">Schedule</h1>
         <p className="text-zinc-400">{today}</p>
       </div>
 
@@ -110,21 +110,21 @@ export default function ResidentSchedulePage() {
         </h2>
 
         {scheduleItems.length === 0 ? (
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-8 text-center">
+          <div className="bg-white rounded-lg border border-zinc-200 p-8 text-center">
             <Calendar className="h-10 w-10 text-zinc-600 mx-auto mb-3" />
             <p className="text-zinc-500">No scheduled events today</p>
             <p className="text-sm text-zinc-500 mt-1">Check back later for updates</p>
           </div>
         ) : (
-          <div className="bg-zinc-900 rounded-lg border border-zinc-800 divide-y divide-zinc-800/50">
+          <div className="bg-white rounded-lg border border-zinc-200 divide-y divide-zinc-200/50">
             {scheduleItems.map((item) => (
               <div key={item.id} className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="w-16 text-center flex-shrink-0">
-                    <p className="text-sm font-bold text-zinc-100">{item.time}</p>
+                    <p className="text-sm font-bold text-zinc-800">{item.time}</p>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-zinc-100">{item.title}</p>
+                    <p className="font-semibold text-zinc-800">{item.title}</p>
                     {item.location && (
                       <div className="flex items-center gap-2 mt-1 text-sm text-zinc-400">
                         <MapPin className="h-3.5 w-3.5" />
@@ -152,7 +152,7 @@ export default function ResidentSchedulePage() {
         <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide">
           This Week
         </h2>
-        <div className="bg-zinc-900 rounded-lg border border-zinc-800 p-4">
+        <div className="bg-white rounded-lg border border-zinc-200 p-4">
           <div className="grid grid-cols-7 gap-2 text-center">
             {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
               <div key={i} className="text-xs font-medium text-zinc-500">
@@ -169,8 +169,8 @@ export default function ResidentSchedulePage() {
                   key={i}
                   className={`py-2 rounded-lg text-sm ${
                     isToday
-                      ? "bg-indigo-500 text-zinc-100 font-bold"
-                      : "text-zinc-300"
+                      ? "bg-[#0d9488] text-white font-bold"
+                      : "text-zinc-600"
                   }`}
                 >
                   {date}

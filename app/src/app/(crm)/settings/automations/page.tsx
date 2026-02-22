@@ -174,11 +174,11 @@ function SettingsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-md mx-4 shadow-2xl">
+      <div className="bg-white border border-zinc-200 rounded-xl w-full max-w-md mx-4 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-100">{automationName} Settings</h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+        <div className="flex items-center justify-between p-5 border-b border-zinc-200">
+          <h2 className="text-sm font-semibold text-zinc-800">{automationName} Settings</h2>
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-600 transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -186,7 +186,7 @@ function SettingsModal({
         {/* Body */}
         <div className="p-5 space-y-4">
           {isLoading ? (
-            <div className="h-20 animate-pulse bg-zinc-800 rounded-lg" />
+            <div className="h-20 animate-pulse bg-zinc-100 rounded-lg" />
           ) : (
             fields.map((f) => (
               <div key={f.field}>
@@ -196,14 +196,14 @@ function SettingsModal({
                     type="time"
                     value={(settings[f.field] as string) ?? "08:00"}
                     onChange={(e) => handleChange(f.field, e.target.value)}
-                    className="w-full h-9 px-3 rounded-md bg-zinc-800 border border-zinc-700 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
+                    className="w-full h-9 px-3 rounded-md bg-zinc-100 border border-zinc-200 text-sm text-zinc-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 )}
                 {f.type === "select" && f.options && (
                   <select
                     value={(settings[f.field] as string) ?? f.options[0]?.value ?? ""}
                     onChange={(e) => handleChange(f.field, e.target.value)}
-                    className="w-full h-9 px-3 rounded-md bg-zinc-800 border border-zinc-700 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors appearance-none"
+                    className="w-full h-9 px-3 rounded-md bg-zinc-100 border border-zinc-200 text-sm text-zinc-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors appearance-none"
                   >
                     {f.options.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -219,7 +219,7 @@ function SettingsModal({
                     max={100}
                     value={(settings[f.field] as number) ?? 25}
                     onChange={(e) => handleChange(f.field, parseInt(e.target.value, 10) || 0)}
-                    className="w-full h-9 px-3 rounded-md bg-zinc-800 border border-zinc-700 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
+                    className="w-full h-9 px-3 rounded-md bg-zinc-100 border border-zinc-200 text-sm text-zinc-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 )}
               </div>
@@ -228,7 +228,7 @@ function SettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 p-5 border-t border-zinc-800">
+        <div className="flex items-center justify-end gap-2 p-5 border-t border-zinc-200">
           <Button variant="ghost" size="sm" onClick={onClose}>
             Cancel
           </Button>
@@ -310,14 +310,14 @@ export default function AutomationsPage() {
                   return (
                     <div
                       key={automation.key}
-                      className="flex items-center gap-4 p-4 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/30 transition-colors"
+                      className="flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-white/50 hover:bg-zinc-100/30 transition-colors"
                     >
                       {/* Icon */}
                       <div
                         className={`flex-shrink-0 p-2 rounded-lg ${
                           automation.enabled
                             ? "bg-indigo-500/10 text-indigo-400"
-                            : "bg-zinc-800 text-zinc-500"
+                            : "bg-zinc-100 text-zinc-500"
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -326,7 +326,7 @@ export default function AutomationsPage() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-zinc-100">{automation.name}</p>
+                          <p className="text-sm font-medium text-zinc-800">{automation.name}</p>
                           {automation.enabled && (
                             <Badge variant="success" dot>
                               Active
@@ -364,7 +364,7 @@ export default function AutomationsPage() {
                         {hasSettings && (
                           <button
                             onClick={() => setSettingsModal({ key: automation.key, name: automation.name })}
-                            className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+                            className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
                             title="Settings"
                           >
                             <Settings2 className="h-4 w-4" />
@@ -375,7 +375,7 @@ export default function AutomationsPage() {
                         <button
                           onClick={() => runNowMutation.mutate({ key: automation.key })}
                           disabled={runNowMutation.isPending}
-                          className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors disabled:opacity-40"
+                          className="p-1.5 rounded-md text-zinc-500 hover:text-zinc-600 hover:bg-zinc-100 transition-colors disabled:opacity-40"
                           title="Run Now"
                         >
                           <Play className="h-4 w-4" />
@@ -391,7 +391,7 @@ export default function AutomationsPage() {
                           }
                           disabled={toggleMutation.isPending}
                           className={`relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950 ${
-                            automation.enabled ? "bg-indigo-500" : "bg-zinc-700"
+                            automation.enabled ? "bg-indigo-500" : "bg-zinc-200"
                           }`}
                           role="switch"
                           aria-checked={automation.enabled}

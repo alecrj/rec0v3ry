@@ -48,15 +48,15 @@ const REFERRAL_TYPE_LABELS: Record<string, string> = {
 };
 
 const REFERRAL_TYPE_COLORS: Record<string, string> = {
-  treatment_center: "bg-indigo-500/10 text-indigo-300",
-  court: "bg-amber-500/10 text-amber-300",
-  hospital: "bg-red-500/10 text-red-300",
-  aa_na: "bg-cyan-500/10 text-cyan-300",
-  church: "bg-purple-500/10 text-purple-300",
-  self: "bg-zinc-500/10 text-zinc-300",
-  family: "bg-green-500/10 text-green-300",
-  online: "bg-blue-500/10 text-blue-300",
-  other: "bg-zinc-500/10 text-zinc-400",
+  treatment_center: "bg-indigo-50 text-indigo-600",
+  court: "bg-amber-50 text-amber-600",
+  hospital: "bg-red-50 text-red-600",
+  aa_na: "bg-cyan-50 text-cyan-600",
+  church: "bg-purple-50 text-purple-600",
+  self: "bg-zinc-100 text-zinc-600",
+  family: "bg-green-50 text-green-600",
+  online: "bg-blue-50 text-blue-600",
+  other: "bg-zinc-100 text-zinc-500",
 };
 
 const REFERRAL_TYPES = [
@@ -72,7 +72,7 @@ const REFERRAL_TYPES = [
 ] as const;
 
 const inputClass =
-  "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+  "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
 interface ReferralSource {
   id: string;
@@ -139,24 +139,24 @@ function ReferralSourceModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-200">
+        <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-zinc-100">
+            <h2 className="text-xl font-bold text-zinc-800">
               {isEdit ? "Edit Referral Source" : "Add Referral Source"}
             </h2>
             <p className="text-sm text-zinc-500 mt-1">
               {isEdit ? "Update source information" : "Track where your referrals come from"}
             </p>
           </div>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -169,7 +169,7 @@ function ReferralSourceModal({
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Type <span className="text-red-400">*</span>
               </label>
               <select
@@ -187,7 +187,7 @@ function ReferralSourceModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Contact Name</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Contact Name</label>
             <input
               type="text"
               value={contactName}
@@ -199,7 +199,7 @@ function ReferralSourceModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Phone</label>
               <input
                 type="tel"
                 value={contactPhone}
@@ -209,7 +209,7 @@ function ReferralSourceModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Email</label>
               <input
                 type="email"
                 value={contactEmail}
@@ -221,7 +221,7 @@ function ReferralSourceModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Address</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Address</label>
             <input
               type="text"
               value={address}
@@ -232,17 +232,17 @@ function ReferralSourceModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Notes</label>
             <textarea
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
               placeholder="Additional notes about this referral source..."
             />
           </div>
 
-          <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
+          <div className="pt-4 border-t border-zinc-200 flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
@@ -367,7 +367,7 @@ export default function ReferralSourcesPage() {
       <div>
         <Link
           href="/admissions"
-          className="flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-100"
+          className="flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-800"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Pipeline
@@ -448,7 +448,7 @@ export default function ReferralSourcesPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-800">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     Source
                   </th>
@@ -475,19 +475,19 @@ export default function ReferralSourcesPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/50">
+              <tbody className="divide-y divide-zinc-200/50">
                 {sources.map((source) => (
                   <tr
                     key={source.id}
-                    className="hover:bg-zinc-800/40 transition-colors"
+                    className="hover:bg-zinc-100/40 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-9 h-9 bg-zinc-100 rounded-lg flex items-center justify-center flex-shrink-0">
                           <Building2 className="h-4 w-4 text-zinc-500" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-zinc-100">{source.name}</p>
+                          <p className="text-sm font-medium text-zinc-800">{source.name}</p>
                           {source.address && (
                             <p className="text-xs text-zinc-500 truncate max-w-[200px]">
                               {source.address}
@@ -508,7 +508,7 @@ export default function ReferralSourcesPage() {
                     <td className="px-4 py-3">
                       <div className="space-y-1">
                         {source.contact_name && (
-                          <p className="text-sm text-zinc-300">{source.contact_name}</p>
+                          <p className="text-sm text-zinc-600">{source.contact_name}</p>
                         )}
                         {source.contact_phone && (
                           <div className="flex items-center gap-1 text-xs text-zinc-500">
@@ -528,13 +528,13 @@ export default function ReferralSourcesPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="text-sm font-medium text-zinc-100">{source.total_referrals}</span>
+                      <span className="text-sm font-medium text-zinc-800">{source.total_referrals}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-sm font-medium text-green-400">{source.total_admitted}</span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="text-sm font-medium text-zinc-100">
+                      <span className="text-sm font-medium text-zinc-800">
                         {source.conversion_rate}%
                       </span>
                     </td>
@@ -547,7 +547,7 @@ export default function ReferralSourcesPage() {
                       <div className="relative inline-block">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === source.id ? null : source.id)}
-                          className="p-1 hover:bg-zinc-800 rounded transition-colors"
+                          className="p-1 hover:bg-zinc-100 rounded transition-colors"
                         >
                           <MoreVertical className="h-4 w-4 text-zinc-500" />
                         </button>
@@ -557,9 +557,9 @@ export default function ReferralSourcesPage() {
                               className="fixed inset-0 z-10"
                               onClick={() => setOpenMenuId(null)}
                             />
-                            <div className="absolute right-0 top-8 w-44 bg-zinc-900 rounded-lg shadow-lg border border-zinc-800 py-1 z-20">
+                            <div className="absolute right-0 top-8 w-44 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-20">
                               <button
-                                className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40 flex items-center gap-2"
+                                className="w-full text-left px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100/40 flex items-center gap-2"
                                 onClick={() => {
                                   setOpenMenuId(null);
                                   setEditingSource(source);
@@ -569,7 +569,7 @@ export default function ReferralSourcesPage() {
                                 Edit
                               </button>
                               <button
-                                className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40 flex items-center gap-2"
+                                className="w-full text-left px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100/40 flex items-center gap-2"
                                 onClick={() => {
                                   setOpenMenuId(null);
                                   handleToggleActive(source);

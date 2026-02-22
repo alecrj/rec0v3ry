@@ -146,17 +146,17 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
     }
   };
 
-  const inputClass = "w-full px-3 py-2 bg-zinc-900 text-zinc-100 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500";
+  const inputClass = "w-full px-3 py-2 bg-white text-zinc-800 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500";
 
   return (
-    <div className="bg-zinc-900 rounded-lg border border-zinc-800">
+    <div className="bg-white rounded-lg border border-zinc-200">
       {/* Progress Steps */}
-      <div className="border-b border-zinc-800 p-6">
+      <div className="border-b border-zinc-200 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-zinc-100">
+          <h2 className="text-xl font-semibold text-zinc-800">
             Create 42 CFR Part 2 Consent
           </h2>
-          <button onClick={onCancel} className="text-sm text-zinc-400 hover:text-zinc-100">
+          <button onClick={onCancel} className="text-sm text-zinc-400 hover:text-zinc-800">
             Cancel
           </button>
         </div>
@@ -167,17 +167,17 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
                 <div
                   className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors",
-                    currentStep >= step.number ? "bg-indigo-500 text-white" : "bg-zinc-700 text-zinc-400"
+                    currentStep >= step.number ? "bg-indigo-500 text-white" : "bg-zinc-200 text-zinc-400"
                   )}
                 >
                   {step.number}
                 </div>
-                <span className={cn("text-xs mt-2 text-center", currentStep >= step.number ? "text-zinc-100 font-medium" : "text-zinc-500")}>
+                <span className={cn("text-xs mt-2 text-center", currentStep >= step.number ? "text-zinc-800 font-medium" : "text-zinc-500")}>
                   {step.title}
                 </span>
               </div>
               {index < steps.length - 1 && (
-                <div className={cn("h-0.5 flex-1 mx-2 transition-colors", currentStep > step.number ? "bg-indigo-500" : "bg-zinc-700")} />
+                <div className={cn("h-0.5 flex-1 mx-2 transition-colors", currentStep > step.number ? "bg-indigo-500" : "bg-zinc-200")} />
               )}
             </div>
           ))}
@@ -189,12 +189,12 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
         {currentStep === 1 && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-100 mb-4">Patient Information</h3>
+              <h3 className="text-lg font-semibold text-zinc-800 mb-4">Patient Information</h3>
               <p className="text-sm text-zinc-400 mb-6">Enter the patient&apos;s identifying information as required by 42 CFR 2.31(a)(1).</p>
             </div>
             {!residentId && (
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Select Resident <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">Select Resident <span className="text-red-500">*</span></label>
                 <select value={formData.residentId} onChange={(e) => {
                   update("residentId", e.target.value);
                   const r = residents.find((res) => res.id === e.target.value);
@@ -212,21 +212,21 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
             )}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">First Name <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">First Name <span className="text-red-500">*</span></label>
                 <input type="text" value={formData.firstName} onChange={(e) => update("firstName", e.target.value)} className={inputClass} placeholder="Enter first name" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Last Name <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">Last Name <span className="text-red-500">*</span></label>
                 <input type="text" value={formData.lastName} onChange={(e) => update("lastName", e.target.value)} className={inputClass} placeholder="Enter last name" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Date of Birth</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">Date of Birth</label>
                 <input type="date" value={formData.dateOfBirth} onChange={(e) => update("dateOfBirth", e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Patient ID</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">Patient ID</label>
                 <input type="text" value={formData.patientId} onChange={(e) => update("patientId", e.target.value)} className={inputClass} placeholder="Optional patient identifier" />
               </div>
             </div>
@@ -236,20 +236,20 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
         {currentStep === 2 && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-100 mb-4">Disclosure Details</h3>
+              <h3 className="text-lg font-semibold text-zinc-800 mb-4">Disclosure Details</h3>
               <p className="text-sm text-zinc-400 mb-6">Identify the disclosing entity and recipient as required by 42 CFR 2.31(a)(2-3).</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Disclosing Entity <span className="text-red-500">*</span></label>
-              <input type="text" className={cn(inputClass, "bg-zinc-800/40")} value="Organization Facility" disabled />
+              <label className="block text-sm font-medium text-zinc-600 mb-2">Disclosing Entity <span className="text-red-500">*</span></label>
+              <input type="text" className={cn(inputClass, "bg-zinc-100")} value="Organization Facility" disabled />
               <p className="text-xs text-zinc-500 mt-1">Pre-filled from your organization settings</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Recipient Name <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-zinc-600 mb-2">Recipient Name <span className="text-red-500">*</span></label>
               <input type="text" value={formData.recipientName} onChange={(e) => update("recipientName", e.target.value)} className={inputClass} placeholder="Enter recipient name or organization" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Recipient Address</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-2">Recipient Address</label>
               <textarea rows={3} value={formData.recipientAddress} onChange={(e) => update("recipientAddress", e.target.value)} className={inputClass} placeholder="Enter complete mailing address" />
             </div>
           </div>
@@ -258,11 +258,11 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
         {currentStep === 3 && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-100 mb-4">Scope & Purpose</h3>
+              <h3 className="text-lg font-semibold text-zinc-800 mb-4">Scope & Purpose</h3>
               <p className="text-sm text-zinc-400 mb-6">Define the purpose and scope of information to be disclosed per 42 CFR 2.31(a)(4-5).</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Purpose of Disclosure <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-zinc-600 mb-2">Purpose of Disclosure <span className="text-red-500">*</span></label>
               <select value={formData.purpose} onChange={(e) => update("purpose", e.target.value)} className={inputClass}>
                 <option value="">Select purpose</option>
                 <option value="treatment">Treatment Coordination</option>
@@ -275,16 +275,16 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Additional Purpose Details</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-2">Additional Purpose Details</label>
               <textarea rows={3} value={formData.purposeDetails} onChange={(e) => update("purposeDetails", e.target.value)} className={inputClass} placeholder="Provide specific details about the disclosure purpose" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-3">Information to be Disclosed <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-zinc-600 mb-3">Information to be Disclosed <span className="text-red-500">*</span></label>
               <div className="space-y-2">
                 {scopeOptions.map((item) => (
                   <label key={item} className="flex items-center gap-3">
-                    <input type="checkbox" checked={formData.informationScope.includes(item)} onChange={() => toggleScope(item)} className="w-4 h-4 text-indigo-500 border-zinc-700 rounded focus:ring-indigo-500 accent-indigo-500" />
-                    <span className="text-sm text-zinc-300">{item}</span>
+                    <input type="checkbox" checked={formData.informationScope.includes(item)} onChange={() => toggleScope(item)} className="w-4 h-4 text-indigo-500 border-zinc-200 rounded focus:ring-indigo-500 accent-indigo-500" />
+                    <span className="text-sm text-zinc-600">{item}</span>
                   </label>
                 ))}
               </div>
@@ -295,18 +295,18 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
         {currentStep === 4 && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-100 mb-4">Terms & Rights</h3>
+              <h3 className="text-lg font-semibold text-zinc-800 mb-4">Terms & Rights</h3>
               <p className="text-sm text-zinc-400 mb-6">Set expiration and review patient rights per 42 CFR 2.31(a)(6-9).</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Expiration Date <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-zinc-600 mb-2">Expiration Date <span className="text-red-500">*</span></label>
               <input type="date" value={formData.expirationDate} onChange={(e) => update("expirationDate", e.target.value)} className={inputClass} />
               <p className="text-xs text-zinc-500 mt-1">Maximum recommended duration: 1 year from signature</p>
             </div>
             <RedisclosureBanner />
             <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-indigo-200 mb-2">Patient Rights Notice</h4>
-              <ul className="text-sm text-indigo-300 space-y-1 list-disc list-inside">
+              <h4 className="text-sm font-semibold text-indigo-700 mb-2">Patient Rights Notice</h4>
+              <ul className="text-sm text-indigo-600 space-y-1 list-disc list-inside">
                 <li>You have the right to revoke this consent at any time by providing written notice to the facility.</li>
                 <li>Revocation will not apply to information already disclosed based on this consent.</li>
                 <li>Your treatment or benefits cannot be conditioned on signing this consent, except as permitted by law.</li>
@@ -319,40 +319,40 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
         {currentStep === 5 && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-100 mb-4">Review & Sign</h3>
+              <h3 className="text-lg font-semibold text-zinc-800 mb-4">Review & Sign</h3>
               <p className="text-sm text-zinc-400 mb-6">Review the consent details and capture the patient&apos;s signature.</p>
             </div>
-            <div className="bg-zinc-800/40 border border-zinc-800 rounded-lg p-6 space-y-4">
+            <div className="bg-zinc-100 border border-zinc-200 rounded-lg p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-medium text-zinc-500 uppercase">Patient Name</p>
-                  <p className="text-sm text-zinc-100 mt-1">{formData.firstName} {formData.lastName}</p>
+                  <p className="text-sm text-zinc-800 mt-1">{formData.firstName} {formData.lastName}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-500 uppercase">Date of Birth</p>
-                  <p className="text-sm text-zinc-100 mt-1">{formData.dateOfBirth || "Not provided"}</p>
+                  <p className="text-sm text-zinc-800 mt-1">{formData.dateOfBirth || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-500 uppercase">Recipient</p>
-                  <p className="text-sm text-zinc-100 mt-1">{formData.recipientName || "Not set"}</p>
+                  <p className="text-sm text-zinc-800 mt-1">{formData.recipientName || "Not set"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-500 uppercase">Purpose</p>
-                  <p className="text-sm text-zinc-100 mt-1">{formData.purpose || "Not set"}</p>
+                  <p className="text-sm text-zinc-800 mt-1">{formData.purpose || "Not set"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-500 uppercase">Expiration Date</p>
-                  <p className="text-sm text-zinc-100 mt-1">{formData.expirationDate || "No expiration"}</p>
+                  <p className="text-sm text-zinc-800 mt-1">{formData.expirationDate || "No expiration"}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-500 uppercase">Information Scope</p>
-                  <p className="text-sm text-zinc-100 mt-1">{formData.informationScope.length} categories selected</p>
+                  <p className="text-sm text-zinc-800 mt-1">{formData.informationScope.length} categories selected</p>
                 </div>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Patient Signature <span className="text-red-500">*</span></label>
-              <div className="border-2 border-dashed border-zinc-700 rounded-lg p-8 text-center bg-zinc-800/40">
+              <label className="block text-sm font-medium text-zinc-600 mb-2">Patient Signature <span className="text-red-500">*</span></label>
+              <div className="border-2 border-dashed border-zinc-200 rounded-lg p-8 text-center bg-zinc-100">
                 <FileText className="h-12 w-12 text-zinc-500 mx-auto mb-3" />
                 <p className="text-sm text-zinc-400 mb-2">Electronic consent will be recorded</p>
                 <p className="text-xs text-zinc-500">By clicking Complete, the patient consents to this disclosure</p>
@@ -360,11 +360,11 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Signature Date <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">Signature Date <span className="text-red-500">*</span></label>
                 <input type="date" value={formData.signatureDate} onChange={(e) => update("signatureDate", e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Witness (if applicable)</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">Witness (if applicable)</label>
                 <input type="text" value={formData.witness} onChange={(e) => update("witness", e.target.value)} className={inputClass} placeholder="Witness name" />
               </div>
             </div>
@@ -373,11 +373,11 @@ export function ConsentWizard({ residentId, onComplete, onCancel }: ConsentWizar
       </div>
 
       {/* Navigation */}
-      <div className="border-t border-zinc-800 p-6 flex items-center justify-between">
+      <div className="border-t border-zinc-200 p-6 flex items-center justify-between">
         <button
           onClick={goBack}
           disabled={currentStep === 1}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-300 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="h-4 w-4" />
           Back

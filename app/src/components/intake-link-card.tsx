@@ -33,8 +33,8 @@ export function IntakeLinkCard({ intakeUrl, label, propertyName }: IntakeLinkCar
       width: 256,
       margin: 2,
       color: {
-        dark: "#18181B",   // zinc-900 — dark modules
-        light: "#FAFAFA",  // almost white — background
+        dark: "#0a0a0a",   // primary text color — dark modules
+        light: "#ffffff",  // white — background
       },
       errorCorrectionLevel: "M",
     })
@@ -74,7 +74,7 @@ export function IntakeLinkCard({ intakeUrl, label, propertyName }: IntakeLinkCar
 <a href="${intakeUrl}"
    target="_blank"
    rel="noopener noreferrer"
-   style="display:inline-block;background:#6366F1;color:#fff;font-family:sans-serif;font-size:14px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">
+   style="display:inline-block;background:#dc2626;color:#fff;font-family:sans-serif;font-size:14px;font-weight:600;padding:12px 24px;border-radius:2px;text-decoration:none;">
   Apply Now
 </a>`;
 
@@ -96,11 +96,11 @@ export function IntakeLinkCard({ intakeUrl, label, propertyName }: IntakeLinkCar
   }
 
   return (
-    <div className="bg-[#18181B] border border-zinc-800 rounded-xl overflow-hidden">
+    <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
+      <div className="px-4 py-3 border-b border-zinc-200 flex items-center gap-2">
         <QrCode className="h-4 w-4 text-indigo-400" />
-        <span className="text-sm font-medium text-zinc-200">
+        <span className="text-sm font-medium text-zinc-700">
           {label ?? "Intake Link"}
         </span>
         {propertyName && (
@@ -111,8 +111,8 @@ export function IntakeLinkCard({ intakeUrl, label, propertyName }: IntakeLinkCar
       <div className="p-4 space-y-4">
         {/* URL Row */}
         <div className="flex items-center gap-2">
-          <div className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 overflow-hidden">
-            <p className="text-sm text-zinc-300 truncate font-mono">{intakeUrl}</p>
+          <div className="flex-1 bg-white border border-zinc-200 rounded-lg px-3 py-2 overflow-hidden">
+            <p className="text-sm text-zinc-600 truncate font-mono">{intakeUrl}</p>
           </div>
           <button
             onClick={handleCopyLink}
@@ -157,7 +157,7 @@ export function IntakeLinkCard({ intakeUrl, label, propertyName }: IntakeLinkCar
             <button
               onClick={handleDownloadQR}
               disabled={!qrDataUrl}
-              className="flex items-center gap-1.5 text-sm text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors w-fit"
+              className="flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 bg-zinc-100 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-lg transition-colors w-fit"
             >
               <Download className="h-4 w-4" />
               Download PNG
@@ -166,10 +166,10 @@ export function IntakeLinkCard({ intakeUrl, label, propertyName }: IntakeLinkCar
         </div>
 
         {/* Embed on Website */}
-        <div className="border border-zinc-800 rounded-lg overflow-hidden">
+        <div className="border border-zinc-200 rounded-lg overflow-hidden">
           <button
             onClick={() => setEmbedExpanded(!embedExpanded)}
-            className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
           >
             <span className="flex items-center gap-2">
               <Code className="h-4 w-4" />
@@ -183,17 +183,17 @@ export function IntakeLinkCard({ intakeUrl, label, propertyName }: IntakeLinkCar
           </button>
 
           {embedExpanded && (
-            <div className="border-t border-zinc-800 p-3 space-y-2">
+            <div className="border-t border-zinc-200 p-3 space-y-2">
               <p className="text-xs text-zinc-500">
                 Paste this HTML snippet anywhere on your website to add an &quot;Apply Now&quot; button.
               </p>
-              <div className="relative bg-zinc-900 rounded-lg p-3">
-                <pre className="text-xs text-zinc-300 whitespace-pre-wrap break-all font-mono leading-relaxed overflow-x-auto">
+              <div className="relative bg-white rounded-lg p-3">
+                <pre className="text-xs text-zinc-600 whitespace-pre-wrap break-all font-mono leading-relaxed overflow-x-auto">
                   {embedHtml}
                 </pre>
                 <button
                   onClick={handleCopyEmbed}
-                  className="absolute top-2 right-2 flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 px-2 py-1 rounded transition-colors"
+                  className="absolute top-2 right-2 flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 bg-zinc-100 hover:bg-zinc-100 px-2 py-1 rounded transition-colors"
                 >
                   {embedCopied ? (
                     <>

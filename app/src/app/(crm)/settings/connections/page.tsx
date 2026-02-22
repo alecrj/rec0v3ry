@@ -74,14 +74,14 @@ export default function ConnectionsPage() {
             />
           </CardContent>
         ) : (
-          <div className="divide-y divide-zinc-800/50">
+          <div className="divide-y divide-zinc-200/50">
             {connections.map((conn) => (
               <div key={conn.id} className="flex items-center gap-4 px-6 py-4">
                 <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
                   <Building2 className="h-5 w-5 text-indigo-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-200">{conn.institution_name}</p>
+                  <p className="text-sm font-medium text-zinc-700">{conn.institution_name}</p>
                   <div className="flex items-center gap-3 mt-0.5">
                     <span className="flex items-center gap-1 text-xs text-zinc-500">
                       <CreditCard className="h-3 w-3" />

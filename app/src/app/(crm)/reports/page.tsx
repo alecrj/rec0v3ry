@@ -53,13 +53,13 @@ export default function ReportsPage() {
           <Link
             key={item.href}
             href={item.href}
-            className="group flex items-center gap-4 p-5 rounded-xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800/40 transition-all"
+            className="group flex items-center gap-4 p-5 rounded-xl border border-zinc-200 hover:border-zinc-200 bg-white/50 hover:bg-zinc-100/40 transition-all"
           >
             <div className={`p-3 rounded-lg ${item.color}`}>
               <item.icon className="h-6 w-6" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-zinc-100">{item.label}</p>
+              <p className="text-base font-semibold text-zinc-800">{item.label}</p>
               <p className="text-sm text-zinc-500 mt-0.5">{item.description}</p>
             </div>
             <ChevronRight className="h-5 w-5 text-zinc-600 group-hover:text-zinc-400 transition-colors flex-shrink-0" />

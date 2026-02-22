@@ -12,7 +12,7 @@ export function PatientNotice() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-zinc-900">
+    <div className="max-w-4xl mx-auto bg-white">
       {/* Print button - hidden when printing */}
       <div className="mb-6 print:hidden">
         <button
@@ -25,16 +25,16 @@ export function PatientNotice() {
       </div>
 
       {/* Document */}
-      <div className="border border-zinc-800 rounded-lg p-8 space-y-6 print:border-0">
+      <div className="border border-zinc-200 rounded-lg p-8 space-y-6 print:border-0">
         {/* Header */}
-        <div className="text-center border-b border-zinc-800 pb-6">
+        <div className="text-center border-b border-zinc-200 pb-6">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-lg bg-indigo-500 flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">R</span>
+              <span className="text-2xl font-bold text-zinc-900">R</span>
             </div>
-            <h1 className="text-3xl font-bold text-zinc-100">RecoveryOS</h1>
+            <h1 className="text-3xl font-bold text-zinc-800">RecoveryOS</h1>
           </div>
-          <h2 className="text-2xl font-semibold text-zinc-100">Notice of Privacy Practices</h2>
+          <h2 className="text-2xl font-semibold text-zinc-800">Notice of Privacy Practices</h2>
           <p className="text-sm text-zinc-400 mt-2">
             Effective Date: February 16, 2026 | Version 1.0
           </p>
@@ -42,11 +42,11 @@ export function PatientNotice() {
 
         {/* Introduction */}
         <div className="space-y-3">
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <p className="text-sm text-zinc-600 leading-relaxed">
             This notice describes how information about you may be used and disclosed and how you
             can get access to this information. Please review it carefully.
           </p>
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <p className="text-sm text-zinc-600 leading-relaxed">
             RecoveryOS is committed to protecting your privacy and maintaining the confidentiality
             of your health information in accordance with federal and state law, including the
             Health Insurance Portability and Accountability Act (HIPAA) and 42 CFR Part 2 (federal
@@ -58,16 +58,16 @@ export function PatientNotice() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-indigo-400" />
-            <h3 className="text-lg font-semibold text-zinc-100">
+            <h3 className="text-lg font-semibold text-zinc-800">
               Your Rights Under 42 CFR Part 2
             </h3>
           </div>
           <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
-            <p className="text-sm text-indigo-200 font-medium mb-3">
+            <p className="text-sm text-indigo-700 font-medium mb-3">
               As a patient receiving substance use disorder treatment services, you have the
               following rights:
             </p>
-            <ul className="space-y-2 text-sm text-indigo-300">
+            <ul className="space-y-2 text-sm text-indigo-600">
               <li className="flex items-start gap-2">
                 <span className="font-bold mt-0.5">•</span>
                 <span>
@@ -112,13 +112,13 @@ export function PatientNotice() {
 
         {/* How We Use Your Information */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-zinc-100">How We Use Your Information</h3>
+          <h3 className="text-lg font-semibold text-zinc-800">How We Use Your Information</h3>
           <div className="space-y-3">
             <div>
-              <h4 className="text-sm font-semibold text-zinc-100 mb-1">
+              <h4 className="text-sm font-semibold text-zinc-800 mb-1">
                 Uses Without Your Consent
               </h4>
-              <p className="text-sm text-zinc-300 leading-relaxed">
+              <p className="text-sm text-zinc-600 leading-relaxed">
                 We may use and disclose your information within our program for treatment,
                 payment, and healthcare operations without your written consent. We may also
                 disclose information without consent in certain limited circumstances, including:
@@ -127,10 +127,10 @@ export function PatientNotice() {
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-zinc-100 mb-1">
+              <h4 className="text-sm font-semibold text-zinc-800 mb-1">
                 Uses Requiring Your Consent
               </h4>
-              <p className="text-sm text-zinc-300 leading-relaxed">
+              <p className="text-sm text-zinc-600 leading-relaxed">
                 For all other disclosures to external entities (e.g., family members, employers,
                 insurance companies, other treatment providers), we will obtain your written
                 consent before releasing any information.
@@ -141,14 +141,14 @@ export function PatientNotice() {
 
         {/* Redisclosure Notice */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-zinc-100">
+          <h3 className="text-lg font-semibold text-zinc-800">
             Federal Redisclosure Notice (42 CFR § 2.32)
           </h3>
           <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-lg p-4">
-            <p className="text-sm text-amber-200 font-semibold mb-2">
+            <p className="text-sm text-amber-700 font-semibold mb-2">
               IMPORTANT NOTICE TO RECIPIENT OF INFORMATION:
             </p>
-            <p className="text-sm text-amber-300 leading-relaxed">
+            <p className="text-sm text-amber-600 leading-relaxed">
               This information has been disclosed to you from records protected by federal
               confidentiality rules (42 CFR Part 2). The federal rules prohibit you from making
               any further disclosure of information in this record that identifies a patient as
@@ -167,8 +167,8 @@ export function PatientNotice() {
 
         {/* Breach Notification */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-zinc-100">Breach Notification</h3>
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <h3 className="text-lg font-semibold text-zinc-800">Breach Notification</h3>
+          <p className="text-sm text-zinc-600 leading-relaxed">
             If a breach of your unsecured protected health information occurs, we will notify you
             within 60 days of discovering the breach. We will provide information about what
             happened, what information was involved, steps you can take to protect yourself, and
@@ -178,39 +178,39 @@ export function PatientNotice() {
 
         {/* Contact Information */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-zinc-100">Contact Information</h3>
-          <div className="bg-zinc-800/40 border border-zinc-800 rounded-lg p-4 space-y-2">
+          <h3 className="text-lg font-semibold text-zinc-800">Contact Information</h3>
+          <div className="bg-zinc-100 border border-zinc-200 rounded-lg p-4 space-y-2">
             <div>
-              <p className="text-sm font-semibold text-zinc-100">Privacy Officer</p>
-              <p className="text-sm text-zinc-300">RecoveryOS Compliance Department</p>
+              <p className="text-sm font-semibold text-zinc-800">Privacy Officer</p>
+              <p className="text-sm text-zinc-600">RecoveryOS Compliance Department</p>
             </div>
             <div>
-              <p className="text-sm text-zinc-300">Email: privacy@recoveryos.com</p>
-              <p className="text-sm text-zinc-300">Phone: (555) 123-4567</p>
+              <p className="text-sm text-zinc-600">Email: privacy@recoveryos.com</p>
+              <p className="text-sm text-zinc-600">Phone: (555) 123-4567</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-100 mt-3">
+              <p className="text-sm font-semibold text-zinc-800 mt-3">
                 U.S. Department of Health and Human Services
               </p>
-              <p className="text-sm text-zinc-300">Office for Civil Rights</p>
-              <p className="text-sm text-zinc-300">Website: www.hhs.gov/ocr/privacy</p>
-              <p className="text-sm text-zinc-300">Phone: 1-800-368-1019</p>
+              <p className="text-sm text-zinc-600">Office for Civil Rights</p>
+              <p className="text-sm text-zinc-600">Website: www.hhs.gov/ocr/privacy</p>
+              <p className="text-sm text-zinc-600">Phone: 1-800-368-1019</p>
             </div>
           </div>
         </div>
 
         {/* Changes to This Notice */}
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-zinc-100">Changes to This Notice</h3>
-          <p className="text-sm text-zinc-300 leading-relaxed">
+          <h3 className="text-lg font-semibold text-zinc-800">Changes to This Notice</h3>
+          <p className="text-sm text-zinc-600 leading-relaxed">
             We reserve the right to change this notice. We will post a copy of the current notice
             in our facility and on our website. You may request a paper copy at any time.
           </p>
         </div>
 
         {/* Acknowledgment Section */}
-        <div className="border-t-2 border-zinc-700 pt-6 mt-8 space-y-6 print:page-break-before-always">
-          <h3 className="text-lg font-semibold text-zinc-100">Acknowledgment of Receipt</h3>
+        <div className="border-t-2 border-zinc-200 pt-6 mt-8 space-y-6 print:page-break-before-always">
+          <h3 className="text-lg font-semibold text-zinc-800">Acknowledgment of Receipt</h3>
 
           <div className="space-y-4">
             <label className="flex items-start gap-3 cursor-pointer">
@@ -218,9 +218,9 @@ export function PatientNotice() {
                 type="checkbox"
                 checked={acknowledged}
                 onChange={(e) => setAcknowledged(e.target.checked)}
-                className="w-4 h-4 text-indigo-500 border-zinc-700 rounded focus:ring-indigo-500 mt-0.5 print:hidden accent-indigo-500"
+                className="w-4 h-4 text-indigo-500 border-zinc-200 rounded focus:ring-indigo-500 mt-0.5 print:hidden accent-indigo-500"
               />
-              <span className="text-sm text-zinc-300">
+              <span className="text-sm text-zinc-600">
                 I acknowledge that I have received a copy of RecoveryOS's Notice of Privacy
                 Practices and have been given the opportunity to review it. I understand that I
                 have rights regarding my protected health information under 42 CFR Part 2 and
@@ -230,32 +230,32 @@ export function PatientNotice() {
 
             <div className="grid grid-cols-2 gap-6 mt-6">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                <label className="block text-sm font-medium text-zinc-600 mb-2">
                   Patient Signature
                 </label>
-                <div className="border-b-2 border-zinc-700 pb-2 min-h-[40px]">
+                <div className="border-b-2 border-zinc-200 pb-2 min-h-[40px]">
                   <span className="text-sm text-zinc-500 print:hidden">
                     [Signature capture in production]
                   </span>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Date</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-2">Date</label>
                 <input
                   type="date"
                   value={signatureDate}
                   onChange={(e) => setSignatureDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-900 text-zinc-100 border border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 print:border-0 print:border-b-2"
+                  className="w-full px-3 py-2 bg-white text-zinc-800 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 print:border-0 print:border-b-2"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6 mt-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                <label className="block text-sm font-medium text-zinc-600 mb-2">
                   Print Name
                 </label>
-                <div className="border-b-2 border-zinc-700 pb-2 min-h-[40px]">
+                <div className="border-b-2 border-zinc-200 pb-2 min-h-[40px]">
                   <input
                     type="text"
                     className="w-full border-0 focus:outline-none print:bg-transparent"
@@ -264,10 +264,10 @@ export function PatientNotice() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                <label className="block text-sm font-medium text-zinc-600 mb-2">
                   Date of Birth
                 </label>
-                <div className="border-b-2 border-zinc-700 pb-2 min-h-[40px]">
+                <div className="border-b-2 border-zinc-200 pb-2 min-h-[40px]">
                   <input
                     type="date"
                     className="w-full border-0 focus:outline-none print:bg-transparent"
@@ -276,7 +276,7 @@ export function PatientNotice() {
               </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-zinc-800">
+            <div className="mt-6 pt-6 border-t border-zinc-200">
               <p className="text-xs text-zinc-500 italic">
                 For facility use only: If patient refuses or is unable to sign, staff member must
                 document reason and witness.
@@ -286,11 +286,11 @@ export function PatientNotice() {
                   <label className="block text-xs font-medium text-zinc-400 mb-2">
                     Staff Witness Signature
                   </label>
-                  <div className="border-b border-zinc-700 pb-2 min-h-[30px]"></div>
+                  <div className="border-b border-zinc-200 pb-2 min-h-[30px]"></div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 mb-2">Date</label>
-                  <div className="border-b border-zinc-700 pb-2 min-h-[30px]"></div>
+                  <div className="border-b border-zinc-200 pb-2 min-h-[30px]"></div>
                 </div>
               </div>
             </div>
@@ -298,7 +298,7 @@ export function PatientNotice() {
         </div>
 
         {/* Footer */}
-        <div className="text-center text-xs text-zinc-500 mt-8 pt-6 border-t border-zinc-800">
+        <div className="text-center text-xs text-zinc-500 mt-8 pt-6 border-t border-zinc-200">
           <p>RecoveryOS Notice of Privacy Practices | Version 1.0 | Effective February 16, 2026</p>
           <p className="mt-1">© 2026 RecoveryOS. All rights reserved.</p>
         </div>

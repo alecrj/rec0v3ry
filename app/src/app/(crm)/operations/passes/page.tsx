@@ -139,7 +139,7 @@ export default function PassesPage() {
       key: "resident_first_name",
       header: "Resident",
       render: (_val, row) => (
-        <span className="text-sm font-medium text-zinc-100">
+        <span className="text-sm font-medium text-zinc-800">
           {row.resident_first_name} {row.resident_last_name}
         </span>
       ),
@@ -229,11 +229,11 @@ export default function PassesPage() {
       <Card>
         <CardContent>
           <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <span className="text-sm font-medium text-zinc-600">Filter:</span>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Statuses</option>
               <option value="requested">Pending</option>
@@ -246,7 +246,7 @@ export default function PassesPage() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Types</option>
               <option value="day_pass">Day Pass</option>
@@ -274,18 +274,18 @@ export default function PassesPage() {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="divide-y divide-zinc-800/50 -mx-6">
+                <div className="divide-y divide-zinc-200/50 -mx-6">
                   {pendingPasses.map((pass) => {
                     const tc = typeConfig[pass.pass_type as PassType] ?? { variant: "default" as const, label: pass.pass_type };
                     return (
-                      <div key={pass.id} className="px-6 py-4 hover:bg-zinc-800/50 transition-colors">
+                      <div key={pass.id} className="px-6 py-4 hover:bg-zinc-100 transition-colors">
                         <div className="flex items-start justify-between">
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                              <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center">
                                 <User className="h-4 w-4 text-zinc-500" />
                               </div>
-                              <span className="font-medium text-sm text-zinc-100">
+                              <span className="font-medium text-sm text-zinc-800">
                                 {pass.resident_first_name} {pass.resident_last_name}
                               </span>
                               <Badge variant={tc.variant}>{tc.label}</Badge>
@@ -351,18 +351,18 @@ export default function PassesPage() {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="divide-y divide-zinc-800/50 -mx-6">
+                <div className="divide-y divide-zinc-200/50 -mx-6">
                   {activePasses.map((pass) => {
                     const tc = typeConfig[pass.pass_type as PassType] ?? { variant: "default" as const, label: pass.pass_type };
                     return (
-                      <div key={pass.id} className="px-6 py-4 hover:bg-zinc-800/50 transition-colors">
+                      <div key={pass.id} className="px-6 py-4 hover:bg-zinc-100 transition-colors">
                         <div className="flex items-start justify-between">
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center">
                                 <User className="h-4 w-4 text-green-400" />
                               </div>
-                              <span className="font-medium text-sm text-zinc-100">
+                              <span className="font-medium text-sm text-zinc-800">
                                 {pass.resident_first_name} {pass.resident_last_name}
                               </span>
                               <Badge variant={tc.variant}>{tc.label}</Badge>
@@ -429,21 +429,21 @@ export default function PassesPage() {
       {denyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setDenyModal(null); setDenyReason(""); }} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-lg font-bold text-zinc-100">Deny Pass Request</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-lg font-bold text-zinc-800">Deny Pass Request</h2>
               <p className="text-sm text-zinc-500 mt-1">{denyModal.name}</p>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Reason for Denial <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   value={denyReason}
                   onChange={(e) => setDenyReason(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                   placeholder="Reason for denying this pass request..."
                   autoFocus
                 />

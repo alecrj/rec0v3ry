@@ -83,12 +83,12 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
     <PageContainer>
       {/* Back link + header */}
       <div className="flex items-center gap-4">
-        <Link href="/operations/maintenance" className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+        <Link href="/operations/maintenance" className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
           <ChevronLeft className="h-5 w-5 text-zinc-400" />
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl font-bold text-zinc-100">{request.title}</h1>
+            <h1 className="text-xl font-bold text-zinc-800">{request.title}</h1>
             <Badge variant={stConfig.variant}>{stConfig.label}</Badge>
             <Badge variant={prConfig.variant} dot>{prConfig.label}</Badge>
           </div>
@@ -105,13 +105,13 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
             <CardHeader><CardTitle>Details</CardTitle></CardHeader>
             <CardContent className="pt-0 space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-zinc-300 mb-1">Description</h3>
+                <h3 className="text-sm font-medium text-zinc-600 mb-1">Description</h3>
                 <p className="text-sm text-zinc-400">{request.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {request.location && (
                   <div>
-                    <h3 className="text-sm font-medium text-zinc-300 mb-1">Location</h3>
+                    <h3 className="text-sm font-medium text-zinc-600 mb-1">Location</h3>
                     <div className="flex items-center gap-1.5 text-sm text-zinc-400">
                       <MapPin className="h-3.5 w-3.5" />
                       {request.location}
@@ -119,7 +119,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                   </div>
                 )}
                 <div>
-                  <h3 className="text-sm font-medium text-zinc-300 mb-1">House</h3>
+                  <h3 className="text-sm font-medium text-zinc-600 mb-1">House</h3>
                   <div className="flex items-center gap-1.5 text-sm text-zinc-400">
                     <Home className="h-3.5 w-3.5" />
                     {request.house_name ?? "—"}
@@ -128,7 +128,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-sm font-medium text-zinc-300 mb-1">Created</h3>
+                  <h3 className="text-sm font-medium text-zinc-600 mb-1">Created</h3>
                   <div className="flex items-center gap-1.5 text-sm text-zinc-400">
                     <Clock className="h-3.5 w-3.5" />
                     {new Date(request.created_at).toLocaleString()}
@@ -136,7 +136,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
                 </div>
                 {request.completed_at && (
                   <div>
-                    <h3 className="text-sm font-medium text-zinc-300 mb-1">Completed</h3>
+                    <h3 className="text-sm font-medium text-zinc-600 mb-1">Completed</h3>
                     <div className="flex items-center gap-1.5 text-sm text-zinc-400">
                       <Clock className="h-3.5 w-3.5" />
                       {new Date(request.completed_at).toLocaleString()}
@@ -146,7 +146,7 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
               </div>
               {request.completion_notes && (
                 <div>
-                  <h3 className="text-sm font-medium text-zinc-300 mb-1">Completion Notes</h3>
+                  <h3 className="text-sm font-medium text-zinc-600 mb-1">Completion Notes</h3>
                   <p className="text-sm text-zinc-400 italic">{request.completion_notes}</p>
                 </div>
               )}
@@ -200,8 +200,8 @@ export default function MaintenanceDetailPage({ params }: { params: Promise<{ id
 
           <Card>
             <CardContent>
-              <h3 className="text-sm font-medium text-zinc-300 mb-1">Time Open</h3>
-              <p className="text-2xl font-bold text-zinc-100">
+              <h3 className="text-sm font-medium text-zinc-600 mb-1">Time Open</h3>
+              <p className="text-2xl font-bold text-zinc-800">
                 {request.completed_at
                   ? `${Math.round((new Date(request.completed_at).getTime() - new Date(request.created_at).getTime()) / (1000 * 60 * 60))} hrs`
                   : `${Math.round((Date.now() - new Date(request.created_at).getTime()) / (1000 * 60 * 60))} hrs`}

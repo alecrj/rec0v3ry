@@ -4,11 +4,11 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 
 const MOODS = [
-  { rating: 1, emoji: "😢", label: "Struggling", color: "text-red-400", bg: "bg-red-900/40 border-red-700" },
-  { rating: 2, emoji: "😕", label: "Rough day", color: "text-orange-400", bg: "bg-orange-900/40 border-orange-700" },
-  { rating: 3, emoji: "😐", label: "Okay", color: "text-yellow-400", bg: "bg-yellow-900/40 border-yellow-700" },
-  { rating: 4, emoji: "🙂", label: "Pretty good", color: "text-green-400", bg: "bg-green-900/40 border-green-700" },
-  { rating: 5, emoji: "😄", label: "Doing great", color: "text-emerald-400", bg: "bg-emerald-900/40 border-emerald-700" },
+  { rating: 1, emoji: "😢", label: "Struggling", color: "text-red-600", bg: "bg-red-50 border-red-200" },
+  { rating: 2, emoji: "😕", label: "Rough day", color: "text-orange-600", bg: "bg-orange-50 border-orange-200" },
+  { rating: 3, emoji: "😐", label: "Okay", color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200" },
+  { rating: 4, emoji: "🙂", label: "Pretty good", color: "text-green-600", bg: "bg-green-50 border-green-200" },
+  { rating: 5, emoji: "😄", label: "Doing great", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
 ];
 
 interface WellnessCheckInProps {
@@ -38,9 +38,9 @@ export function WellnessCheckIn({ onComplete }: WellnessCheckInProps) {
 
   if (submitted) {
     return (
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 text-center">
+      <div className="bg-white border border-zinc-200 rounded-xl p-6 text-center">
         <div className="text-4xl mb-2">{selectedMood?.emoji}</div>
-        <p className="text-lg font-semibold text-white">Checked in!</p>
+        <p className="text-lg font-semibold text-zinc-900">Checked in!</p>
         <p className="text-sm text-zinc-400 mt-1">
           {selectedRating && selectedRating >= 4
             ? "Keep it up — you're doing amazing."
@@ -53,9 +53,9 @@ export function WellnessCheckIn({ onComplete }: WellnessCheckInProps) {
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6">
+    <div className="bg-white border border-zinc-200 rounded-xl p-6">
       <div className="mb-5">
-        <h2 className="text-lg font-semibold text-white">How are you feeling today?</h2>
+        <h2 className="text-lg font-semibold text-zinc-900">How are you feeling today?</h2>
         <p className="text-sm text-zinc-400 mt-1">Take a moment to check in with yourself.</p>
       </div>
 
@@ -68,7 +68,7 @@ export function WellnessCheckIn({ onComplete }: WellnessCheckInProps) {
             className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all duration-150 ${
               selectedRating === mood.rating
                 ? `${mood.bg} scale-110 shadow-lg`
-                : "border-zinc-700 bg-zinc-800 hover:border-zinc-500"
+                : "border-zinc-200 bg-zinc-100 hover:border-zinc-400"
             }`}
           >
             <span className="text-3xl leading-none">{mood.emoji}</span>
@@ -83,7 +83,7 @@ export function WellnessCheckIn({ onComplete }: WellnessCheckInProps) {
       {selectedRating && !showNote && (
         <button
           onClick={() => setShowNote(true)}
-          className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors mb-4 underline underline-offset-2"
+          className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors mb-4 underline underline-offset-2"
         >
           Want to share more?
         </button>
@@ -96,7 +96,7 @@ export function WellnessCheckIn({ onComplete }: WellnessCheckInProps) {
           placeholder="Anything on your mind? (optional)"
           maxLength={500}
           rows={3}
-          className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-4 placeholder-zinc-500"
+          className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488] resize-none mb-4 placeholder-zinc-500"
         />
       )}
 
@@ -107,7 +107,7 @@ export function WellnessCheckIn({ onComplete }: WellnessCheckInProps) {
           mutation.mutate({ moodRating: selectedRating, note: note || undefined });
         }}
         disabled={!selectedRating || mutation.isPending}
-        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
+        className="w-full py-3 bg-[#0d9488] hover:bg-[#0f766e] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
       >
         {mutation.isPending ? "Saving..." : "Submit Check-in"}
       </button>

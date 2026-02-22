@@ -165,13 +165,13 @@ export default function MessagesInboxPage() {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
               />
             </div>
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value as typeof selectedFilter)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Messages</option>
               <option value="unread">Unread</option>
@@ -200,10 +200,10 @@ export default function MessagesInboxPage() {
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="animate-pulse flex items-start gap-4">
-                  <div className="w-9 h-9 bg-zinc-700 rounded-full" />
+                  <div className="w-9 h-9 bg-zinc-200 rounded-full" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-zinc-700 rounded" />
-                    <div className="h-3 w-48 bg-zinc-700 rounded" />
+                    <div className="h-4 w-32 bg-zinc-200 rounded" />
+                    <div className="h-3 w-48 bg-zinc-200 rounded" />
                   </div>
                 </div>
               ))}
@@ -219,21 +219,21 @@ export default function MessagesInboxPage() {
             />
           </CardContent>
         ) : (
-          <div className="divide-y divide-zinc-800/50">
+          <div className="divide-y divide-zinc-200/50">
             {filteredConversations.map((conversation) => (
               <Link
                 key={conversation.id}
                 href={`/messages/${conversation.id}`}
-                className="block px-6 py-4 hover:bg-zinc-800/50 transition-colors"
+                className="block px-6 py-4 hover:bg-zinc-100 transition-colors"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 p-2 bg-zinc-800 rounded-full">
+                  <div className="flex-shrink-0 p-2 bg-zinc-100 rounded-full">
                     {getConversationIcon(conversation.conversation_type)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <h3 className={`text-sm font-medium ${conversation.unreadCount > 0 ? "text-zinc-100" : "text-zinc-300"}`}>
+                        <h3 className={`text-sm font-medium ${conversation.unreadCount > 0 ? "text-zinc-800" : "text-zinc-600"}`}>
                           {conversation.displayTitle}
                         </h3>
                         {conversation.house_name && (
@@ -253,14 +253,14 @@ export default function MessagesInboxPage() {
                           onClick={(e) => {
                             e.preventDefault();
                           }}
-                          className="p-1 hover:bg-zinc-700 rounded"
+                          className="p-1 hover:bg-zinc-100 rounded"
                         >
                           <MoreVertical className="h-4 w-4 text-zinc-500" />
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <p className={`text-sm truncate ${conversation.unreadCount > 0 ? "text-zinc-300 font-medium" : "text-zinc-500"}`}>
+                      <p className={`text-sm truncate ${conversation.unreadCount > 0 ? "text-zinc-600 font-medium" : "text-zinc-500"}`}>
                         {conversation.lastMessage?.content || "No messages yet"}
                       </p>
                       {conversation.unreadCount > 0 && (

@@ -104,7 +104,7 @@ export default function InvoicesPage() {
       render: (_val, row) => (
         <Link
           href={`/billing/invoices/${row.id}`}
-          className="text-sm font-mono font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
+          className="text-sm font-medium tabular-nums text-indigo-400 hover:text-indigo-600 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {row.invoice_number ?? "—"}
@@ -115,7 +115,7 @@ export default function InvoicesPage() {
       key: "resident",
       header: "Resident",
       render: (_val, row) => (
-        <p className="text-sm font-medium text-zinc-100">
+        <p className="text-sm font-medium text-zinc-800">
           {row.resident ? `${row.resident.first_name} ${row.resident.last_name}` : "—"}
         </p>
       ),
@@ -150,7 +150,7 @@ export default function InvoicesPage() {
       align: "right",
       sortable: true,
       render: (_val, row) => (
-        <span className="text-sm font-semibold text-zinc-100">
+        <span className="text-sm font-semibold text-zinc-800">
           {formatCurrency(parseFloat(row.total ?? "0"))}
         </span>
       ),
@@ -203,12 +203,12 @@ export default function InvoicesPage() {
               placeholder="Search by name or invoice number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
           </div>
         </div>
 
-        <div className="border-b border-zinc-800 mt-4">
+        <div className="border-b border-zinc-200 mt-4">
           <div className="flex overflow-x-auto px-4">
             {tabs.map((tab) => (
               <button
@@ -217,7 +217,7 @@ export default function InvoicesPage() {
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-indigo-500 text-indigo-400"
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
+                    : "border-transparent text-zinc-500 hover:text-zinc-600"
                 }`}
               >
                 {tab.label}
@@ -253,7 +253,7 @@ export default function InvoicesPage() {
             rowActions={(row) => (
               <Link
                 href={`/billing/invoices/${row.id}`}
-                className="text-indigo-400 hover:text-indigo-300"
+                className="text-indigo-400 hover:text-indigo-600"
               >
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
@@ -262,7 +262,7 @@ export default function InvoicesPage() {
         )}
 
         {filteredInvoices.length > 0 && (
-          <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+          <div className="px-4 py-3 border-t border-zinc-200/50 bg-zinc-100">
             <p className="text-sm text-zinc-500">
               Showing {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? "s" : ""}
             </p>

@@ -35,13 +35,13 @@ function EmbeddedSigningModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 rounded-2xl shadow-xl w-full max-w-4xl mx-4 border border-zinc-800 h-[85vh] flex flex-col">
-        <div className="p-4 border-b border-zinc-800 flex items-center justify-between flex-shrink-0">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl mx-4 border border-zinc-200 h-[85vh] flex flex-col">
+        <div className="p-4 border-b border-zinc-200 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
-            <PenTool className="h-4 w-4 text-indigo-400" />
-            <h2 className="text-lg font-semibold text-zinc-100">Sign Document</h2>
+            <PenTool className="h-4 w-4 text-[#0d9488]" />
+            <h2 className="text-lg font-semibold text-zinc-800">Sign Document</h2>
           </div>
-          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} className="p-1 text-zinc-500 hover:text-zinc-600">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -56,8 +56,8 @@ function EmbeddedSigningModal({
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <PenTool className="h-12 w-12 text-indigo-400 mb-4" />
-            <h3 className="text-lg font-semibold text-zinc-100 mb-2">DocuSign Signing</h3>
+            <PenTool className="h-12 w-12 text-[#0d9488] mb-4" />
+            <h3 className="text-lg font-semibold text-zinc-800 mb-2">DocuSign Signing</h3>
             <p className="text-sm text-zinc-400 mb-6 max-w-md">
               The signing experience will open here when DocuSign is fully configured.
               For now, click below to open the signing page in a new tab.
@@ -66,7 +66,7 @@ function EmbeddedSigningModal({
               href={signingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0d9488] text-white rounded-lg font-medium hover:bg-[#0d9488] text-sm"
             >
               <ExternalLink className="h-4 w-4" />
               Open Signing Page
@@ -128,7 +128,7 @@ export default function ResidentDocumentsPage() {
   const getSensitivityLabel = (level: string | null) => {
     const labels: Record<string, { label: string; className: string }> = {
       public: { label: "Public", className: "text-zinc-500" },
-      internal: { label: "Internal", className: "text-indigo-400" },
+      internal: { label: "Internal", className: "text-[#0d9488]" },
       confidential: { label: "Confidential", className: "text-amber-400" },
       part2_protected: { label: "Part 2 Protected", className: "text-red-400" },
     };
@@ -177,10 +177,10 @@ export default function ResidentDocumentsPage() {
     return (
       <div className="p-4 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-100">My Documents</h1>
+          <h1 className="text-2xl font-bold text-zinc-800">My Documents</h1>
           <p className="text-zinc-400 mt-1">View and sign your documents</p>
         </div>
-        <div className="bg-zinc-800/40 border border-zinc-800 rounded-lg p-6 text-center">
+        <div className="bg-zinc-100 border border-zinc-200 rounded-lg p-6 text-center">
           <FileText className="h-10 w-10 text-zinc-500 mx-auto mb-3" />
           <p className="text-zinc-400">No resident account linked. Contact your house manager.</p>
         </div>
@@ -191,7 +191,7 @@ export default function ResidentDocumentsPage() {
   return (
     <div className="p-4 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">My Documents</h1>
+        <h1 className="text-2xl font-bold text-zinc-800">My Documents</h1>
         <p className="text-zinc-400 mt-1">View and sign your documents</p>
       </div>
 
@@ -199,7 +199,7 @@ export default function ResidentDocumentsPage() {
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <PenTool className="h-5 w-5 text-amber-400" />
-            <h2 className="font-semibold text-amber-300">
+            <h2 className="font-semibold text-amber-600">
               {pendingSignatures.length} Document{pendingSignatures.length > 1 ? "s" : ""} Awaiting Your Signature
             </h2>
           </div>
@@ -207,14 +207,14 @@ export default function ResidentDocumentsPage() {
             {pendingSignatures.map((doc) => (
               <div
                 key={doc.id}
-                className="bg-zinc-900 rounded-lg border border-amber-500/30 p-4 flex items-center justify-between"
+                className="bg-white rounded-lg border border-amber-500/30 p-4 flex items-center justify-between"
               >
                 <div className="flex items-start gap-3 flex-1">
                   <div className="p-2 bg-amber-500/15 rounded-lg">
                     <PenTool className="h-4 w-4 text-amber-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-zinc-100">{doc.title ?? doc.description}</p>
+                    <p className="font-medium text-zinc-800">{doc.title ?? doc.description}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {doc.created_at && (
                         <p className="text-sm text-zinc-400">
@@ -222,7 +222,7 @@ export default function ResidentDocumentsPage() {
                         </p>
                       )}
                       {doc.docusign_status === "delivered" && (
-                        <span className="text-xs text-indigo-400 font-medium">Viewed</span>
+                        <span className="text-xs text-[#0d9488] font-medium">Viewed</span>
                       )}
                     </div>
                   </div>
@@ -230,7 +230,7 @@ export default function ResidentDocumentsPage() {
                 <button
                   onClick={() => handleSignNow(doc.id)}
                   disabled={getSigningUrl.isPending}
-                  className="px-4 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-500 text-sm disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 bg-amber-600 text-zinc-900 rounded-lg font-medium hover:bg-amber-500 text-sm disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {getSigningUrl.isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -245,12 +245,12 @@ export default function ResidentDocumentsPage() {
         </div>
       )}
 
-      <div className="bg-zinc-900 rounded-lg border border-zinc-800">
-        <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-100">Signed Documents</h2>
+      <div className="bg-white rounded-lg border border-zinc-200">
+        <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-zinc-800">Signed Documents</h2>
           <span className="text-sm text-zinc-400">{signedDocuments.length + otherDocuments.length} documents</span>
         </div>
-        <div className="divide-y divide-zinc-800/50">
+        <div className="divide-y divide-zinc-200/50">
           {[...signedDocuments, ...otherDocuments].length === 0 ? (
             <div className="p-8 text-center text-zinc-500 text-sm">No documents yet</div>
           ) : (
@@ -258,13 +258,13 @@ export default function ResidentDocumentsPage() {
               const sensitivity = getSensitivityLabel(doc.sensitivity_level);
 
               return (
-                <div key={doc.id} className="p-4 hover:bg-zinc-800/40 transition-colors">
+                <div key={doc.id} className="p-4 hover:bg-zinc-100/40 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-green-500/15 rounded-lg">
                       <CheckCircle className="h-4 w-4 text-green-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-zinc-100">{doc.title ?? doc.description}</p>
+                      <p className="font-medium text-zinc-800">{doc.title ?? doc.description}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {doc.created_at && (
                           <span className="text-sm text-zinc-400">
@@ -282,7 +282,7 @@ export default function ResidentDocumentsPage() {
                       <button
                         onClick={() => handleView(doc.id)}
                         disabled={getDownloadUrl.isPending}
-                        className="p-2 text-zinc-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                        className="p-2 text-zinc-500 hover:text-[#0d9488] hover:bg-[#0d9488]/10 rounded-lg transition-colors"
                         title="View"
                       >
                         <Eye className="h-4 w-4" />
@@ -290,7 +290,7 @@ export default function ResidentDocumentsPage() {
                       <button
                         onClick={() => handleDownload(doc.id)}
                         disabled={getDownloadUrl.isPending}
-                        className="p-2 text-zinc-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                        className="p-2 text-zinc-500 hover:text-[#0d9488] hover:bg-[#0d9488]/10 rounded-lg transition-colors"
                         title="Download"
                       >
                         <Download className="h-4 w-4" />
@@ -304,12 +304,12 @@ export default function ResidentDocumentsPage() {
         </div>
       </div>
 
-      <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-4">
+      <div className="bg-[#0d9488]/10 border border-[#0d9488]/30 rounded-lg p-4">
         <div className="flex items-start gap-2">
-          <Shield className="h-5 w-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+          <Shield className="h-5 w-5 text-[#0d9488] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-indigo-100">Your Privacy</p>
-            <p className="text-xs text-indigo-200 mt-1">
+            <p className="text-sm font-medium text-[#0d9488]">Your Privacy</p>
+            <p className="text-xs text-[#0f766e] mt-1">
               Documents marked &quot;Part 2 Protected&quot; are subject to 42 CFR Part 2 regulations.
               Your substance use disorder treatment records cannot be shared without your written consent.
             </p>

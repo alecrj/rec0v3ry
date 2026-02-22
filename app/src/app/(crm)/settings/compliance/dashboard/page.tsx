@@ -120,7 +120,7 @@ export default function ComplianceDashboardPage() {
                 <div className="overflow-x-auto -mx-6">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                      <tr className="border-y border-zinc-200/50 bg-zinc-100">
                         <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resident</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Type</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Expires</th>
@@ -130,8 +130,8 @@ export default function ComplianceDashboardPage() {
                     </thead>
                     <tbody>
                       {expiringConsents.map((consent) => (
-                        <tr key={consent.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
-                          <td className="py-3 px-6 text-sm font-medium text-zinc-100">
+                        <tr key={consent.id} className="border-b border-zinc-200/50 hover:bg-zinc-100 transition-colors">
+                          <td className="py-3 px-6 text-sm font-medium text-zinc-800">
                             {consent.residentName}
                           </td>
                           <td className="py-3 px-4 text-sm text-zinc-400">{consent.consentType}</td>
@@ -176,7 +176,7 @@ export default function ComplianceDashboardPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-sm font-semibold text-red-300">
+                      <span className="text-sm font-semibold text-red-600">
                         {summary?.breaches?.open} open incident(s)
                       </span>
                       {(summary?.breaches?.byRiskLevel?.high ?? 0) > 0 && (
@@ -186,9 +186,9 @@ export default function ComplianceDashboardPage() {
                         <Badge variant="warning">{summary?.breaches?.byRiskLevel?.medium} Medium Risk</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-red-300">Requires immediate attention and investigation</p>
+                    <p className="text-sm text-red-600">Requires immediate attention and investigation</p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-red-300">View Details</Button>
+                  <Button variant="ghost" size="sm" className="text-red-600">View Details</Button>
                 </div>
               </CardContent>
             </Card>

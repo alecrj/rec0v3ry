@@ -143,10 +143,10 @@ export default function InvoiceDetailPage() {
     return (
       <PageContainer>
         <div className="flex items-center gap-4 mb-6">
-          <div className="h-8 w-8 bg-zinc-700 rounded-lg animate-shimmer" />
+          <div className="h-8 w-8 bg-zinc-200 rounded-lg animate-shimmer" />
           <div className="space-y-2">
-            <div className="h-7 w-48 bg-zinc-700 rounded animate-shimmer" />
-            <div className="h-4 w-32 bg-zinc-700 rounded animate-shimmer" />
+            <div className="h-7 w-48 bg-zinc-200 rounded animate-shimmer" />
+            <div className="h-4 w-32 bg-zinc-200 rounded animate-shimmer" />
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -216,7 +216,7 @@ export default function InvoiceDetailPage() {
       {/* Back link */}
       <Link
         href="/billing/invoices"
-        className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-300 transition-colors -mt-4"
+        className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-600 transition-colors -mt-4"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Invoices
@@ -231,26 +231,26 @@ export default function InvoiceDetailPage() {
               <div className="flex items-start justify-between mb-6">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Invoice Number</p>
-                  <p className="text-xl font-bold font-mono text-zinc-100">{invoice.invoice_number}</p>
+                  <p className="text-xl font-bold tabular-nums text-zinc-800">{invoice.invoice_number}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Issue Date</p>
-                  <p className="text-lg font-semibold text-zinc-100">
+                  <p className="text-lg font-semibold text-zinc-800">
                     {new Date(invoice.issue_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 mb-6 pb-6 border-b border-zinc-800">
+              <div className="grid grid-cols-2 gap-6 mb-6 pb-6 border-b border-zinc-200">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Due Date</p>
-                  <p className="text-lg font-semibold text-zinc-100">
+                  <p className="text-lg font-semibold text-zinc-800">
                     {new Date(invoice.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1">Bill To</p>
-                  <p className="text-lg font-semibold text-zinc-100">{residentName}</p>
+                  <p className="text-lg font-semibold text-zinc-800">{residentName}</p>
                 </div>
               </div>
 
@@ -260,7 +260,7 @@ export default function InvoiceDetailPage() {
                 <div className="overflow-x-auto -mx-6">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                      <tr className="border-y border-zinc-200/50 bg-zinc-100">
                         <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Description</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Type</th>
                         <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Qty</th>
@@ -268,16 +268,16 @@ export default function InvoiceDetailPage() {
                         <th className="text-right py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Amount</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-800/50">
+                    <tbody className="divide-y divide-zinc-200/50">
                       {(invoice.lineItems ?? []).map((item) => (
-                        <tr key={item.id} className="hover:bg-zinc-800/50 transition-colors">
-                          <td className="py-3 px-6 text-sm text-zinc-100">{item.description}</td>
+                        <tr key={item.id} className="hover:bg-zinc-100 transition-colors">
+                          <td className="py-3 px-6 text-sm text-zinc-800">{item.description}</td>
                           <td className="py-3 px-4">
                             <Badge variant="default">{item.payment_type}</Badge>
                           </td>
                           <td className="py-3 px-4 text-sm text-zinc-400 text-right">{item.quantity ?? 1}</td>
                           <td className="py-3 px-4 text-sm text-zinc-400 text-right">{formatCurrency(item.unit_price)}</td>
-                          <td className="py-3 px-6 text-sm font-semibold text-zinc-100 text-right">{formatCurrency(item.amount)}</td>
+                          <td className="py-3 px-6 text-sm font-semibold text-zinc-800 text-right">{formatCurrency(item.amount)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -285,27 +285,27 @@ export default function InvoiceDetailPage() {
                 </div>
 
                 {/* Totals */}
-                <div className="mt-6 pt-4 border-t border-zinc-800">
+                <div className="mt-6 pt-4 border-t border-zinc-200">
                   <div className="flex justify-end">
                     <div className="w-64 space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-zinc-500">Subtotal</span>
-                        <span className="font-medium text-zinc-100">{formatCurrency(subtotal)}</span>
+                        <span className="font-medium text-zinc-800">{formatCurrency(subtotal)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-zinc-500">Tax</span>
-                        <span className="font-medium text-zinc-100">{formatCurrency(taxAmount)}</span>
+                        <span className="font-medium text-zinc-800">{formatCurrency(taxAmount)}</span>
                       </div>
-                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-800">
-                        <span className="text-zinc-100">Total</span>
-                        <span className="text-zinc-100">{formatCurrency(total)}</span>
+                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-200">
+                        <span className="text-zinc-800">Total</span>
+                        <span className="text-zinc-800">{formatCurrency(total)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-zinc-500">Paid</span>
                         <span className="font-semibold text-green-400">{formatCurrency(amountPaid)}</span>
                       </div>
-                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-800">
-                        <span className="text-zinc-100">Balance Due</span>
+                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-zinc-200">
+                        <span className="text-zinc-800">Balance Due</span>
                         <span className="text-indigo-400">{formatCurrency(amountDue)}</span>
                       </div>
                     </div>
@@ -314,9 +314,9 @@ export default function InvoiceDetailPage() {
               </div>
 
               {invoice.notes && (
-                <div className="mt-6 pt-6 border-t border-zinc-800">
+                <div className="mt-6 pt-6 border-t border-zinc-200">
                   <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Notes</p>
-                  <p className="text-sm text-zinc-300 leading-relaxed">{invoice.notes}</p>
+                  <p className="text-sm text-zinc-600 leading-relaxed">{invoice.notes}</p>
                 </div>
               )}
             </CardContent>
@@ -332,20 +332,20 @@ export default function InvoiceDetailPage() {
                 <div className="overflow-x-auto -mx-6">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                      <tr className="border-y border-zinc-200/50 bg-zinc-100">
                         <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Date</th>
                         <th className="text-right py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Amount</th>
                         <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Method</th>
                         <th className="text-left py-3 px-6 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-800/50">
+                    <tbody className="divide-y divide-zinc-200/50">
                       {invoicePayments.map((payment) => (
-                        <tr key={payment.id} className="hover:bg-zinc-800/50 transition-colors">
+                        <tr key={payment.id} className="hover:bg-zinc-100 transition-colors">
                           <td className="py-3 px-6 text-sm text-zinc-400">
                             {new Date(payment.payment_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </td>
-                          <td className="py-3 px-4 text-sm font-semibold text-zinc-100 text-right">
+                          <td className="py-3 px-4 text-sm font-semibold text-zinc-800 text-right">
                             {formatCurrency(payment.amount)}
                           </td>
                           <td className="py-3 px-4 text-sm text-zinc-400 capitalize">
@@ -371,12 +371,12 @@ export default function InvoiceDetailPage() {
               <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 mb-4">Resident Information</h2>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500/15 to-indigo-500/25 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-indigo-300">
+                  <span className="text-sm font-semibold text-indigo-600">
                     {residentName.split(" ").map(n => n[0]).join("").slice(0, 2)}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-zinc-100">{residentName}</p>
+                  <p className="text-sm font-semibold text-zinc-800">{residentName}</p>
                 </div>
               </div>
 
@@ -385,9 +385,9 @@ export default function InvoiceDetailPage() {
                   <div className="flex items-start gap-3">
                     <DollarSign className="h-5 w-5 text-indigo-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-semibold text-indigo-100">Balance Due</p>
-                      <p className="text-2xl font-bold text-indigo-100 mt-1">{formatCurrency(amountDue)}</p>
-                      <p className="text-xs text-indigo-300 mt-2">
+                      <p className="text-sm font-semibold text-indigo-800">Balance Due</p>
+                      <p className="text-2xl font-bold text-indigo-800 mt-1">{formatCurrency(amountDue)}</p>
+                      <p className="text-xs text-indigo-600 mt-2">
                         Due by {new Date(invoice.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
@@ -400,8 +400,8 @@ export default function InvoiceDetailPage() {
                   <div className="flex items-start gap-3">
                     <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-semibold text-green-300">Paid in Full</p>
-                      <p className="text-xs text-green-300 mt-1">Payment complete</p>
+                      <p className="text-sm font-semibold text-green-600">Paid in Full</p>
+                      <p className="text-xs text-green-600 mt-1">Payment complete</p>
                     </div>
                   </div>
                 </div>
@@ -414,9 +414,9 @@ export default function InvoiceDetailPage() {
       {/* Record Payment Modal */}
       {showPaymentModal && invoice.resident && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-md w-full mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Record Payment</h2>
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Record Payment</h2>
               <p className="text-sm text-zinc-500 mt-1">
                 For invoice {invoice.invoice_number}
               </p>
@@ -436,7 +436,7 @@ export default function InvoiceDetailPage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Amount <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -446,20 +446,20 @@ export default function InvoiceDetailPage() {
                   required
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
                   Balance due: {formatCurrency(invoice.amount_due ?? "0")}
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Payment Method <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="cash">Cash</option>
                   <option value="check">Check</option>
@@ -468,12 +468,12 @@ export default function InvoiceDetailPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Notes</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Notes</label>
                 <textarea
                   rows={2}
                   value={paymentNotes}
                   onChange={(e) => setPaymentNotes(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                   placeholder="Optional notes..."
                 />
               </div>
@@ -493,8 +493,8 @@ export default function InvoiceDetailPage() {
       {/* Void Confirmation */}
       {showVoidConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-zinc-900 rounded-xl shadow-2xl max-w-sm w-full mx-4 border border-zinc-800 p-6">
-            <h2 className="text-lg font-bold text-zinc-100 mb-2">Void Invoice?</h2>
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full mx-4 border border-zinc-200 p-6">
+            <h2 className="text-lg font-bold text-zinc-800 mb-2">Void Invoice?</h2>
             <p className="text-sm text-zinc-400 mb-6">
               This will permanently mark invoice {invoice.invoice_number} as void. This action cannot be undone.
             </p>

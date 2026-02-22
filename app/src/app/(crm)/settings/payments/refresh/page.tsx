@@ -33,21 +33,21 @@ export default function StripeConnectRefreshPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-4">
       <div className="text-center max-w-md">
         {createAccountLink.isError ? (
           <>
             <div className="w-20 h-20 bg-amber-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="h-12 w-12 text-amber-400" />
             </div>
-            <h1 className="text-2xl font-bold text-zinc-100 mb-2">Session Expired</h1>
+            <h1 className="text-2xl font-bold text-zinc-800 mb-2">Session Expired</h1>
             <p className="text-zinc-400 mb-1">Unable to resume Stripe onboarding.</p>
             <p className="text-sm text-zinc-500">Redirecting to payment settings...</p>
           </>
         ) : (
           <>
             <Loader2 className="h-12 w-12 animate-spin text-indigo-400 mx-auto mb-6" />
-            <h1 className="text-2xl font-bold text-zinc-100 mb-2">Resuming Stripe Setup</h1>
+            <h1 className="text-2xl font-bold text-zinc-800 mb-2">Resuming Stripe Setup</h1>
             <p className="text-zinc-400">Generating a fresh onboarding link...</p>
           </>
         )}

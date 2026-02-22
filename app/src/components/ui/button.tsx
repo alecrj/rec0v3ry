@@ -27,14 +27,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const baseStyles = cn(
       "inline-flex items-center justify-center gap-2 font-medium text-sm rounded-md transition-all duration-150",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#dc2626] focus-visible:ring-offset-2 focus-visible:ring-offset-white",
       "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none"
     );
 
     const variants = {
       primary: "bg-indigo-500 text-white hover:bg-indigo-400 active:bg-indigo-600",
-      secondary: "bg-zinc-800 text-zinc-200 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-100 active:bg-zinc-600",
-      ghost: "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 active:bg-zinc-700",
+      secondary: "bg-zinc-100 text-zinc-700 border border-zinc-200 hover:bg-zinc-200 hover:text-zinc-800 active:bg-zinc-300",
+      ghost: "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 active:bg-zinc-200",
       destructive: "bg-red-500/90 text-white hover:bg-red-500 active:bg-red-600",
       outline: "text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/10 active:bg-indigo-500/20",
     };

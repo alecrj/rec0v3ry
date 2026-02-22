@@ -54,7 +54,7 @@ function PropertyCard({ property }: { property: Property }) {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
-    <Card className="hover:border-zinc-700 transition-colors">
+    <Card className="hover:border-zinc-200 transition-colors">
       <CardContent>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
@@ -62,7 +62,7 @@ function PropertyCard({ property }: { property: Property }) {
               <Building2 className="h-6 w-6 text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-zinc-100">{property.name}</h3>
+              <h3 className="text-lg font-semibold text-zinc-800">{property.name}</h3>
               <div className="flex items-center gap-1 text-sm text-zinc-400 mt-1">
                 <MapPin className="h-4 w-4" />
                 <span>
@@ -74,17 +74,17 @@ function PropertyCard({ property }: { property: Property }) {
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
             >
               <MoreVertical className="h-5 w-5 text-zinc-500" />
             </button>
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-10 w-48 bg-zinc-900 rounded-lg shadow-lg border border-zinc-800 py-1 z-20">
+                <div className="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-lg border border-zinc-200 py-1 z-20">
                   <Link
                     href={`/admin/properties/${property.id}`}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800/40"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100/40"
                   >
                     <Edit className="h-4 w-4" />
                     Manage Property
@@ -100,27 +100,27 @@ function PropertyCard({ property }: { property: Property }) {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="flex items-center gap-3 p-3 bg-zinc-800/40 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-zinc-100 rounded-lg">
             <Home className="h-5 w-5 text-zinc-500" />
             <div>
               <p className="text-sm text-zinc-500">Houses</p>
-              <p className="text-lg font-semibold text-zinc-100">{property.house_count}</p>
+              <p className="text-lg font-semibold text-zinc-800">{property.house_count}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-zinc-800/40 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-zinc-100 rounded-lg">
             <Users className="h-5 w-5 text-zinc-500" />
             <div>
               <p className="text-sm text-zinc-500">Total Beds</p>
-              <p className="text-lg font-semibold text-zinc-100">{property.total_capacity}</p>
+              <p className="text-lg font-semibold text-zinc-800">{property.total_capacity}</p>
             </div>
           </div>
         </div>
       </CardContent>
 
-      <div className="px-6 py-4 border-t border-zinc-800/50">
+      <div className="px-6 py-4 border-t border-zinc-200/50">
         <Link
           href={`/admin/properties/${property.id}`}
-          className="flex items-center justify-between text-sm font-medium text-indigo-400 hover:text-indigo-300"
+          className="flex items-center justify-between text-sm font-medium text-indigo-400 hover:text-indigo-600"
         >
           <span>Manage Houses</span>
           <ChevronRight className="h-4 w-4" />
@@ -272,14 +272,14 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
   if (!isOpen) return null;
 
   const inputClass =
-    "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+    "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={resetAndClose} />
-      <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl mx-4 border border-zinc-800 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 border border-zinc-200 max-h-[90vh] overflow-y-auto">
         {/* Header with step indicator */}
-        <div className="p-6 border-b border-zinc-800 sticky top-0 bg-zinc-900 z-10">
+        <div className="p-6 border-b border-zinc-200 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3 mb-3">
             {[1, 2].map((s) => (
               <div key={s} className="flex items-center gap-2">
@@ -289,19 +289,19 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                       ? "bg-green-500/20 text-green-400"
                       : step === s
                       ? "bg-indigo-500 text-white"
-                      : "bg-zinc-800 text-zinc-500"
+                      : "bg-zinc-100 text-zinc-500"
                   }`}
                 >
                   {step > s ? <Check className="h-3.5 w-3.5" /> : s}
                 </div>
-                <span className={`text-xs font-medium ${step >= s ? "text-zinc-300" : "text-zinc-600"}`}>
+                <span className={`text-xs font-medium ${step >= s ? "text-zinc-600" : "text-zinc-600"}`}>
                   {s === 1 ? "Property" : "House Setup"}
                 </span>
                 {s === 1 && <ChevronRight className="h-3 w-3 text-zinc-600" />}
               </div>
             ))}
           </div>
-          <h2 className="text-xl font-bold text-zinc-100">
+          <h2 className="text-xl font-bold text-zinc-800">
             {step === 1 ? "Add New Property" : step === 2 ? "Set Up Your House" : "All Done!"}
           </h2>
           <p className="text-sm text-zinc-500 mt-1">
@@ -317,7 +317,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
         {step === 1 && (
           <form onSubmit={handlePropertySubmit} className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Property Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -331,7 +331,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                 Street Address <span className="text-red-400">*</span>
               </label>
               <input
@@ -345,7 +345,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   City <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -357,7 +357,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   State <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -371,7 +371,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   ZIP <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -414,7 +414,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             {/* Basic house info */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   House Name <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -428,7 +428,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Gender</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Gender</label>
                 <select
                   className={inputClass}
                   value={gender}
@@ -445,7 +445,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             {/* Bedroom + Bathroom counts */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   How many bedrooms? <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -460,7 +460,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">
                   Bathrooms
                 </label>
                 <input
@@ -479,7 +479,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             {roomConfigs.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-zinc-300">
+                  <label className="block text-sm font-medium text-zinc-600">
                     Configure each bedroom
                   </label>
                   <span className="text-xs text-zinc-500">Click a name to rename</span>
@@ -488,13 +488,13 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                   {roomConfigs.map((room, i) => (
                     <div
                       key={i}
-                      className="border border-zinc-800 rounded-lg p-4 bg-zinc-800/20 hover:border-zinc-700 transition-colors"
+                      className="border border-zinc-200 rounded-lg p-4 bg-zinc-100/20 hover:border-zinc-200 transition-colors"
                     >
                       {/* Room name — click to edit */}
                       {room.isEditing ? (
                         <input
                           type="text"
-                          className="w-full h-7 px-2 text-sm font-semibold text-zinc-100 bg-zinc-800 border border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full h-7 px-2 text-sm font-semibold text-zinc-800 bg-zinc-100 border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           value={room.name}
                           autoFocus
                           onChange={(e) => updateRoom(i, { name: e.target.value })}
@@ -506,7 +506,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                       ) : (
                         <button
                           type="button"
-                          className="text-sm font-semibold text-zinc-100 hover:text-indigo-400 transition-colors cursor-text"
+                          className="text-sm font-semibold text-zinc-800 hover:text-indigo-400 transition-colors cursor-text"
                           onClick={() => updateRoom(i, { isEditing: true })}
                         >
                           {room.name}
@@ -524,23 +524,23 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                       </div>
 
                       {/* +/- Beds */}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-800/50">
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-200/50">
                         <span className="text-xs text-zinc-500">Beds</span>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            className="w-7 h-7 flex items-center justify-center rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors disabled:opacity-30"
+                            className="w-7 h-7 flex items-center justify-center rounded bg-zinc-100 hover:bg-zinc-100 text-zinc-600 text-sm font-bold transition-colors disabled:opacity-30"
                             onClick={() => adjustBeds(i, -1)}
                             disabled={room.beds <= 1}
                           >
                             −
                           </button>
-                          <span className="text-sm font-semibold text-zinc-100 w-4 text-center font-mono">
+                          <span className="text-sm font-semibold text-zinc-800 w-4 text-center tabular-nums">
                             {room.beds}
                           </span>
                           <button
                             type="button"
-                            className="w-7 h-7 flex items-center justify-center rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold transition-colors disabled:opacity-30"
+                            className="w-7 h-7 flex items-center justify-center rounded bg-zinc-100 hover:bg-zinc-100 text-zinc-600 text-sm font-bold transition-colors disabled:opacity-30"
                             onClick={() => adjustBeds(i, 1)}
                             disabled={room.beds >= 8}
                           >
@@ -560,16 +560,16 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
                 <div className="flex items-center gap-6 text-sm">
                   <div>
                     <span className="text-zinc-400">Bedrooms: </span>
-                    <span className="font-semibold text-zinc-100">{roomConfigs.length}</span>
+                    <span className="font-semibold text-zinc-800">{roomConfigs.length}</span>
                   </div>
                   <div>
                     <span className="text-zinc-400">Total Beds: </span>
-                    <span className="font-semibold text-zinc-100">{totalBeds}</span>
+                    <span className="font-semibold text-zinc-800">{totalBeds}</span>
                   </div>
                   {parseInt(bathrooms) > 0 && (
                     <div>
                       <span className="text-zinc-400">Bathrooms: </span>
-                      <span className="font-semibold text-zinc-100">{bathrooms}</span>
+                      <span className="font-semibold text-zinc-800">{bathrooms}</span>
                     </div>
                   )}
                 </div>
@@ -616,7 +616,7 @@ function CreatePropertyModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-green-400" />
             </div>
-            <h3 className="text-xl font-bold text-zinc-100">Property Ready!</h3>
+            <h3 className="text-xl font-bold text-zinc-800">Property Ready!</h3>
             <p className="text-sm text-zinc-500 mt-2">
               {propForm.name} is set up with {roomConfigs.length} bedrooms and {totalBeds} beds.
             </p>

@@ -144,8 +144,8 @@ export default function FamilyPortalPage() {
           <div className="flex items-start gap-3">
             <Shield className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-sm font-semibold text-amber-300">Privacy Notice</h3>
-              <p className="text-sm text-amber-300 mt-1">
+              <h3 className="text-sm font-semibold text-amber-600">Privacy Notice</h3>
+              <p className="text-sm text-amber-600 mt-1">
                 Family portal access requires active consent from the resident. All data viewed through the
                 portal is logged. Family members can only view information they have
                 been explicitly consented to access.
@@ -201,7 +201,7 @@ export default function FamilyPortalPage() {
               placeholder="Search contacts or residents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function FamilyPortalPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-y border-zinc-800/50 bg-zinc-800/50">
+                    <tr className="border-y border-zinc-200/50 bg-zinc-100">
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Contact</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resident</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Relationship</th>
@@ -237,10 +237,10 @@ export default function FamilyPortalPage() {
                   </thead>
                   <tbody>
                     {filteredUsers.map((user) => (
-                      <tr key={user.contact_id} className="border-b border-zinc-800/50 hover:bg-zinc-800/50 transition-colors">
+                      <tr key={user.contact_id} className="border-b border-zinc-200/50 hover:bg-zinc-100 transition-colors">
                         <td className="py-3 px-4">
                           <div>
-                            <div className="text-sm font-medium text-zinc-100">
+                            <div className="text-sm font-medium text-zinc-800">
                               {user.contact_first_name} {user.contact_last_name}
                             </div>
                             {user.contact_email && (
@@ -251,7 +251,7 @@ export default function FamilyPortalPage() {
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-sm font-medium text-zinc-100">
+                        <td className="py-3 px-4 text-sm font-medium text-zinc-800">
                           {user.resident_first_name} {user.resident_last_name}
                         </td>
                         <td className="py-3 px-4 text-sm text-zinc-400">
@@ -294,7 +294,7 @@ export default function FamilyPortalPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="px-4 py-3 border-t border-zinc-800/50 bg-zinc-800/50">
+              <div className="px-4 py-3 border-t border-zinc-200/50 bg-zinc-100">
                 <p className="text-sm text-zinc-500">
                   Showing {filteredUsers.length} contact{filteredUsers.length !== 1 ? "s" : ""}
                 </p>
@@ -307,9 +307,9 @@ export default function FamilyPortalPage() {
       {showAddModal && orgId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Add Family Contact</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Add Family Contact</h2>
             </div>
             <form
               onSubmit={(e: FormEvent) => {
@@ -330,12 +330,12 @@ export default function FamilyPortalPage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Resident <span className="text-red-400">*</span></label>
                 <select
                   required
                   value={contactForm.residentId}
                   onChange={(e) => setContactForm({ ...contactForm, residentId: e.target.value })}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="">Select a resident</option>
                   {(residents?.items ?? []).map((r) => (
@@ -345,36 +345,36 @@ export default function FamilyPortalPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name <span className="text-red-400">*</span></label>
-                  <input type="text" required value={contactForm.firstName} onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">First Name <span className="text-red-400">*</span></label>
+                  <input type="text" required value={contactForm.firstName} onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name <span className="text-red-400">*</span></label>
-                  <input type="text" required value={contactForm.lastName} onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Last Name <span className="text-red-400">*</span></label>
+                  <input type="text" required value={contactForm.lastName} onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Relationship <span className="text-red-400">*</span></label>
-                <input type="text" required value={contactForm.relationship} onChange={(e) => setContactForm({ ...contactForm, relationship: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" placeholder="e.g., Parent, Spouse, Sibling" />
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Relationship <span className="text-red-400">*</span></label>
+                <input type="text" required value={contactForm.relationship} onChange={(e) => setContactForm({ ...contactForm, relationship: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" placeholder="e.g., Parent, Spouse, Sibling" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
-                  <input type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Email</label>
+                  <input type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
-                  <input type="tel" value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Phone</label>
+                  <input type="tel" value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500" />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={contactForm.isEmergencyContact} onChange={(e) => setContactForm({ ...contactForm, isEmergencyContact: e.target.checked })} className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" />
-                  <span className="text-sm text-zinc-300">Emergency contact</span>
+                  <input type="checkbox" checked={contactForm.isEmergencyContact} onChange={(e) => setContactForm({ ...contactForm, isEmergencyContact: e.target.checked })} className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500" />
+                  <span className="text-sm text-zinc-600">Emergency contact</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={contactForm.canReceiveUpdates} onChange={(e) => setContactForm({ ...contactForm, canReceiveUpdates: e.target.checked })} className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" />
-                  <span className="text-sm text-zinc-300">Can receive updates</span>
+                  <input type="checkbox" checked={contactForm.canReceiveUpdates} onChange={(e) => setContactForm({ ...contactForm, canReceiveUpdates: e.target.checked })} className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500" />
+                  <span className="text-sm text-zinc-600">Can receive updates</span>
                 </label>
               </div>
               <div className="flex justify-end gap-3 pt-2">
@@ -392,9 +392,9 @@ export default function FamilyPortalPage() {
       {managingContact && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setManagingContact(null)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Manage Contact</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Manage Contact</h2>
               <p className="text-sm text-zinc-500 mt-1">{managingContact.name}</p>
             </div>
             <div className="p-6 space-y-3">
@@ -441,7 +441,7 @@ export default function FamilyPortalPage() {
                 {deleteContact.isPending ? "Removing..." : "Remove Contact"}
               </Button>
             </div>
-            <div className="p-6 border-t border-zinc-800">
+            <div className="p-6 border-t border-zinc-200">
               <Button variant="secondary" className="w-full justify-center" onClick={() => setManagingContact(null)}>Close</Button>
             </div>
           </div>

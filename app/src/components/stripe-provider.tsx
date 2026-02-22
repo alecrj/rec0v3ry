@@ -28,14 +28,14 @@ export function StripeProvider({
       options={{
         clientSecret,
         appearance: {
-          theme: "night",
+          theme: "stripe",
           variables: {
-            colorPrimary: "#6366f1",
-            colorBackground: "#18181b",
-            colorText: "#f4f4f5",
-            colorDanger: "#ef4444",
+            colorPrimary: "#dc2626",
+            colorBackground: "#ffffff",
+            colorText: "#0a0a0a",
+            colorDanger: "#dc2626",
             fontFamily: "system-ui, sans-serif",
-            borderRadius: "8px",
+            borderRadius: "2px",
           },
         },
       }}

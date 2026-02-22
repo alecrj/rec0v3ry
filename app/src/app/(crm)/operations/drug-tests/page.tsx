@@ -108,7 +108,7 @@ export default function DrugTestsPage() {
       render: (_val, row) => (
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-zinc-500" />
-          <span className="text-sm font-medium text-zinc-100">
+          <span className="text-sm font-medium text-zinc-800">
             {row.resident_first_name} {row.resident_last_name}
           </span>
         </div>
@@ -196,11 +196,11 @@ export default function DrugTestsPage() {
       <Card>
         <CardContent>
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-zinc-300">Filter:</span>
+            <span className="text-sm font-medium text-zinc-600">Filter:</span>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              className="h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
               <option value="all">All Types</option>
               <option value="urine">Urine</option>
@@ -251,9 +251,9 @@ export default function DrugTestsPage() {
       {showCreateModal && orgId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Record Drug Test</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Record Drug Test</h2>
               <div className="flex items-center gap-1.5 mt-1.5">
                 <Shield className="h-3.5 w-3.5 text-amber-400" />
                 <p className="text-xs text-zinc-500">Protected record</p>
@@ -273,8 +273,8 @@ export default function DrugTestsPage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident <span className="text-red-400">*</span></label>
-                <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={testForm.residentId} onChange={(e) => setTestForm({ ...testForm, residentId: e.target.value })}>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Resident <span className="text-red-400">*</span></label>
+                <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" required value={testForm.residentId} onChange={(e) => setTestForm({ ...testForm, residentId: e.target.value })}>
                   <option value="">Select resident...</option>
                   {(residentList?.items ?? []).map((r) => (
                     <option key={r.id} value={r.id}>{r.first_name} {r.last_name}</option>
@@ -283,8 +283,8 @@ export default function DrugTestsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Test Type <span className="text-red-400">*</span></label>
-                  <select className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" value={testForm.testType} onChange={(e) => setTestForm({ ...testForm, testType: e.target.value })}>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Test Type <span className="text-red-400">*</span></label>
+                  <select className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" value={testForm.testType} onChange={(e) => setTestForm({ ...testForm, testType: e.target.value })}>
                     <option value="urine">Urine</option>
                     <option value="breathalyzer">Breathalyzer</option>
                     <option value="oral_swab">Oral Swab</option>
@@ -293,13 +293,13 @@ export default function DrugTestsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date <span className="text-red-400">*</span></label>
-                  <input type="date" className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40" required value={testForm.testDate} onChange={(e) => setTestForm({ ...testForm, testDate: e.target.value })} />
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Date <span className="text-red-400">*</span></label>
+                  <input type="date" className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100" required value={testForm.testDate} onChange={(e) => setTestForm({ ...testForm, testDate: e.target.value })} />
                 </div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500" checked={testForm.isRandom} onChange={(e) => setTestForm({ ...testForm, isRandom: e.target.checked })} />
-                <span className="text-sm text-zinc-300">Random test</span>
+                <input type="checkbox" className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500" checked={testForm.isRandom} onChange={(e) => setTestForm({ ...testForm, isRandom: e.target.checked })} />
+                <span className="text-sm text-zinc-600">Random test</span>
               </label>
               <div className="pt-2 flex justify-end gap-3">
                 <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>

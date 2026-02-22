@@ -129,13 +129,13 @@ function RecordPaymentModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-zinc-700">
+      <div className="relative bg-white border border-zinc-200 rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-zinc-200">
           <div>
-            <h2 className="text-lg font-semibold text-white">Record Payment</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Record Payment</h2>
             <p className="text-sm text-zinc-400 mt-0.5">Log a manual payment from a resident</p>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded">
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 p-1 rounded">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -154,15 +154,15 @@ function RecordPaymentModal({
           className="p-6 space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resident</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Resident</label>
             {residentsLoading ? (
-              <div className="h-10 bg-zinc-800 rounded-lg animate-pulse" />
+              <div className="h-10 bg-zinc-100 rounded-lg animate-pulse" />
             ) : (
               <select
                 value={residentId}
                 onChange={(e) => setResidentId(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select resident...</option>
                 {residents?.map((r) => (
@@ -173,7 +173,7 @@ function RecordPaymentModal({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Amount ($)</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Amount ($)</label>
               <input
                 type="number"
                 step="0.01"
@@ -182,22 +182,22 @@ function RecordPaymentModal({
                 onChange={(e) => setAmount(e.target.value)}
                 required
                 placeholder="0.00"
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Date</label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Payment Method</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Payment Method</label>
             <select
               value={methodLabel}
               onChange={(e) => {
@@ -205,7 +205,7 @@ function RecordPaymentModal({
                 const found = methodLabels.find((m) => m.label === e.target.value);
                 if (found) setMethod(found.value);
               }}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {methodLabels.map((m) => (
                 <option key={m.label} value={m.label}>{m.label}</option>
@@ -213,7 +213,7 @@ function RecordPaymentModal({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">
               Reference Number <span className="text-zinc-500">(optional)</span>
             </label>
             <input
@@ -221,14 +221,14 @@ function RecordPaymentModal({
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder="Check #, transaction ID, etc."
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg font-medium hover:bg-zinc-800 transition-colors"
+              className="flex-1 px-4 py-2 border border-zinc-300 text-zinc-600 rounded-lg font-medium hover:bg-zinc-100 transition-colors"
             >
               Cancel
             </button>
@@ -281,13 +281,13 @@ function AddResidentModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-zinc-700">
+      <div className="relative bg-white border border-zinc-200 rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-zinc-200">
           <div>
-            <h2 className="text-lg font-semibold text-white">Add Resident</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Add Resident</h2>
             <p className="text-sm text-zinc-400 mt-0.5">Create a new lead in your pipeline</p>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded">
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 p-1 rounded">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -308,52 +308,52 @@ function AddResidentModal({
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">First Name</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">First Name</label>
               <input
                 type="text"
                 value={form.firstName}
                 onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Last Name</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Last Name</label>
               <input
                 type="text"
                 value={form.lastName}
                 onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
                 required
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Email</label>
             <input
               type="email"
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Phone</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Phone</label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Date of Birth</label>
+              <label className="block text-sm font-medium text-zinc-600 mb-1.5">Date of Birth</label>
               <input
                 type="date"
                 value={form.dob}
                 onChange={(e) => setForm((f) => ({ ...f, dob: e.target.value }))}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -361,7 +361,7 @@ function AddResidentModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg font-medium hover:bg-zinc-800 transition-colors"
+              className="flex-1 px-4 py-2 border border-zinc-300 text-zinc-600 rounded-lg font-medium hover:bg-zinc-100 transition-colors"
             >
               Cancel
             </button>
@@ -401,26 +401,26 @@ function OutstandingBreakdown({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-zinc-700">
+      <div className="relative bg-white border border-zinc-200 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-zinc-200">
           <div>
-            <h2 className="text-lg font-semibold text-white">Outstanding Balances</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Outstanding Balances</h2>
             <p className="text-sm text-zinc-400 mt-0.5">Residents with overdue invoices</p>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded">
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 p-1 rounded">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="overflow-y-auto flex-1">
           {isLoading ? (
             <div className="p-6 space-y-3">
-              {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-zinc-800 rounded-lg animate-pulse" />)}
+              {[1, 2, 3].map((i) => <div key={i} className="h-14 bg-zinc-100 rounded-lg animate-pulse" />)}
             </div>
           ) : !data || data.length === 0 ? (
             <div className="p-12 text-center text-zinc-400">No outstanding balances</div>
           ) : (
             <table className="w-full">
-              <thead className="sticky top-0 bg-zinc-900 border-b border-zinc-700">
+              <thead className="sticky top-0 bg-white border-b border-zinc-200">
                 <tr>
                   <th className="text-left py-3 px-6 text-xs font-medium text-zinc-400 uppercase tracking-wide">Resident</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-zinc-400 uppercase tracking-wide">Owed</th>
@@ -430,14 +430,14 @@ function OutstandingBreakdown({
               </thead>
               <tbody>
                 {data.map((row) => (
-                  <tr key={row.residentId} className="border-b border-zinc-800 hover:bg-zinc-800/50">
-                    <td className="py-4 px-6 text-sm font-medium text-white">{row.residentName}</td>
+                  <tr key={row.residentId} className="border-b border-zinc-200 hover:bg-zinc-100">
+                    <td className="py-4 px-6 text-sm font-medium text-zinc-900">{row.residentName}</td>
                     <td className="py-4 px-4 text-sm text-right font-semibold text-red-400">{formatCurrency(row.totalOwed)}</td>
                     <td className="py-4 px-4 text-right">
                       <span className={`px-2 py-1 text-xs font-medium rounded ${
-                        row.daysOverdue > 60 ? "bg-red-900/50 text-red-300"
-                          : row.daysOverdue > 30 ? "bg-orange-900/50 text-orange-300"
-                          : "bg-yellow-900/50 text-yellow-300"
+                        row.daysOverdue > 60 ? "bg-red-50 text-red-700 border border-red-200"
+                          : row.daysOverdue > 30 ? "bg-orange-50 text-orange-700 border border-orange-200"
+                          : "bg-yellow-50 text-yellow-700 border border-yellow-200"
                       }`}>
                         {row.daysOverdue}d
                       </span>
@@ -493,32 +493,32 @@ function AnnounceModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-zinc-700">
+      <div className="relative bg-white border border-zinc-200 rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-zinc-200">
           <div>
-            <h2 className="text-lg font-semibold text-white">Send Announcement</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Send Announcement</h2>
             <p className="text-sm text-zinc-400 mt-0.5">Broadcast to all residents</p>
           </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white p-1 rounded">
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900 p-1 rounded">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Message</label>
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Message</label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type your announcement..."
               rows={4}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              className="w-full px-3 py-2 bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
             />
           </div>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-zinc-600 text-zinc-300 rounded-lg font-medium hover:bg-zinc-800 transition-colors"
+              className="flex-1 px-4 py-2 border border-zinc-300 text-zinc-600 rounded-lg font-medium hover:bg-zinc-100 transition-colors"
             >
               Cancel
             </button>
@@ -559,31 +559,31 @@ function EmptyStateChecklist({
       done: hasHouses,
       label: "Add your first house",
       description: "Create a property and house to get started",
-      action: <a href="/admin/properties" className="text-xs font-medium text-indigo-400 hover:text-indigo-300">Set up house &rarr;</a>,
+      action: <a href="/admin/properties" className="text-xs font-medium text-indigo-400 hover:text-indigo-600">Set up house &rarr;</a>,
     },
     {
       done: hasResidents,
       label: "Add your first resident",
       description: "Add a resident to your pipeline",
-      action: <button onClick={onAddResident} className="text-xs font-medium text-indigo-400 hover:text-indigo-300">Add resident &rarr;</button>,
+      action: <button onClick={onAddResident} className="text-xs font-medium text-indigo-400 hover:text-indigo-600">Add resident &rarr;</button>,
     },
     {
       done: false,
       label: "Set your rent rates",
       description: "Configure billing rates for each house",
-      action: <a href="/billing/rates" className="text-xs font-medium text-indigo-400 hover:text-indigo-300">Set rates &rarr;</a>,
+      action: <a href="/billing/rates" className="text-xs font-medium text-indigo-400 hover:text-indigo-600">Set rates &rarr;</a>,
     },
     {
       done: false,
       label: "Create your first invoice",
       description: "Bill a resident for rent",
-      action: <a href="/billing/invoices/new" className="text-xs font-medium text-indigo-400 hover:text-indigo-300">Create invoice &rarr;</a>,
+      action: <a href="/billing/invoices/new" className="text-xs font-medium text-indigo-400 hover:text-indigo-600">Create invoice &rarr;</a>,
     },
   ];
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6">
-      <h2 className="text-base font-semibold text-white mb-1">Get started with RecoveryOS</h2>
+    <div className="bg-white border border-zinc-200 rounded-xl p-6">
+      <h2 className="text-base font-semibold text-zinc-900 mb-1">Get started with RecoveryOS</h2>
       <p className="text-sm text-zinc-400 mb-5">Complete these steps to set up your house</p>
       <div className="space-y-3">
         {steps.map((step, idx) => (
@@ -592,7 +592,7 @@ function EmptyStateChecklist({
               {step.done ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Circle className="h-5 w-5 text-zinc-600" />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${step.done ? "line-through text-zinc-500" : "text-white"}`}>{step.label}</p>
+              <p className={`text-sm font-medium ${step.done ? "line-through text-zinc-500" : "text-zinc-900"}`}>{step.label}</p>
               {!step.done && <p className="text-xs text-zinc-500 mt-0.5">{step.description}</p>}
             </div>
             {!step.done && <div className="flex-shrink-0">{step.action}</div>}
@@ -622,12 +622,12 @@ function ActivityItem({ actor, description, timestamp }: { actor: string; descri
 
   return (
     <div className="flex items-start gap-3 py-2.5">
-      <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 text-xs font-medium text-zinc-300">
+      <div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center flex-shrink-0 text-xs font-medium text-zinc-600">
         {actor.charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-300">
-          <span className="font-medium text-white">{actor}</span>{" "}
+        <p className="text-sm text-zinc-600">
+          <span className="font-medium text-zinc-900">{actor}</span>{" "}
           <span>{description}</span>
         </p>
         <p className="text-xs text-zinc-500 mt-0.5">{formatTimeAgo(timestamp)}</p>
@@ -648,10 +648,10 @@ function MoodBar({ avg, count }: { avg: number | null; count: number }) {
   return (
     <div className="flex items-center gap-2 flex-1">
       <span className="text-lg">{emoji}</span>
-      <div className="flex-1 bg-zinc-700 rounded-full h-1.5">
+      <div className="flex-1 bg-zinc-200 rounded-full h-1.5">
         <div className={`${color} h-1.5 rounded-full transition-all`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs font-mono text-zinc-300 w-8 text-right">{avg.toFixed(1)}</span>
+      <span className="text-xs tabular-nums text-zinc-600 w-8 text-right">{avg.toFixed(1)}</span>
       <span className="text-xs text-zinc-500">({count})</span>
     </div>
   );
@@ -682,7 +682,7 @@ export default function DashboardPage() {
   const emptyBeds = (data?.occupancy.total || 0) - (data?.occupancy.occupied || 0);
 
   return (
-    <div className="p-6 space-y-6 bg-zinc-950 min-h-screen">
+    <div className="p-6 space-y-6 bg-[#fafafa] min-h-screen">
       <ToastContainer toasts={toast.toasts} />
 
       <RecordPaymentModal
@@ -710,13 +710,13 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Dashboard</h1>
           <p className="text-zinc-400 mt-1 text-sm">Command center for your recovery house</p>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-900/30 border border-red-700 rounded-xl p-4 text-red-300">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
           <p className="font-medium">Error loading dashboard data</p>
           <p className="text-sm mt-1 text-red-400">{error.message}</p>
         </div>
@@ -733,12 +733,12 @@ export default function DashboardPage() {
       {/* ROW 1: Money */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Revenue MTD */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+        <div className="bg-white border border-zinc-200 rounded-xl p-5">
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Revenue MTD</p>
           {isLoading ? (
-            <div className="h-9 bg-zinc-700 rounded mt-2 animate-pulse" />
+            <div className="h-9 bg-zinc-200 rounded mt-2 animate-pulse" />
           ) : (
-            <p className="text-3xl font-bold font-mono text-white mt-2">
+            <p className="text-3xl font-bold tabular-nums text-zinc-900 mt-2">
               {formatCurrency(data?.revenueMTD || 0)}
             </p>
           )}
@@ -746,12 +746,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Collected */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+        <div className="bg-white border border-zinc-200 rounded-xl p-5">
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Collected</p>
           {isLoading ? (
-            <div className="h-9 bg-zinc-700 rounded mt-2 animate-pulse" />
+            <div className="h-9 bg-zinc-200 rounded mt-2 animate-pulse" />
           ) : (
-            <p className="text-3xl font-bold font-mono text-green-400 mt-2">
+            <p className="text-3xl font-bold tabular-nums text-green-400 mt-2">
               {formatCurrency(data?.revenueMTD || 0)}
             </p>
           )}
@@ -760,18 +760,18 @@ export default function DashboardPage() {
 
         {/* Outstanding — tappable */}
         <div
-          className={`bg-zinc-900 border rounded-xl p-5 ${
+          className={`bg-white border rounded-xl p-5 ${
             (data?.outstanding.invoiceCount || 0) > 0
-              ? "border-red-800/50 cursor-pointer hover:border-red-600 transition-colors"
-              : "border-zinc-700"
+              ? "border-red-300 cursor-pointer hover:border-red-400 transition-colors"
+              : "border-zinc-200"
           }`}
           onClick={(data?.outstanding.invoiceCount || 0) > 0 ? () => setOutstandingOpen(true) : undefined}
         >
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Outstanding</p>
           {isLoading ? (
-            <div className="h-9 bg-zinc-700 rounded mt-2 animate-pulse" />
+            <div className="h-9 bg-zinc-200 rounded mt-2 animate-pulse" />
           ) : (
-            <p className={`text-3xl font-bold font-mono mt-2 ${(data?.outstanding.total || 0) > 0 ? "text-red-400" : "text-white"}`}>
+            <p className={`text-3xl font-bold tabular-nums mt-2 ${(data?.outstanding.total || 0) > 0 ? "text-red-400" : "text-zinc-900"}`}>
               {formatCurrency(data?.outstanding.total || 0)}
             </p>
           )}
@@ -783,12 +783,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Profit */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+        <div className="bg-white border border-zinc-200 rounded-xl p-5">
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide">Profit MTD</p>
           {isLoading ? (
-            <div className="h-9 bg-zinc-700 rounded mt-2 animate-pulse" />
+            <div className="h-9 bg-zinc-200 rounded mt-2 animate-pulse" />
           ) : (
-            <p className="text-3xl font-bold font-mono text-emerald-400 mt-2">
+            <p className="text-3xl font-bold tabular-nums text-emerald-400 mt-2">
               {formatCurrency(profitData?.profitMTD || data?.revenueMTD || 0)}
             </p>
           )}
@@ -799,17 +799,17 @@ export default function DashboardPage() {
       {/* ROW 2: Beds + Leads */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Beds */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+        <div className="bg-white border border-zinc-200 rounded-xl p-5">
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <BedDouble className="h-4 w-4 text-indigo-400" />
-                <p className="text-sm font-medium text-zinc-300">Occupancy</p>
+                <p className="text-sm font-medium text-zinc-600">Occupancy</p>
               </div>
               {isLoading ? (
-                <div className="h-8 bg-zinc-700 rounded w-40 animate-pulse" />
+                <div className="h-8 bg-zinc-200 rounded w-40 animate-pulse" />
               ) : (
-                <p className="text-2xl font-bold font-mono text-white">
+                <p className="text-2xl font-bold tabular-nums text-zinc-900">
                   {data?.occupancy.occupied || 0}/{data?.occupancy.total || 0} Beds
                   <span className="text-base text-zinc-400 font-normal ml-2">({data?.occupancy.rate || 0}%)</span>
                 </p>
@@ -822,7 +822,7 @@ export default function DashboardPage() {
             </div>
             <a
               href="/residents"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-100 hover:bg-zinc-100 border border-zinc-300 text-zinc-600 rounded-lg transition-colors"
             >
               <Users className="h-3.5 w-3.5" />
               Residents
@@ -830,7 +830,7 @@ export default function DashboardPage() {
           </div>
           {/* Occupancy bar */}
           <div className="mt-4">
-            <div className="bg-zinc-700 rounded-full h-2">
+            <div className="bg-zinc-200 rounded-full h-2">
               <div
                 className="bg-indigo-500 h-2 rounded-full transition-all"
                 style={{ width: `${data?.occupancy.rate || 0}%` }}
@@ -840,22 +840,22 @@ export default function DashboardPage() {
         </div>
 
         {/* Leads pipeline */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-5">
+        <div className="bg-white border border-zinc-200 rounded-xl p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-400" />
-              <p className="text-sm font-medium text-zinc-300">Leads Pipeline</p>
+              <p className="text-sm font-medium text-zinc-600">Leads Pipeline</p>
             </div>
             <div className="flex items-center gap-2">
               <a
                 href="/leads"
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                className="text-xs text-indigo-400 hover:text-indigo-600 font-medium"
               >
                 View all &rarr;
               </a>
               <button
                 onClick={() => setAddResidentModal(true)}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-zinc-700 hover:bg-zinc-600 border border-zinc-600 text-zinc-300 rounded-lg transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-zinc-200 hover:bg-zinc-200 border border-zinc-300 text-zinc-600 rounded-lg transition-colors"
               >
                 <QrCode className="h-3 w-3" />
                 Share Intake
@@ -864,7 +864,7 @@ export default function DashboardPage() {
           </div>
           {leadsLoading ? (
             <div className="flex gap-3">
-              {[1, 2, 3].map((i) => <div key={i} className="h-14 flex-1 bg-zinc-800 rounded-lg animate-pulse" />)}
+              {[1, 2, 3].map((i) => <div key={i} className="h-14 flex-1 bg-zinc-100 rounded-lg animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
@@ -873,8 +873,8 @@ export default function DashboardPage() {
                 { label: "Screening", value: leadsSummary?.screening || 0, color: "text-yellow-400" },
                 { label: "Ready", value: leadsSummary?.ready || 0, color: "text-green-400" },
               ].map(({ label, value, color }) => (
-                <div key={label} className="bg-zinc-800 rounded-lg p-3 text-center">
-                  <p className={`text-2xl font-bold font-mono ${color}`}>{value}</p>
+                <div key={label} className="bg-zinc-100 rounded-lg p-3 text-center">
+                  <p className={`text-2xl font-bold tabular-nums ${color}`}>{value}</p>
                   <p className="text-xs text-zinc-400 mt-0.5">{label}</p>
                 </div>
               ))}
@@ -894,21 +894,21 @@ export default function DashboardPage() {
         </button>
         <button
           onClick={() => setAddResidentModal(true)}
-          className="flex items-center gap-2.5 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-white rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2.5 px-4 py-3 bg-zinc-100 hover:bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-xl text-sm font-medium transition-colors"
         >
           <UserPlus className="h-4 w-4 flex-shrink-0" />
           Add Resident
         </button>
         <button
           onClick={() => setAnnounceOpen(true)}
-          className="flex items-center gap-2.5 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-white rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2.5 px-4 py-3 bg-zinc-100 hover:bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-xl text-sm font-medium transition-colors"
         >
           <Megaphone className="h-4 w-4 flex-shrink-0" />
           Announce
         </button>
         <a
           href="/expenses/new"
-          className="flex items-center gap-2.5 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-white rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2.5 px-4 py-3 bg-zinc-100 hover:bg-zinc-100 border border-zinc-300 text-zinc-900 rounded-xl text-sm font-medium transition-colors"
         >
           <Receipt className="h-4 w-4 flex-shrink-0" />
           Log Expense
@@ -918,50 +918,50 @@ export default function DashboardPage() {
       {/* ROW 4: Action Items + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Action Items */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6">
-          <h2 className="text-base font-semibold text-white mb-4">Action Items</h2>
+        <div className="bg-white border border-zinc-200 rounded-xl p-6">
+          <h2 className="text-base font-semibold text-zinc-900 mb-4">Action Items</h2>
           {isLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => <div key={i} className="h-12 bg-zinc-800 rounded-lg animate-pulse" />)}
+              {[1, 2, 3].map((i) => <div key={i} className="h-12 bg-zinc-100 rounded-lg animate-pulse" />)}
             </div>
           ) : (
             <div className="space-y-2">
               {(data?.actionItems.highPriorityIncidents || 0) > 0 && (
-                <div className="flex items-center justify-between p-3 bg-red-950/50 border border-red-800/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-red-900 text-red-300 rounded text-xs font-medium">HIGH</span>
-                    <span className="text-sm text-white">{data!.actionItems.highPriorityIncidents} critical incident{data!.actionItems.highPriorityIncidents > 1 ? "s" : ""} need follow-up</span>
+                    <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-medium">HIGH</span>
+                    <span className="text-sm text-zinc-900">{data!.actionItems.highPriorityIncidents} critical incident{data!.actionItems.highPriorityIncidents > 1 ? "s" : ""} need follow-up</span>
                   </div>
-                  <a href="/operations/incidents" className="text-xs text-red-400 hover:text-red-300 font-medium whitespace-nowrap">Review &rarr;</a>
+                  <a href="/operations/incidents" className="text-xs text-red-500 hover:text-red-600 font-medium whitespace-nowrap">Review &rarr;</a>
                 </div>
               )}
               {(data?.actionItems.expiringConsents || 0) > 0 && (
-                <div className="flex items-center justify-between p-3 bg-yellow-950/50 border border-yellow-800/50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-yellow-900 text-yellow-300 rounded text-xs font-medium">HIGH</span>
-                    <span className="text-sm text-white">{data!.actionItems.expiringConsents} consent{data!.actionItems.expiringConsents > 1 ? "s" : ""} expiring soon</span>
+                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">HIGH</span>
+                    <span className="text-sm text-zinc-900">{data!.actionItems.expiringConsents} consent{data!.actionItems.expiringConsents > 1 ? "s" : ""} expiring soon</span>
                   </div>
-                  <a href="/compliance/consents" className="text-xs text-yellow-400 hover:text-yellow-300 font-medium whitespace-nowrap">Renew &rarr;</a>
+                  <a href="/compliance/consents" className="text-xs text-yellow-500 hover:text-yellow-600 font-medium whitespace-nowrap">Renew &rarr;</a>
                 </div>
               )}
               {(data?.actionItems.pendingPasses || 0) > 0 && (
-                <div className="flex items-center justify-between p-3 bg-zinc-800 border border-zinc-700 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-zinc-100 border border-zinc-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-blue-900 text-blue-300 rounded text-xs font-medium">MED</span>
-                    <span className="text-sm text-white">{data!.actionItems.pendingPasses} pass request{data!.actionItems.pendingPasses > 1 ? "s" : ""} pending</span>
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">MED</span>
+                    <span className="text-sm text-zinc-900">{data!.actionItems.pendingPasses} pass request{data!.actionItems.pendingPasses > 1 ? "s" : ""} pending</span>
                   </div>
-                  <a href="/operations/passes" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium whitespace-nowrap">Review &rarr;</a>
+                  <a href="/operations/passes" className="text-xs text-indigo-400 hover:text-indigo-600 font-medium whitespace-nowrap">Review &rarr;</a>
                 </div>
               )}
               {(data?.outstanding.invoiceCount || 0) > 0 && (
-                <div className="flex items-center justify-between p-3 bg-zinc-800 border border-zinc-700 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-zinc-100 border border-zinc-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-orange-900 text-orange-300 rounded text-xs font-medium">MED</span>
-                    <span className="text-sm text-white">{data!.outstanding.invoiceCount} residents late ({formatCurrency(data!.outstanding.total)})</span>
+                    <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-xs font-medium">MED</span>
+                    <span className="text-sm text-zinc-900">{data!.outstanding.invoiceCount} residents late ({formatCurrency(data!.outstanding.total)})</span>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => setOutstandingOpen(true)} className="text-xs text-zinc-400 hover:text-white font-medium">View</button>
-                    <a href="/billing" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium whitespace-nowrap">Billing &rarr;</a>
+                    <button onClick={() => setOutstandingOpen(true)} className="text-xs text-zinc-400 hover:text-zinc-900 font-medium">View</button>
+                    <a href="/billing" className="text-xs text-indigo-400 hover:text-indigo-600 font-medium whitespace-nowrap">Billing &rarr;</a>
                   </div>
                 </div>
               )}
@@ -979,22 +979,22 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6">
-          <h2 className="text-base font-semibold text-white mb-4">Recent Activity</h2>
+        <div className="bg-white border border-zinc-200 rounded-xl p-6">
+          <h2 className="text-base font-semibold text-zinc-900 mb-4">Recent Activity</h2>
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="animate-pulse flex gap-3 py-2">
-                  <div className="h-7 w-7 bg-zinc-700 rounded-full flex-shrink-0" />
+                  <div className="h-7 w-7 bg-zinc-200 rounded-full flex-shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-zinc-700 rounded w-3/4" />
-                    <div className="h-3 bg-zinc-700 rounded w-1/4" />
+                    <div className="h-4 bg-zinc-200 rounded w-3/4" />
+                    <div className="h-3 bg-zinc-200 rounded w-1/4" />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="divide-y divide-zinc-800 max-h-[360px] overflow-y-auto">
+            <div className="divide-y divide-zinc-200 max-h-[360px] overflow-y-auto">
               {data?.recentActivity.map((activity) => (
                 <ActivityItem
                   key={activity.id}
@@ -1013,17 +1013,17 @@ export default function DashboardPage() {
 
       {/* ROW 5: House Satisfaction */}
       {(!satisfactionLoading && houseSatisfaction && houseSatisfaction.length > 0) && (
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6">
+        <div className="bg-white border border-zinc-200 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-4">
             <Heart className="h-4 w-4 text-pink-400" />
-            <h2 className="text-base font-semibold text-white">House Satisfaction</h2>
+            <h2 className="text-base font-semibold text-zinc-900">House Satisfaction</h2>
             <span className="text-xs text-zinc-500">(last 7 days)</span>
           </div>
           <div className="space-y-3">
             {houseSatisfaction.map((house) => (
-              <div key={house.houseId} className={`flex items-center gap-3 p-3 rounded-lg ${house.isLow ? "bg-red-950/30 border border-red-800/40" : "bg-zinc-800/50"}`}>
+              <div key={house.houseId} className={`flex items-center gap-3 p-3 rounded-lg ${house.isLow ? "bg-red-50 border border-red-200" : "bg-zinc-100"}`}>
                 <div className="w-32 flex-shrink-0">
-                  <p className="text-sm font-medium text-zinc-200 truncate">{house.houseName}</p>
+                  <p className="text-sm font-medium text-zinc-700 truncate">{house.houseName}</p>
                   {house.isLow && <p className="text-xs text-red-400">Low mood — check in</p>}
                 </div>
                 <MoodBar avg={house.avgMood} count={house.checkInCount} />
@@ -1034,28 +1034,28 @@ export default function DashboardPage() {
       )}
 
       {/* ROW 6: Messages preview */}
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6">
+      <div className="bg-white border border-zinc-200 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-indigo-400" />
-            <h2 className="text-base font-semibold text-white">Messages</h2>
+            <h2 className="text-base font-semibold text-zinc-900">Messages</h2>
           </div>
-          <a href="/messages" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium">View All &rarr;</a>
+          <a href="/messages" className="text-sm text-indigo-400 hover:text-indigo-600 font-medium">View All &rarr;</a>
         </div>
         <p className="text-sm text-zinc-500 text-center py-4">Message preview coming soon</p>
       </div>
 
       {/* ROW 7: Expiring Consents */}
       {(data?.expiringConsents.count || 0) > 0 && (
-        <div className="bg-zinc-900 border border-zinc-700 rounded-xl">
-          <div className="flex items-center justify-between p-6 border-b border-zinc-700">
-            <h2 className="text-base font-semibold text-white">Expiring Consents (Next 30 Days)</h2>
-            <a href="/compliance/consents" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium">View All</a>
+        <div className="bg-white border border-zinc-200 rounded-xl">
+          <div className="flex items-center justify-between p-6 border-b border-zinc-200">
+            <h2 className="text-base font-semibold text-zinc-900">Expiring Consents (Next 30 Days)</h2>
+            <a href="/compliance/consents" className="text-sm text-indigo-400 hover:text-indigo-600 font-medium">View All</a>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-700">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left py-3 px-6 text-xs font-medium text-zinc-400 uppercase tracking-wide">Resident</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-zinc-400 uppercase tracking-wide">Type</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-zinc-400 uppercase tracking-wide">Expires</th>
@@ -1065,23 +1065,23 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {data?.expiringConsents.items.map((consent) => (
-                  <tr key={consent.id} className="border-b border-zinc-800 hover:bg-zinc-800/50">
-                    <td className="py-3 px-6 text-sm text-white">{consent.residentName}</td>
+                  <tr key={consent.id} className="border-b border-zinc-200 hover:bg-zinc-100">
+                    <td className="py-3 px-6 text-sm text-zinc-900">{consent.residentName}</td>
                     <td className="py-3 px-4 text-sm text-zinc-400">{consent.consentType.replace(/_/g, " ")}</td>
                     <td className="py-3 px-4 text-sm text-zinc-400">
                       {consent.expiresAt ? new Date(consent.expiresAt).toLocaleDateString() : "—"}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 text-xs font-medium rounded ${
-                        (consent.daysRemaining || 0) <= 7 ? "bg-red-900/50 text-red-300"
-                          : (consent.daysRemaining || 0) <= 14 ? "bg-yellow-900/50 text-yellow-300"
-                          : "bg-blue-900/50 text-blue-300"
+                        (consent.daysRemaining || 0) <= 7 ? "bg-red-50 text-red-700"
+                          : (consent.daysRemaining || 0) <= 14 ? "bg-yellow-50 text-yellow-700"
+                          : "bg-blue-50 text-blue-700"
                       }`}>
                         {consent.daysRemaining}d
                       </span>
                     </td>
                     <td className="py-3 px-6">
-                      <a href="/compliance/consents" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium">Renew</a>
+                      <a href="/compliance/consents" className="text-sm text-indigo-400 hover:text-indigo-600 font-medium">Renew</a>
                     </td>
                   </tr>
                 ))}
@@ -1094,21 +1094,21 @@ export default function DashboardPage() {
       {/* Quick Reports */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { href: "/reports/occupancy", icon: BedDouble, iconClass: "text-indigo-400", bg: "bg-indigo-900/50", label: "Occupancy Report", desc: "Beds, trends, waitlist" },
-          { href: "/reports/financial", icon: DollarSign, iconClass: "text-green-400", bg: "bg-green-900/50", label: "Financial Report", desc: "Revenue, aging, collections" },
-          { href: "/reports/operations", icon: TrendingUp, iconClass: "text-orange-400", bg: "bg-orange-900/50", label: "Operations Report", desc: "Chores, meetings, incidents" },
-          { href: "/reports/compliance", icon: ShieldCheck, iconClass: "text-purple-400", bg: "bg-purple-900/50", label: "Compliance Report", desc: "Consents, disclosures, audit" },
+          { href: "/reports/occupancy", icon: BedDouble, iconClass: "text-red-600", bg: "bg-red-50", label: "Occupancy Report", desc: "Beds, trends, waitlist" },
+          { href: "/reports/financial", icon: DollarSign, iconClass: "text-green-600", bg: "bg-green-50", label: "Financial Report", desc: "Revenue, aging, collections" },
+          { href: "/reports/operations", icon: TrendingUp, iconClass: "text-orange-600", bg: "bg-orange-50", label: "Operations Report", desc: "Chores, meetings, incidents" },
+          { href: "/reports/compliance", icon: ShieldCheck, iconClass: "text-purple-600", bg: "bg-purple-50", label: "Compliance Report", desc: "Consents, disclosures, audit" },
         ].map(({ href, icon: Icon, iconClass, bg, label, desc }) => (
           <a
             key={href}
             href={href}
-            className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-700 rounded-xl hover:border-zinc-500 transition-colors"
+            className="flex items-center gap-3 p-4 bg-white border border-zinc-200 rounded-xl hover:border-zinc-400 transition-colors"
           >
             <div className={`p-2 ${bg} rounded-lg`}>
               <Icon className={`h-5 w-5 ${iconClass}`} />
             </div>
             <div>
-              <p className="font-medium text-white text-sm">{label}</p>
+              <p className="font-medium text-zinc-900 text-sm">{label}</p>
               <p className="text-xs text-zinc-500">{desc}</p>
             </div>
           </a>

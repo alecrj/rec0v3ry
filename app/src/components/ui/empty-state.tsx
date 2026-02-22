@@ -37,7 +37,7 @@ function EmptyState({
   return (
     <div className={cn("flex flex-col items-center justify-center py-12 px-4", className)}>
       {icon || <IconComponent className="h-6 w-6 text-zinc-600 mb-3" />}
-      <p className="text-sm font-medium text-zinc-300 mb-0.5">{title}</p>
+      <p className="text-sm font-medium text-zinc-600 mb-0.5">{title}</p>
       {description && (
         <p className="text-xs text-zinc-500 text-center max-w-xs mb-4">{description}</p>
       )}

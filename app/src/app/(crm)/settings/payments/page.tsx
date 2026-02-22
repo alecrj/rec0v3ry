@@ -25,13 +25,13 @@ function SectionCard({ title, description, icon: Icon, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-zinc-800 rounded-xl overflow-hidden">
-      <div className="px-6 py-4 border-b border-zinc-800/50 flex items-center gap-3">
+    <div className="border border-zinc-200 rounded-xl overflow-hidden">
+      <div className="px-6 py-4 border-b border-zinc-200/50 flex items-center gap-3">
         <div className="p-2 rounded-lg bg-indigo-500/10">
           <Icon className="h-4 w-4 text-indigo-400" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
+          <h3 className="text-sm font-semibold text-zinc-800">{title}</h3>
           <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
         </div>
       </div>
@@ -47,7 +47,7 @@ function Toggle({ enabled, onToggle, disabled }: { enabled: boolean; onToggle: (
       onClick={onToggle}
       disabled={disabled}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? "bg-indigo-500" : "bg-zinc-700"
+        enabled ? "bg-indigo-500" : "bg-zinc-200"
       } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span
@@ -171,10 +171,10 @@ export default function PaymentSettingsPage() {
           >
             {!stripeConnected ? (
               <div className="space-y-4">
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-zinc-800/40 border border-zinc-800">
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-zinc-100 border border-zinc-200">
                   <XCircle className="h-5 w-5 text-zinc-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-zinc-200">Stripe not connected</p>
+                    <p className="text-sm font-medium text-zinc-700">Stripe not connected</p>
                     <p className="text-xs text-zinc-500 mt-1">
                       Connect a Stripe account to accept card and ACH payments from residents.
                       Supports Apple Pay and Google Pay automatically.
@@ -196,7 +196,7 @@ export default function PaymentSettingsPage() {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
                   <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-zinc-200">Onboarding incomplete</p>
+                    <p className="text-sm font-medium text-zinc-700">Onboarding incomplete</p>
                     <p className="text-xs text-zinc-500 mt-1">
                       Your Stripe account is created but you need to complete verification before you can accept payments.
                     </p>
@@ -216,7 +216,7 @@ export default function PaymentSettingsPage() {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/20">
                   <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-zinc-200">Stripe connected</p>
+                    <p className="text-sm font-medium text-zinc-700">Stripe connected</p>
                     <p className="text-xs text-zinc-500 mt-1">
                       You can accept card, ACH, Apple Pay, and Google Pay payments from residents.
                     </p>
@@ -251,10 +251,10 @@ export default function PaymentSettingsPage() {
                   className={`p-4 rounded-lg border text-left transition-all ${
                     feeMode === "absorb"
                       ? "border-indigo-500 bg-indigo-500/5"
-                      : "border-zinc-800 bg-zinc-800/20 hover:border-zinc-700"
+                      : "border-zinc-200 bg-zinc-100/20 hover:border-zinc-200"
                   }`}
                 >
-                  <p className="text-sm font-medium text-zinc-200">You absorb fees</p>
+                  <p className="text-sm font-medium text-zinc-700">You absorb fees</p>
                   <p className="text-xs text-zinc-500 mt-1">
                     You pay ~2.9% + $0.30 per transaction. Residents see no extra charge.
                   </p>
@@ -265,10 +265,10 @@ export default function PaymentSettingsPage() {
                   className={`p-4 rounded-lg border text-left transition-all ${
                     feeMode === "pass_through"
                       ? "border-indigo-500 bg-indigo-500/5"
-                      : "border-zinc-800 bg-zinc-800/20 hover:border-zinc-700"
+                      : "border-zinc-200 bg-zinc-100/20 hover:border-zinc-200"
                   }`}
                 >
-                  <p className="text-sm font-medium text-zinc-200">Convenience fee</p>
+                  <p className="text-sm font-medium text-zinc-700">Convenience fee</p>
                   <p className="text-xs text-zinc-500 mt-1">
                     Residents pay a small processing fee. Your payout is the full amount.
                   </p>
@@ -296,7 +296,7 @@ export default function PaymentSettingsPage() {
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">Enable reminders</p>
+                  <p className="text-sm font-medium text-zinc-700">Enable reminders</p>
                   <p className="text-xs text-zinc-500 mt-0.5">Residents get in-app reminders about upcoming and overdue rent</p>
                 </div>
                 <Toggle
@@ -315,11 +315,11 @@ export default function PaymentSettingsPage() {
                       max={30}
                       value={reminderForm.daysBefore}
                       onChange={(e) => setReminderForm({ ...reminderForm, daysBefore: parseInt(e.target.value) || 0 })}
-                      className="w-24 h-9 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-24 h-9 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-zinc-300">Remind on due date</p>
+                    <p className="text-sm text-zinc-600">Remind on due date</p>
                     <Toggle
                       enabled={reminderForm.dayOf}
                       onToggle={() => setReminderForm({ ...reminderForm, dayOf: !reminderForm.dayOf })}
@@ -342,7 +342,7 @@ export default function PaymentSettingsPage() {
                               updated[i] = parseInt(e.target.value) || 1;
                               setReminderForm({ ...reminderForm, daysAfter: updated });
                             }}
-                            className="w-16 h-9 px-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-center"
+                            className="w-16 h-9 px-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-center"
                           />
                           <button
                             type="button"
@@ -356,19 +356,19 @@ export default function PaymentSettingsPage() {
                       <button
                         type="button"
                         onClick={() => setReminderForm({ ...reminderForm, daysAfter: [...reminderForm.daysAfter, 14] })}
-                        className="h-9 px-3 text-xs font-medium border border-zinc-800 border-dashed rounded-lg text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
+                        className="h-9 px-3 text-xs font-medium border border-zinc-200 border-dashed rounded-lg text-zinc-500 hover:text-zinc-600 hover:border-zinc-200"
                       >
                         + Add
                       </button>
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg bg-zinc-800/30 border border-zinc-800/50">
+                  <div className="p-3 rounded-lg bg-zinc-100/30 border border-zinc-200/50">
                     <p className="text-xs text-zinc-500">
                       Preview: Residents will be reminded{" "}
-                      <span className="text-zinc-300">{reminderForm.daysBefore} days before</span>
-                      {reminderForm.dayOf && <>, <span className="text-zinc-300">on the due date</span></>}
+                      <span className="text-zinc-600">{reminderForm.daysBefore} days before</span>
+                      {reminderForm.dayOf && <>, <span className="text-zinc-600">on the due date</span></>}
                       {reminderForm.daysAfter.length > 0 && (
-                        <>, and <span className="text-zinc-300">{reminderForm.daysAfter.join(", ")} days after</span> if unpaid</>
+                        <>, and <span className="text-zinc-600">{reminderForm.daysAfter.join(", ")} days after</span> if unpaid</>
                       )}.
                     </p>
                   </div>
@@ -402,7 +402,7 @@ export default function PaymentSettingsPage() {
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">Enable late fees</p>
+                  <p className="text-sm font-medium text-zinc-700">Enable late fees</p>
                   <p className="text-xs text-zinc-500 mt-0.5">Fees are applied automatically after the grace period</p>
                 </div>
                 <Toggle
@@ -421,8 +421,8 @@ export default function PaymentSettingsPage() {
                         onClick={() => setLateFeeForm({ ...lateFeeForm, type: "flat" })}
                         className={`p-3 rounded-lg border text-left text-sm transition-all ${
                           lateFeeForm.type === "flat"
-                            ? "border-indigo-500 bg-indigo-500/5 text-zinc-200"
-                            : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                            ? "border-indigo-500 bg-indigo-500/5 text-zinc-700"
+                            : "border-zinc-200 text-zinc-400 hover:border-zinc-200"
                         }`}
                       >
                         Flat fee (e.g. $25)
@@ -432,8 +432,8 @@ export default function PaymentSettingsPage() {
                         onClick={() => setLateFeeForm({ ...lateFeeForm, type: "percentage" })}
                         className={`p-3 rounded-lg border text-left text-sm transition-all ${
                           lateFeeForm.type === "percentage"
-                            ? "border-indigo-500 bg-indigo-500/5 text-zinc-200"
-                            : "border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                            ? "border-indigo-500 bg-indigo-500/5 text-zinc-700"
+                            : "border-zinc-200 text-zinc-400 hover:border-zinc-200"
                         }`}
                       >
                         Percentage (e.g. 5%)
@@ -452,7 +452,7 @@ export default function PaymentSettingsPage() {
                             step="1"
                             value={lateFeeForm.amount}
                             onChange={(e) => setLateFeeForm({ ...lateFeeForm, amount: e.target.value })}
-                            className="w-full h-9 pl-7 pr-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="w-full h-9 pl-7 pr-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                         </div>
                       </div>
@@ -467,7 +467,7 @@ export default function PaymentSettingsPage() {
                             step="0.5"
                             value={lateFeeForm.percentage}
                             onChange={(e) => setLateFeeForm({ ...lateFeeForm, percentage: e.target.value })}
-                            className="w-full h-9 px-3 pr-7 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            className="w-full h-9 px-3 pr-7 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                         </div>
@@ -481,18 +481,18 @@ export default function PaymentSettingsPage() {
                         max={30}
                         value={lateFeeForm.gracePeriodDays}
                         onChange={(e) => setLateFeeForm({ ...lateFeeForm, gracePeriodDays: parseInt(e.target.value) || 0 })}
-                        className="w-full h-9 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        className="w-full h-9 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                       />
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg bg-zinc-800/30 border border-zinc-800/50">
+                  <div className="p-3 rounded-lg bg-zinc-100/30 border border-zinc-200/50">
                     <p className="text-xs text-zinc-500">
                       Preview: A{" "}
-                      <span className="text-zinc-300">
+                      <span className="text-zinc-600">
                         {lateFeeForm.type === "flat" ? `$${lateFeeForm.amount}` : `${lateFeeForm.percentage}%`} late fee
                       </span>{" "}
                       will be applied to overdue invoices after a{" "}
-                      <span className="text-zinc-300">{lateFeeForm.gracePeriodDays}-day grace period</span>.
+                      <span className="text-zinc-600">{lateFeeForm.gracePeriodDays}-day grace period</span>.
                     </p>
                   </div>
                 </div>

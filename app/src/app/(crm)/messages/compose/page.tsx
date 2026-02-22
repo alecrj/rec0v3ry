@@ -146,30 +146,30 @@ export default function ComposeMessagePage() {
 
   const isSending = createConversation.isPending || sendMessage.isPending;
 
-  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
+  const inputClass = "w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors";
 
   return (
     <PageContainer>
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/messages" className="p-2 hover:bg-zinc-800 rounded-lg transition-colors">
+        <Link href="/messages" className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
           <ChevronLeft className="h-5 w-5 text-zinc-400" />
         </Link>
-        <h1 className="text-2xl font-bold text-zinc-100">New Message</h1>
+        <h1 className="text-2xl font-bold text-zinc-800">New Message</h1>
       </div>
 
       <Card className="max-w-3xl">
         {/* Recipients Section */}
-        <div className="p-4 border-b border-zinc-800">
-          <label className="block text-sm font-medium text-zinc-300 mb-2">To:</label>
+        <div className="p-4 border-b border-zinc-200">
+          <label className="block text-sm font-medium text-zinc-600 mb-2">To:</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {selectedRecipients.map((recipient) => (
               <span
                 key={recipient.id}
                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm ${
                   recipient.type === "resident" && !recipient.hasConsent
-                    ? "bg-amber-500/15 text-amber-300"
-                    : "bg-indigo-500/15 text-indigo-200"
+                    ? "bg-amber-500/15 text-amber-600"
+                    : "bg-indigo-500/15 text-indigo-700"
                 }`}
               >
                 {getRecipientIcon(recipient.type)}
@@ -187,7 +187,7 @@ export default function ComposeMessagePage() {
               placeholder="Search residents or staff..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
           </div>
 
@@ -199,18 +199,18 @@ export default function ComposeMessagePage() {
           )}
 
           {searchQuery && !isLoading && filteredRecipients.length > 0 && (
-            <div className="mt-2 border border-zinc-800 rounded-lg divide-y divide-zinc-800/50 max-h-48 overflow-y-auto">
+            <div className="mt-2 border border-zinc-200 rounded-lg divide-y divide-zinc-200/50 max-h-48 overflow-y-auto">
               {filteredRecipients.map((recipient) => (
                 <button
                   key={recipient.id}
                   onClick={() => addRecipient(recipient)}
-                  className="w-full flex items-center gap-3 p-3 hover:bg-zinc-800/40 text-left"
+                  className="w-full flex items-center gap-3 p-3 hover:bg-zinc-100/40 text-left"
                 >
-                  <div className="p-1.5 bg-zinc-800 rounded-full">
+                  <div className="p-1.5 bg-zinc-100 rounded-full">
                     {getRecipientIcon(recipient.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-100">{recipient.name}</p>
+                    <p className="text-sm font-medium text-zinc-800">{recipient.name}</p>
                     <p className="text-xs text-zinc-500">
                       {recipient.houseName || recipient.email || `${recipient.type}`}
                     </p>
@@ -227,7 +227,7 @@ export default function ComposeMessagePage() {
           )}
 
           {searchQuery && !isLoading && filteredRecipients.length === 0 && (
-            <div className="mt-2 p-4 text-center text-zinc-500 border border-zinc-800 rounded-lg">
+            <div className="mt-2 p-4 text-center text-zinc-500 border border-zinc-200 rounded-lg">
               <p className="text-sm">No results found for &quot;{searchQuery}&quot;</p>
             </div>
           )}
@@ -239,8 +239,8 @@ export default function ComposeMessagePage() {
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-amber-300">Consent Required</p>
-                <p className="text-sm text-amber-300 mt-1">
+                <p className="text-sm font-medium text-amber-600">Consent Required</p>
+                <p className="text-sm text-amber-600 mt-1">
                   One or more recipients do not have active consent.
                   Messages containing sensitive information cannot be sent
                   without proper consent on file.
@@ -252,8 +252,8 @@ export default function ComposeMessagePage() {
 
         {/* Group Name */}
         {conversationType === "group" && (
-          <div className="p-4 border-b border-zinc-800">
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Group Name:</label>
+          <div className="p-4 border-b border-zinc-200">
+            <label className="block text-sm font-medium text-zinc-600 mb-1.5">Group Name:</label>
             <input
               type="text"
               placeholder="Enter group name..."
@@ -266,18 +266,18 @@ export default function ComposeMessagePage() {
 
         {/* Message Content */}
         <div className="p-4">
-          <label className="block text-sm font-medium text-zinc-300 mb-1.5">Message:</label>
+          <label className="block text-sm font-medium text-zinc-600 mb-1.5">Message:</label>
           <textarea
             value={messageContent}
             onChange={(e) => setMessageContent(e.target.value)}
             placeholder="Type your message..."
             rows={6}
-            className="w-full px-4 py-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
+            className="w-full px-4 py-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none transition-colors"
           />
         </div>
 
         {/* Actions */}
-        <div className="p-4 border-t border-zinc-800 flex justify-between items-center">
+        <div className="p-4 border-t border-zinc-200 flex justify-between items-center">
           <div className="flex items-center gap-2 text-sm text-zinc-500">
             {conversationType === "group" ? (
               <>

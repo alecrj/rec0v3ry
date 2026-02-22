@@ -84,13 +84,13 @@ export default function SettingsPage() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex items-center gap-3 p-4 rounded-xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800/40 transition-all"
+                  className="group flex items-center gap-3 p-4 rounded-xl border border-zinc-200 hover:border-zinc-200 bg-white/50 hover:bg-zinc-100/40 transition-all"
                 >
                   <div className={`p-2 rounded-lg ${item.color}`}>
                     <item.icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-zinc-100">{item.label}</p>
+                    <p className="text-sm font-medium text-zinc-800">{item.label}</p>
                     <p className="text-xs text-zinc-500 mt-0.5 truncate">{item.description}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-zinc-400 transition-colors flex-shrink-0" />

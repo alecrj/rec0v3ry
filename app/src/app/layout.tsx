@@ -1,10 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { GeistSans } from "geist/font/sans";
+import { Outfit, DM_Sans } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
 import { Providers } from "./providers";
 import "./globals.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "RecoveryOS - Sober Living Management Platform",
@@ -18,7 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#09090B",
+  themeColor: "#fafafa",
 };
 
 export default function RootLayout({
@@ -27,8 +38,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider appearance={{ baseTheme: dark }}>
-      <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+    <ClerkProvider>
+      <html lang="en" className={`${outfit.variable} ${dmSans.variable} ${GeistMono.variable}`}>
         <head>
           <link rel="manifest" href="/manifest.json" />
           <link rel="apple-touch-icon" href="/icon-192.png" />

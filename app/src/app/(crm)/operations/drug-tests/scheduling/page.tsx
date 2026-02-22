@@ -35,18 +35,18 @@ type ScheduleType = "random" | "scheduled" | "weekly" | "monthly";
 type TestType = "urine" | "breathalyzer" | "oral_swab" | "blood" | "hair_follicle";
 
 const scheduleTypeStyles: Record<ScheduleType, string> = {
-  random: "bg-purple-500/15 text-purple-300",
-  scheduled: "bg-indigo-500/15 text-indigo-300",
-  weekly: "bg-green-500/15 text-green-300",
-  monthly: "bg-orange-500/15 text-orange-300",
+  random: "bg-purple-50 text-purple-600",
+  scheduled: "bg-indigo-50 text-indigo-600",
+  weekly: "bg-green-50 text-green-600",
+  monthly: "bg-orange-50 text-orange-600",
 };
 
 const testTypeStyles: Record<TestType, string> = {
-  urine: "bg-indigo-500/15 text-indigo-300",
-  breathalyzer: "bg-purple-500/15 text-purple-300",
-  oral_swab: "bg-cyan-500/15 text-cyan-300",
-  blood: "bg-red-500/15 text-red-300",
-  hair_follicle: "bg-orange-500/15 text-orange-300",
+  urine: "bg-indigo-50 text-indigo-600",
+  breathalyzer: "bg-purple-50 text-purple-600",
+  oral_swab: "bg-cyan-50 text-cyan-600",
+  blood: "bg-red-50 text-red-600",
+  hair_follicle: "bg-orange-50 text-orange-600",
 };
 
 const testTypeLabels: Record<TestType, string> = {
@@ -132,12 +132,12 @@ export default function DrugTestSchedulingPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/operations/drug-tests"
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
           >
             <ChevronLeft className="h-5 w-5 text-zinc-400" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-zinc-100">Drug Test Scheduling</h1>
+            <h1 className="text-2xl font-bold text-zinc-800">Drug Test Scheduling</h1>
             <p className="text-zinc-400 mt-1">Configure automated and random test schedules</p>
           </div>
         </div>
@@ -147,10 +147,10 @@ export default function DrugTestSchedulingPage() {
       </div>
 
       {/* Stats */}
-      <div className="flex items-start gap-0 divide-x divide-zinc-800">
+      <div className="flex items-start gap-0 divide-x divide-zinc-200">
         <div className="flex-1 pr-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total Schedules</p>
-          <p className="text-2xl font-bold text-zinc-100 mt-1">{stats?.total ?? 0}</p>
+          <p className="text-2xl font-bold text-zinc-800 mt-1">{stats?.total ?? 0}</p>
         </div>
         <div className="flex-1 px-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Active</p>
@@ -162,7 +162,7 @@ export default function DrugTestSchedulingPage() {
         </div>
         <div className="flex-1 pl-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Tests (30 days)</p>
-          <p className="text-2xl font-bold text-zinc-100 mt-1">{stats?.last30Days?.testsCreated ?? 0}</p>
+          <p className="text-2xl font-bold text-zinc-800 mt-1">{stats?.last30Days?.testsCreated ?? 0}</p>
         </div>
       </div>
 
@@ -179,11 +179,11 @@ export default function DrugTestSchedulingPage() {
       ) : (
         <div className="space-y-3">
           {allSchedules.map((schedule) => (
-            <div key={schedule.id} className="border border-zinc-800 rounded-lg p-4 hover:bg-zinc-800/30 transition-colors">
+            <div key={schedule.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-zinc-100/30 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-zinc-100">{schedule.name}</h3>
+                    <h3 className="font-medium text-zinc-800">{schedule.name}</h3>
                     {schedule.is_active ? (
                       <Badge variant="success" size="sm">Active</Badge>
                     ) : (
@@ -232,7 +232,7 @@ export default function DrugTestSchedulingPage() {
                     </Button>
                   )}
                   <button
-                    className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-400"
+                    className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-400"
                     title={schedule.is_active ? "Pause" : "Resume"}
                     onClick={() => toggleActive.mutate({ scheduleId: schedule.id, isActive: !schedule.is_active })}
                   >
@@ -260,9 +260,9 @@ export default function DrugTestSchedulingPage() {
       {showCreateModal && orgId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-zinc-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-800">
-            <div className="p-6 border-b border-zinc-800">
-              <h2 className="text-xl font-bold text-zinc-100">Create Test Schedule</h2>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-zinc-200">
+            <div className="p-6 border-b border-zinc-200">
+              <h2 className="text-xl font-bold text-zinc-800">Create Test Schedule</h2>
             </div>
             <form
               onSubmit={(e: FormEvent) => {
@@ -280,19 +280,19 @@ export default function DrugTestSchedulingPage() {
               className="p-6 space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Schedule Name <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Schedule Name <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   placeholder="e.g., Weekly Random Testing"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Schedule Type</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Schedule Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(["random", "scheduled", "weekly", "monthly"] as ScheduleType[]).map((type) => (
                     <button
@@ -301,8 +301,8 @@ export default function DrugTestSchedulingPage() {
                       onClick={() => setForm({ ...form, scheduleType: type })}
                       className={`px-4 py-2 border rounded-lg text-sm font-medium capitalize ${
                         form.scheduleType === type
-                          ? "border-indigo-500 bg-indigo-500/10 text-indigo-300"
-                          : "border-zinc-800 text-zinc-300 hover:bg-zinc-800/40"
+                          ? "border-indigo-500 bg-indigo-500/10 text-indigo-600"
+                          : "border-zinc-200 text-zinc-600 hover:bg-zinc-100/40"
                       }`}
                     >
                       {type}
@@ -312,11 +312,11 @@ export default function DrugTestSchedulingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">Test Type</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">Test Type</label>
                 <select
                   value={form.testType}
                   onChange={(e) => setForm({ ...form, testType: e.target.value as TestType })}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="urine">Urine Test</option>
                   <option value="breathalyzer">Breathalyzer</option>
@@ -327,11 +327,11 @@ export default function DrugTestSchedulingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1.5">House (optional)</label>
+                <label className="block text-sm font-medium text-zinc-600 mb-1.5">House (optional)</label>
                 <select
                   value={form.houseId}
                   onChange={(e) => setForm({ ...form, houseId: e.target.value })}
-                  className="w-full h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="">All Houses</option>
                   {(houses ?? []).map((h) => (
@@ -342,7 +342,7 @@ export default function DrugTestSchedulingPage() {
 
               {form.scheduleType === "random" && (
                 <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Percentage of Residents</label>
+                  <label className="block text-sm font-medium text-zinc-600 mb-1.5">Percentage of Residents</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
@@ -350,7 +350,7 @@ export default function DrugTestSchedulingPage() {
                       max="100"
                       value={form.randomPercentage}
                       onChange={(e) => setForm({ ...form, randomPercentage: e.target.value })}
-                      className="w-24 h-10 px-3 text-sm border border-zinc-800 rounded-lg bg-zinc-800/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-24 h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                     <span className="text-sm text-zinc-400">% of residents per execution</span>
                   </div>
@@ -362,15 +362,15 @@ export default function DrugTestSchedulingPage() {
                   type="checkbox"
                   checked={form.notifyResidents}
                   onChange={(e) => setForm({ ...form, notifyResidents: e.target.checked })}
-                  className="rounded border-zinc-700 text-indigo-400 focus:ring-indigo-500"
+                  className="rounded border-zinc-200 text-indigo-400 focus:ring-indigo-500"
                 />
-                <span className="text-sm text-zinc-300">Notify residents in advance</span>
+                <span className="text-sm text-zinc-600">Notify residents in advance</span>
               </label>
 
               <div className="p-3 bg-amber-500/10 rounded-lg">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-amber-300">
+                  <p className="text-sm text-amber-600">
                     Random testing helps maintain unpredictability and is recommended for compliance programs.
                   </p>
                 </div>

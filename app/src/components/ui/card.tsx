@@ -18,8 +18,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
 
     const variants = {
       ghost: "", // Invisible — just padding, no bg/border/shadow
-      surface: "bg-zinc-900 border border-zinc-800 rounded-lg",
-      outlined: "border border-zinc-800 rounded-lg",
+      surface: "bg-white border border-zinc-200 rounded-lg",
+      outlined: "border border-zinc-200 rounded-lg",
     };
 
     return (
@@ -28,7 +28,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           paddings[padding],
           variants[variant],
-          hover && "hover:bg-zinc-800/50 cursor-pointer transition-colors",
+          hover && "hover:bg-zinc-100 cursor-pointer transition-colors",
           className
         )}
         {...props}
@@ -50,7 +50,7 @@ CardHeader.displayName = "CardHeader";
 
 const CardTitle = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-sm font-semibold text-zinc-100", className)} {...props} />
+    <h3 ref={ref} className={cn("text-sm font-semibold text-zinc-800", className)} {...props} />
   )
 );
 CardTitle.displayName = "CardTitle";
